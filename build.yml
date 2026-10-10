@@ -13,7 +13,7 @@ jobs:
       - name: Locate project
         id: loc
         run: |
-          if [ ! -f settings.gradle.kts ] && [ -f Magen.zip ]; then unzip -oq Magen.zip; fi
+          if [ ! -f settings.gradle.kts ] && [ -f Magen(2).zip ]; then unzip -oq Magen.zip; fi
           if [ -f settings.gradle.kts ]; then echo "dir=." >> "$GITHUB_OUTPUT"; else echo "dir=Magen" >> "$GITHUB_OUTPUT"; fi
 
       - uses: actions/setup-java@v4
