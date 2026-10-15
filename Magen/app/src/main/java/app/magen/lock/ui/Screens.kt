@@ -489,8 +489,7 @@ fun MoreTab(onChangePin: () -> Unit) {
 
         SectionCard(stringResource(R.string.level_title)) {
             LevelSelector(Store.level) { Store.setLevel(it) }
-            Spacer(Modifier.height(14.dp))
-            CompareTable()
+            CompareDialogLink()
             OutlinedButton(
                 onClick = { Session.showGuide = true },
                 shape = RoundedCornerShape(16.dp),
