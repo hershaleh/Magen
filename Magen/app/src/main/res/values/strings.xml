@@ -108,7 +108,7 @@
     <string name="cat_vpn">VPN</string>
     <string name="cat_about">About phone</string>
     <string name="custom_title">Block any other page</string>
-    <string name="custom_desc">Type the page title exactly as it appears at the top of the Settings page, in the phone language.</string>
+    <string name="custom_desc">Find the page in Settings, then enter its exact title as shown at the top. You may paste the full path; Magen uses the final page name.</string>
     <string name="custom_hint">Page title</string>
     <string name="custom_add">Add</string>
 
@@ -196,9 +196,18 @@
     <string name="cat_backup">Backup</string>
     <string name="cat_update">System update</string>
     <string name="cat_google">Google services</string>
+    <string name="allow_restricted_settings">Request permission for restricted settings</string>
+    <string name="cat_autofill">Autofill service</string>
+    <string name="cat_notificationaccess">Notification access</string>
+    <string name="cat_usageaccess">Usage data access</string>
+    <string name="cat_displayover">Display over other apps</string>
+    <string name="cat_pip">Picture-in-picture</string>
+    <string name="cat_screenrecord">Screen recording</string>
+    <string name="cat_emergency">Emergency SOS</string>
+    <string name="cat_installapps">App installation</string>
     <string name="cat_system">System page and general management</string>
     <string name="howto_title">Page names depend on your phone</string>
-    <string name="howto_body">Blocking works by matching the title shown at the top of a Settings page. Those titles come from your phone maker and your phone language, so names differ between Pixel, Samsung, Xiaomi and others, and between Hebrew and English. A switch above may therefore miss a page on your phone. Where a system restriction exists, Strong mode enforces it regardless of names.
+    <string name="howto_body">1. Open the phone's Settings. 2. Tap Search and type the feature you want to block. 3. Open the result and note the title at the top. 4. Return to Magen &gt; Rules &gt; Block any other page, enter that title exactly in the phone language and tap Add. You may paste a full path such as Network &amp; internet &gt; Internet; Magen keeps the last part. 5. Open the page again to test. If it still opens, try the title shown inside the page or a manufacturer-specific name. Names vary by device and language; Strong mode enforces only restrictions Android supports at system level.</string>
 
 To block a page yourself:
 1. Open Settings and go to the page.
