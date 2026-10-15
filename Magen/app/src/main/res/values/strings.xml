@@ -4,7 +4,7 @@
     <string name="service_label">Magen Guard</string>
     <string name="service_desc">Magen locks the apps you choose, blocks new installs and protects parts of Settings. It reads on-screen text only to recognise which app or Settings page is open. Nothing leaves your device.</string>
     <string name="admin_desc">Device admin makes removing Magen require extra steps. Magen does not read or erase your data.</string>
-    <string name="admin_disable_warning">Disabling Magen's device-admin permission weakens protection. To remove Magen, use “Approve uninstall” inside the app.</string>
+    <string name="admin_disable_warning">Disabling Magen\'s device-admin permission weakens protection. To remove Magen, use “Approve uninstall” inside the app.</string>
 
     <string name="nav_home">Protection</string>
     <string name="nav_apps">Apps</string>
@@ -207,6 +207,6 @@
     <string name="cat_installapps">App installation</string>
     <string name="cat_system">System page and general management</string>
     <string name="howto_title">Page names depend on your phone</string>
-    <string name="howto_body">1. Open the phone's Settings. 2. Tap Search and type the feature you want to block. 3. Open the result and note the title at the top. 4. Return to Magen &gt; Rules &gt; Block any other page, enter that title exactly in the phone language and tap Add. You may paste a full path such as Network &amp; internet &gt; Internet; Magen keeps the last part. 5. Open the page again to test. If it still opens, try the title shown inside the page or a manufacturer-specific name. Names vary by device and language; Strong mode enforces only restrictions Android supports at system level.</string>
+    <string name="howto_body">1. Open the phone\'s Settings. 2. Tap Search and type the feature you want to block. 3. Open the result and note the title at the top. 4. Return to Magen &gt; Rules &gt; Block any other page, enter that title exactly in the phone language and tap Add. You may paste a full path such as Network &amp; internet &gt; Internet; Magen keeps the last part. 5. Open the page again to test. If it still opens, try the title shown inside the page or a manufacturer-specific name. Names vary by device and language; Strong mode enforces only restrictions Android supports at system level.</string>
 </resources>
 
