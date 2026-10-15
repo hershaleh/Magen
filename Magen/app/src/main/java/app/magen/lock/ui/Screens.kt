@@ -533,6 +533,18 @@ fun MoreTab(onChangePin: () -> Unit) {
                 Text(stringResource(R.string.approve_uninstall), color = Color.White)
             }
         }
+
+        Row(
+            modifier = Modifier.fillMaxWidth().clickable {
+                ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mitmachim.top/user/%D7%94%D7%A2%D7%A8%D7%A9%D7%9C%D7%94")))
+            }.padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(Icons.Filled.Shield, contentDescription = null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+            Spacer(Modifier.size(6.dp))
+            Text(stringResource(R.string.credit_hearshal), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
     }
 
     if (confirm) {
