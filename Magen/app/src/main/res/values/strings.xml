@@ -211,5 +211,6 @@
     <string name="compare_what_means">What does this mean?</string>
     <string name="compare_title">Regular vs. Strong mode</string>
     <string name="credit_hearshal">Credit: He\'rshele</string>
+    <string name="admin_open_failed">Could not open the device administrator approval screen.</string>
 </resources>
 
