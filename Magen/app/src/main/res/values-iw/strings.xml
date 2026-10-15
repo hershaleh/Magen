@@ -211,5 +211,6 @@
     <string name="compare_what_means">מה זה אומר?</string>
     <string name="compare_title">מה ההבדל בין מצב רגיל למצב חזק?</string>
     <string name="credit_hearshal">קרדיט: הערשלה</string>
+    <string name="admin_open_failed">לא ניתן לפתוח את מסך אישור מנהל המכשיר.</string>
 </resources>
 
