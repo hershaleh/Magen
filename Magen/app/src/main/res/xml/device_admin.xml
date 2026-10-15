@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Magen uses Device Admin for uninstall/deactivation warnings, not destructive policies. -->
     <uses-policies />
 </device-admin>
