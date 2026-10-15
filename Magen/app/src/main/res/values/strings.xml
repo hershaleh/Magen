@@ -208,15 +208,5 @@
     <string name="cat_system">System page and general management</string>
     <string name="howto_title">Page names depend on your phone</string>
     <string name="howto_body">1. Open the phone's Settings. 2. Tap Search and type the feature you want to block. 3. Open the result and note the title at the top. 4. Return to Magen &gt; Rules &gt; Block any other page, enter that title exactly in the phone language and tap Add. You may paste a full path such as Network &amp; internet &gt; Internet; Magen keeps the last part. 5. Open the page again to test. If it still opens, try the title shown inside the page or a manufacturer-specific name. Names vary by device and language; Strong mode enforces only restrictions Android supports at system level.</string>
-
-To block a page yourself:
-1. Open Settings and go to the page.
-2. Read the title at the very top. Copy it exactly, including &amp; and hyphens.
-3. Type it in Block any other page and tap Add. Any text that appears in the top part of that page and is unique to it also works.
-
-Finding the path: in Settings tap the search icon and type the feature name. Each result shows its path under it, for example Network &amp; internet > Internet. You can type the whole path with > between the parts. Magen saves the last part, which is the page itself.
-
-Blocking a page also blocks everything inside it, because it can no longer be opened. To block only a sub-page, add that sub-page and leave its parent unblocked.
-
-Check: after adding, open the page. It should close at once. If it does not, check the spelling or use another unique text from the top of that page.</string>
 </resources>
+
