@@ -23,7 +23,15 @@ class BlockActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         reason = intent.getIntExtra(EXTRA_REASON, R.string.blocked_settings)
-        setContent { MagenTheme { BlockContent(reason) { finish() } } }
+        setContent { MagenTheme { BlockContent(reason) { goHome() } } }
+    }
+
+    private fun goHome() {
+        startActivity(
+            Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
+        )
+        finish()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -32,8 +40,4 @@ class BlockActivity : AppCompatActivity() {
         reason = intent.getIntExtra(EXTRA_REASON, R.string.blocked_settings)
     }
 
-    override fun onStop() {
-        super.onStop()
-        if (!isChangingConfigurations) finish()
-    }
 }
