@@ -9,11 +9,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # Works whether the project files sit at the repo root, or you uploaded Magen.zip as-is.
+      # Works whether the project files sit at the repo root, or the project is uploaded as a ZIP
+      # (any file name, e.g. "Magen (2).zip") that contains a Magen/ folder.
       - name: Locate project
         id: loc
         run: |
-          if [ ! -f settings.gradle.kts ] && [ -f Magen(2).zip ]; then unzip -oq Magen.zip; fi
+          if [ ! -f settings.gradle.kts ]; then
+            ZIP=$(find . -maxdepth 1 -iname '*.zip' | head -n 1)
+            if [ -n "$ZIP" ]; then unzip -oq "$ZIP"; fi
+          fi
           if [ -f settings.gradle.kts ]; then echo "dir=." >> "$GITHUB_OUTPUT"; else echo "dir=Magen" >> "$GITHUB_OUTPUT"; fi
 
       - uses: actions/setup-java@v4
