@@ -4,7 +4,7 @@
     <string name="service_label">Magen Guard</string>
     <string name="service_desc">Magen locks the apps you choose, blocks new installs and protects parts of Settings. It reads on-screen text only to recognise which app or Settings page is open. Nothing leaves your device.</string>
     <string name="admin_desc">Device admin makes removing Magen require extra steps. Magen does not read or erase your data.</string>
-    <string name="admin_disable_warning">Approve this from inside Magen before removing admin rights.</string>
+    <string name="admin_disable_warning">Disabling Magen's device-admin permission weakens protection. To remove Magen, use “Approve uninstall” inside the app.</string>
 
     <string name="nav_home">Protection</string>
     <string name="nav_apps">Apps</string>
