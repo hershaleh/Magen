@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -36,6 +37,7 @@ import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Accessibility
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -106,11 +108,6 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
     ) {
         if (!p.acc) {
             Spacer(Modifier.height(10.dp))
-            Text(
-                stringResource(R.string.restricted_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
             FilledTonalButton(
                 onClick = {
                     ctx.startActivity(
@@ -120,6 +117,12 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
                 },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.allow_restricted_settings)) }
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.restricted_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
         }
     }
 
@@ -222,6 +225,29 @@ private fun LevelCard(
 }
 
 @Composable
+fun CompareDialogLink() {
+    var show by rememberSaveable { mutableStateOf(false) }
+    TextButton(onClick = { show = true }, modifier = Modifier.fillMaxWidth()) {
+        Text(stringResource(R.string.compare_what_means))
+    }
+    if (show) {
+        AlertDialog(
+            onDismissRequest = { show = false },
+            title = { Text(stringResource(R.string.compare_title)) },
+            text = {
+                Column(
+                    Modifier.heightIn(max = 480.dp).verticalScroll(rememberScrollState()),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) { CompareTable() }
+            },
+            confirmButton = {
+                TextButton(onClick = { show = false }) { Text(stringResource(R.string.ok)) }
+            },
+        )
+    }
+}
+
+@Composable
 fun CompareTable() {
     val rows = listOf(
         Triple(R.string.cmp1_label, R.string.cmp1_reg, R.string.cmp1_str),
@@ -269,7 +295,7 @@ fun LevelStep(onNext: () -> Unit) {
     ) {
         Text(stringResource(R.string.level_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         LevelSelector(sel) { sel = it }
-        CompareTable()
+        CompareDialogLink()
         if (sel == "strong") {
             OutlinedButton(
                 onClick = { Session.showGuide = true },
