@@ -34,6 +34,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material.icons.filled.Accessibility
@@ -107,22 +108,21 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
         onEnable = { ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) },
     ) {
         if (!p.acc) {
-            Spacer(Modifier.height(10.dp))
-            FilledTonalButton(
-                onClick = {
-                    ctx.startActivity(
-                        Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}"))
-                            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-                    )
-                },
+            Spacer(Modifier.height(6.dp))
+            Row(
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text(stringResource(R.string.allow_restricted_settings)) }
-            Spacer(Modifier.height(8.dp))
-            Text(
-                stringResource(R.string.restricted_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = {
+                    androidx.compose.ui.window.Dialog(onDismissRequest = {})
+                }, enabled = false) { }
+                IconButton(onClick = {
+                    android.widget.Toast.makeText(ctx, ctx.getString(R.string.restricted_help), android.widget.Toast.LENGTH_LONG).show()
+                }) {
+                    Icon(Icons.Filled.HelpOutline, contentDescription = stringResource(R.string.restricted_help_title))
+                }
+            }
         }
     }
 
