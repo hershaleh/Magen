@@ -7,7 +7,7 @@
     </style>
     <style name="Theme.Magen.Starting" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">@color/ic_bg</item>
-        <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/ic_fg</item>
         <item name="postSplashScreenTheme">@style/Theme.Magen</item>
     </style>
 </resources>
