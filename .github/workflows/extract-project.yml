@@ -1,0 +1,43 @@
+name: Extract Android project
+on:
+  push:
+    branches:
+      - fix/magen-blocking-and-protection
+permissions:
+  contents: write
+jobs:
+  extract:
+    if: "!contains(github.event.head_commit.message, '[extract-bot]')"
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Extract project ZIP
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -f Magen/settings.gradle.kts ] || [ -f settings.gradle.kts ]; then
+            echo "Project already extracted; nothing to do."
+            exit 0
+          fi
+          ZIP="$(find . -maxdepth 1 -iname '*.zip' -print -quit)"
+          test -n "$ZIP" || { echo "No project ZIP found"; exit 1; }
+          mkdir -p _extract
+          unzip -oq "$ZIP" -d _extract
+          if [ -f _extract/Magen/settings.gradle.kts ]; then
+            cp -a _extract/Magen ./Magen
+          elif [ -f _extract/settings.gradle.kts ]; then
+            cp -a _extract/. ./Magen/
+          else
+            echo "Could not find settings.gradle.kts in archive. Archive entries:"
+            find _extract -maxdepth 4 -type f | head -100
+            exit 1
+          fi
+          test -f Magen/settings.gradle.kts
+          rm -rf _extract
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Magen
+          git commit -m "[extract-bot] Extract Android project from ZIP"
+          git push
