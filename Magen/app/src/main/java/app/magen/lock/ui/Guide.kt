@@ -4,6 +4,7 @@ import android.app.admin.DevicePolicyManager
 import android.content.Intent
 import android.net.Uri
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
@@ -147,7 +148,15 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
                 putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ctx.getString(R.string.admin_desc))
             }
             // Launch the system's dedicated device-admin approval screen, not general Settings.
-            runCatching { ctx.startActivity(request) }
+            try {
+                ctx.startActivity(request)
+            } catch (error: Exception) {
+                Toast.makeText(
+                    ctx,
+                    ctx.getString(R.string.admin_open_failed),
+                    Toast.LENGTH_LONG,
+                ).show()
+            }
         },
     )
 
