@@ -91,6 +91,7 @@
     <string name="cancel">Cancel</string>
 
     <string name="blocked_title">Blocked by Magen</string>
+    <string name="blocked_message">This app has been blocked</string>
     <string name="blocked_play">Installing new apps from Google Play is disabled.</string>
     <string name="blocked_apk">Installing from APK files is disabled.</string>
     <string name="blocked_settings">This part of Settings is restricted.</string>
