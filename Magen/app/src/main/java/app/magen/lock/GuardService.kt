@@ -184,6 +184,13 @@ class GuardService : AccessibilityService() {
         if (top.isEmpty()) return
 
         val selfProtected = Store.protect && !Store.uninstallAllowed() && Policy.isAdmin(this)
+        // Best-effort protection: close the Accessibility page while Magen is enabled.
+        // Android/OEM shortcuts may still bypass this when the service is switched off.
+        val accessibilityPage = Catalog.byId["accessibility"]?.keywords?.any { Catalog.norm(it) in top } == true
+        if (Store.protect && Policy.isAdmin(this) && accessibilityPage) {
+            block(R.string.blocked_settings)
+            return
+        }
         if (selfProtected && (top.any { t -> Catalog.ownNames.any { t.contains(it) } } || top.any { it in Catalog.adminPages })) {
             block(R.string.blocked_self)
             return
