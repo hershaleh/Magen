@@ -141,12 +141,13 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
         desc = R.string.perm_admin_desc,
         on = p.admin,
         onEnable = {
-            ctx.startActivity(
-                Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
-                    .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, Policy.admin(ctx))
-                    .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ctx.getString(R.string.admin_desc))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-            )
+            val adminComponent = Policy.admin(ctx)
+            val request = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
+                putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ctx.getString(R.string.admin_desc))
+            }
+            // Launch the system's dedicated device-admin approval screen, not general Settings.
+            runCatching { ctx.startActivity(request) }
         },
     )
 
