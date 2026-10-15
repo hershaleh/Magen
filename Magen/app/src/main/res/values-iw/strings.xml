@@ -108,7 +108,7 @@
     <string name="cat_vpn">VPN</string>
     <string name="cat_about">מידע על הטלפון</string>
     <string name="custom_title">חסימת כל דף אחר</string>
-    <string name="custom_desc">הקלידו את כותרת הדף בדיוק כפי שהיא מופיעה בראש דף ההגדרות, בשפת הטלפון.</string>
+    <string name="custom_desc">מצאו את הדף בהגדרות והזינו את הכותרת המדויקת שמופיעה בראשו. אפשר להדביק גם את הנתיב המלא; מגן משתמשת בשם הדף האחרון.</string>
     <string name="custom_hint">כותרת הדף</string>
     <string name="custom_add">הוספה</string>
 
@@ -196,9 +196,18 @@
     <string name="cat_backup">גיבוי</string>
     <string name="cat_update">עדכון מערכת</string>
     <string name="cat_google">שירותי Google</string>
+    <string name="allow_restricted_settings">בקשת הרשאות מוגבלות למגן</string>
+    <string name="cat_autofill">שירות מילוי אוטומטי</string>
+    <string name="cat_notificationaccess">גישה להתראות</string>
+    <string name="cat_usageaccess">גישה לנתוני שימוש</string>
+    <string name="cat_displayover">הצגה מעל אפליקציות אחרות</string>
+    <string name="cat_pip">תמונה בתוך תמונה</string>
+    <string name="cat_screenrecord">הקלטת מסך</string>
+    <string name="cat_emergency">SOS לשעת חירום</string>
+    <string name="cat_installapps">התקנת אפליקציות</string>
     <string name="cat_system">דף המערכת וניהול כללי</string>
     <string name="howto_title">שמות הדפים תלויים בטלפון שלך</string>
-    <string name="howto_body">החסימה פועלת לפי התאמה לכותרת שמופיעה בראש דף הגדרות. הכותרות האלה נקבעות על ידי יצרן הטלפון ושפת הטלפון, ולכן השמות שונים בין Pixel, Samsung, Xiaomi ואחרים, וגם בין עברית לאנגלית. לכן ייתכן שמתג מהרשימה למעלה לא יתפוס דף בטלפון שלך. איפה שקיימת הגבלת מערכת, מצב חזק אוכף אותה בלי קשר לשמות.
+    <string name="howto_body">1. פתחו את הגדרות הטלפון. 2. לחצו על חיפוש והקלידו את שם האפשרות שברצונכם לחסום. 3. פתחו את התוצאה ורשמו את הכותרת שמופיעה בראש הדף. 4. חזרו למגן &gt; כללים &gt; חסימת כל דף אחר, הזינו את הכותרת בדיוק כפי שהיא מופיעה בשפת הטלפון ולחצו הוספה. אפשר גם להדביק נתיב מלא, למשל Network &amp; internet &gt; Internet; מגן שומרת את שם הדף האחרון. 5. פתחו שוב את הדף כדי לבדוק שהחסימה עובדת. אם הוא עדיין נפתח, נסו את הכותרת שמופיעה בתוך הדף או שם של יצרן הטלפון. השמות משתנים לפי יצרן ושפה; מצב חזק אוכף רק הגבלות שאנדרואיד תומכת בהן ברמת המערכת.</string>
 
 כדי לחסום דף בעצמכם:
 1. פתחו את ההגדרות ועברו לדף.
