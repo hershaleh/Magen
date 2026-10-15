@@ -91,6 +91,7 @@
     <string name="cancel">ביטול</string>
 
     <string name="blocked_title">נחסם על ידי מגן</string>
+    <string name="blocked_message">אפליקציה זו נחסמה</string>
     <string name="blocked_play">התקנת אפליקציות חדשות מגוגל פליי מושבתת.</string>
     <string name="blocked_apk">התקנה מקובצי APK מושבתת.</string>
     <string name="blocked_settings">חלק זה בהגדרות מוגבל.</string>
