@@ -35,7 +35,7 @@
     <string name="perm_owner_note">Needs a one-time adb command, and only works when no accounts are signed in on the device (you can remove them temporarily).</string>
     <string name="btn_enable">Enable</string>
     <string name="status_on">On</string>
-    <string name="restricted_hint">Android may ask you to allow “restricted settings” before Magen\'s Accessibility service can be enabled. Tap the button to open App info. If the ⋮ menu appears, open it and choose “Allow restricted settings”, then return to Magen and enable Accessibility. If the menu is missing, your device or installation method may not offer this option.</string>
+    <string name="restricted_hint">Android may ask you to allow “restricted settings” before Magen\'s Accessibility service can be enabled. Tap the button to open App info. If the ⋮ menu appears, open it and choose “Allow restricted settings”, then return to Magen and enable Accessibility. If the menu is missing, try opening Magen\'s App info by long-pressing its icon or through Settings > Apps > Magen. If the ⋮ menu is still absent, the option may not be available for your device or installation method; Magen cannot enable it by itself.</string>
     <string name="open_app_info">App info</string>
     <string name="copy_cmd">Copy command</string>
     <string name="copied">Copied</string>
