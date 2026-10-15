@@ -146,7 +146,33 @@ class GuardService : AccessibilityService() {
     private fun scanPlay() {
         val root = rootInActiveWindow ?: return
         if (root.packageName?.toString() != Catalog.PLAY) return
-        if (collect(root, false).any { Catalog.norm(it) in Catalog.installWords }) block(R.string.blocked_play)
+        val visibleTexts = collect(root, false).map { Catalog.norm(it) }
+        // Ignore generic home-feed/ad cards: their Install buttons are ads, not a user opening
+        // a specific app page. Still block Install on search results and app-detail pages.
+        val homeFeed = visibleTexts.any { it in setOf("for you", "recommended for you", "מומלץ בשבילך", "בשבילך") } &&
+            visibleTexts.none { it in setOf("what's new", "about this app", "ratings and reviews", "מה חדש", "מידע על האפליקציה", "דירוגים וביקורות") }
+        if (!homeFeed && hasInstallAction(root)) block(R.string.blocked_play)
+    }
+
+    /**
+     * Only count a visible install label when it belongs to a clickable control. This avoids
+     * matching review text, ad descriptions, and unrelated text that merely contains "install".
+     */
+    private fun hasInstallAction(root: AccessibilityNodeInfo): Boolean {
+        var count = 0
+        fun walk(node: AccessibilityNodeInfo, depth: Int, clickableAncestor: Boolean): Boolean {
+            if (count++ > 900 || depth > 28) return false
+            val clickable = clickableAncestor || node.isClickable
+            val labels = listOfNotNull(node.text?.toString(), node.contentDescription?.toString())
+                .map { Catalog.norm(it) }
+            if (clickable && labels.any { it in Catalog.installWords }) return true
+            for (i in 0 until node.childCount) {
+                val child = node.getChild(i) ?: continue
+                if (walk(child, depth + 1, clickable)) return true
+            }
+            return false
+        }
+        return walk(root, 0, false)
     }
 
     // ---- Settings ----------------------------------------------------------------------------
@@ -190,7 +216,6 @@ class GuardService : AccessibilityService() {
     // ---- helpers -----------------------------------------------------------------------------
 
     private fun block(@StringRes reason: Int) {
-        performGlobalAction(GLOBAL_ACTION_HOME)
         val n = SystemClock.uptimeMillis()
         if (n - lastBlock < 1500) return
         lastBlock = n
