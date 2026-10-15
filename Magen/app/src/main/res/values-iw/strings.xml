@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">מגן</string>
+    <string name="service_label">מגן – שומר</string>
+    <string name="service_desc">מגן נועל את האפליקציות שבחרת, חוסם התקנות חדשות ומגן על חלקים מההגדרות. השירות קורא טקסט מהמסך רק כדי לזהות איזו אפליקציה או איזה מסך הגדרות פתוחים. שום מידע לא יוצא מהמכשיר.</string>
+    <string name="admin_desc">הרשאת מנהל מכשיר גורמת לכך שהסרת מגן דורשת צעדים נוספים. מגן לא קורא ולא מוחק את הנתונים שלך.</string>
+    <string name="admin_disable_warning">לפני ביטול הרשאת הניהול יש לאשר זאת מתוך מגן.</string>
+
+    <string name="nav_home">הגנה</string>
+    <string name="nav_apps">אפליקציות</string>
+    <string name="nav_rules">חוקים</string>
+    <string name="nav_more">עוד</string>
+
+    <string name="welcome_title">ברוכים הבאים למגן</string>
+    <string name="welcome_sub">נעילת אפליקציות, חסימת התקנות והגנה מהסרה – הכול במקום אחד.</string>
+    <string name="start">בואו נתחיל</string>
+
+    <string name="create_pin">צרו קוד ראשי</string>
+    <string name="confirm_pin">אשרו את הקוד</string>
+    <string name="pin_hint">4 עד 8 ספרות</string>
+    <string name="pin_mismatch">הקודים אינם תואמים</string>
+    <string name="enter_code">הזינו קוד</string>
+    <string name="wrong_code">קוד שגוי</string>
+    <string name="try_again_in">נסו שוב בעוד %1$d שניות</string>
+
+    <string name="status_active">ההגנה פעילה</string>
+    <string name="status_incomplete">ההגדרה לא הושלמה</string>
+    <string name="status_steps">%1$d מתוך 2 שלבים הושלמו</string>
+    <string name="perm_access_title">שירות נגישות</string>
+    <string name="perm_access_desc">נדרש כדי לנעול אפליקציות ולחסום מסכים</string>
+    <string name="perm_admin_title">מנהל מכשיר</string>
+    <string name="perm_admin_desc">הסרת האפליקציה תדרוש אישור מתוך מגן</string>
+    <string name="perm_owner_title">מצב חזק (Device Owner)</string>
+    <string name="perm_owner_desc">אופציונלי. החסימות נאכפות על ידי אנדרואיד עצמו.</string>
+    <string name="perm_owner_note">מצריך פקודת adb חד־פעמית, ועובד רק כשאין חשבונות מחוברים במכשיר (אפשר להסיר אותם זמנית).</string>
+    <string name="btn_enable">הפעלה</string>
+    <string name="status_on">פעיל</string>
+    <string name="restricted_hint">באנדרואיד 13 ומעלה, אפליקציה שהותקנה מקובץ APK צריכה לקבל אישור מראש: פרטי אפליקציה, תפריט שלוש הנקודות, ואז \"אפשר הגדרות מוגבלות\". רק אחר כך אפשר להפעיל נגישות.</string>
+    <string name="open_app_info">פרטי האפליקציה</string>
+    <string name="copy_cmd">העתקת הפקודה</string>
+    <string name="copied">הועתק</string>
+
+    <string name="apps_title">אפליקציות נעולות</string>
+    <string name="apps_count">%1$d אפליקציות נעולות</string>
+    <string name="search_apps">חיפוש אפליקציה</string>
+    <string name="mode_off">כבוי</string>
+    <string name="mode_pin">קוד</string>
+    <string name="mode_main">מהאפליקציה</string>
+    <string name="apps_hint">הקישו על אפליקציה כדי לעבור בין: כבוי, קוד, נעולה עד שחרור מתוך מגן</string>
+
+    <string name="lock_pin_title">האפליקציה נעולה</string>
+    <string name="lock_pin_sub">הזינו קוד כדי לפתוח את %1$s</string>
+    <string name="lock_main_desc">%1$s נעולה. פתחו את מגן ושחררו אותה משם.</string>
+    <string name="open_magen">פתיחת מגן</string>
+    <string name="go_back">חזרה</string>
+
+    <string name="rules_title">חוקים</string>
+    <string name="rules_installs">התקנות</string>
+    <string name="rule_play">חסימת התקנת אפליקציות חדשות מגוגל פליי</string>
+    <string name="rule_play_desc">עדכונים ממשיכים לעבוד. חנות Play נסגרת כשמוצג בה כפתור התקנה.</string>
+    <string name="rule_apk">חסימת התקנה מקובצי APK</string>
+    <string name="rule_apk_desc">מסך ההתקנה נסגר מיד. במצב חזק אנדרואיד עצמו חוסם.</string>
+    <string name="rules_settings">הגבלת חלקים בהגדרות</string>
+    <string name="rules_settings_desc">הדפים שתסמנו ייסגרו מיד כשייפתחו.</string>
+
+    <string name="cat_accessibility">נגישות</string>
+    <string name="cat_developer">אפשרויות למפתחים</string>
+    <string name="cat_network">רשת ואינטרנט</string>
+    <string name="cat_bluetooth">Bluetooth ומכשירים מחוברים</string>
+    <string name="cat_apps">אפליקציות ופרטי אפליקציה</string>
+    <string name="cat_accounts">חשבונות</string>
+    <string name="cat_security">אבטחה ופרטיות</string>
+    <string name="cat_datetime">תאריך ושעה</string>
+    <string name="cat_reset">אפשרויות איפוס</string>
+
+    <string name="more_title">עוד</string>
+    <string name="language">שפה</string>
+    <string name="lang_system">ברירת מחדל</string>
+    <string name="lang_he">עברית</string>
+    <string name="lang_en">English</string>
+    <string name="security">אבטחה</string>
+    <string name="relock_screen_off">נעילה מחדש בכיבוי המסך</string>
+    <string name="protect_title">הגנה מפני הסרת מגן</string>
+    <string name="protect_desc">ההסרה חסומה עד שתאשרו אותה כאן.</string>
+    <string name="change_pin">שינוי הקוד הראשי</string>
+    <string name="approve_uninstall">אישור הסרה</string>
+    <string name="approve_desc">פותח חלון של 10 דקות, מבטל הרשאות ניהול ומתחיל בהסרה.</string>
+    <string name="approve_confirm_title">לאשר הסרה?</string>
+    <string name="approve_confirm_msg">ההגנה תבוטל והסרת מגן תתחיל.</string>
+    <string name="confirm">אישור</string>
+    <string name="cancel">ביטול</string>
+
+    <string name="blocked_title">נחסם על ידי מגן</string>
+    <string name="blocked_play">התקנת אפליקציות חדשות מגוגל פליי מושבתת.</string>
+    <string name="blocked_apk">התקנה מקובצי APK מושבתת.</string>
+    <string name="blocked_settings">חלק זה בהגדרות מוגבל.</string>
+    <string name="blocked_self">הסרת מגן דורשת אישור מתוך האפליקציה.</string>
+    <string name="ok">הבנתי</string>
+
+    <string name="cat_location">מיקום</string>
+    <string name="cat_notifications">התראות</string>
+    <string name="cat_battery">סוללה</string>
+    <string name="cat_storage">אחסון</string>
+    <string name="cat_display">תצוגה</string>
+    <string name="cat_language">שפות וקלט</string>
+    <string name="cat_users">משתמשים</string>
+    <string name="cat_vpn">VPN</string>
+    <string name="cat_about">מידע על הטלפון</string>
+    <string name="custom_title">חסימת כל דף אחר</string>
+    <string name="custom_desc">הקלידו את כותרת הדף בדיוק כפי שהיא מופיעה בראש דף ההגדרות, בשפת הטלפון.</string>
+    <string name="custom_hint">כותרת הדף</string>
+    <string name="custom_add">הוספה</string>
+
+    <string name="btn_continue">המשך</string>
+    <string name="level_title">רמת הגנה</string>
+    <string name="level_regular">רגילה</string>
+    <string name="level_strong">חזקה</string>
+    <string name="level_regular_sub">הגדרה מהירה. עובדת בכל טלפון.</string>
+    <string name="level_strong_sub">אנדרואיד עצמו אוכף את החוקים. דורשת מחשב פעם אחת.</string>
+    <string name="cmp1_label">הגדרה</string>
+    <string name="cmp1_reg">שתי הפעלות בתוך האפליקציה</string>
+    <string name="cmp1_str">פקודת adb חד־פעמית ממחשב</string>
+    <string name="cmp2_label">התקנת APK</string>
+    <string name="cmp2_reg">מסך ההתקנה נסגר מיד אחרי שנפתח</string>
+    <string name="cmp2_str">אנדרואיד חוסם עוד לפני שהמסך נפתח</string>
+    <string name="cmp3_label">דפי הגדרות</string>
+    <string name="cmp3_reg">נסגרים אחרי שנפתחו, לפי כותרת הדף</string>
+    <string name="cmp3_str">נחסמים גם על ידי המערכת, במקומות שאנדרואיד תומכת בהם</string>
+    <string name="cmp4_label">הגנה מהסרה</string>
+    <string name="cmp4_reg">מנהל מכשיר, וחסימת מסכי ההסרה</string>
+    <string name="cmp4_str">ההסרה חסומה על ידי המערכת. עצירה בכוח ואתחול בטוח מושבתים</string>
+    <string name="cmp5_label">אם מכבים את הנגישות</string>
+    <string name="cmp5_reg">כל החסימות מפסיקות לעבוד</string>
+    <string name="cmp5_str">החסימות ברמת המערכת נשארות. נעילת אפליקציות עדיין תלויה בנגישות</string>
+    <string name="cmp6_label">דרישות</string>
+    <string name="cmp6_reg">אין</string>
+    <string name="cmp6_str">ללא חשבונות מחוברים בזמן ההגדרה, וניפוי באגים ב-USB</string>
+
+    <string name="guide_open">מדריך למצב חזק</string>
+    <string name="guide_title">הגדרת מצב חזק</string>
+    <string name="guide_intro">במצב חזק מגן הופכת למנהלת המכשיר (Device Owner), ולכן אנדרואיד עצמו אוכף את החוקים. ההגדרה נעשית פעם אחת ממחשב ולוקחת כחמש דקות.</string>
+    <string name="g1_t">הפעלת ניפוי באגים ב-USB</string>
+    <string name="g1_b">בטלפון: הגדרות, מידע על הטלפון, ולחצו 7 פעמים על \"מספר Build\". אחר כך הגדרות, מערכת, אפשרויות למפתחים, והפעילו ניפוי באגים ב-USB.</string>
+    <string name="g2_t">הסרת חשבונות באופן זמני</string>
+    <string name="g2_b">אנדרואיד מאפשרת זאת רק כשאין חשבון מחובר. היכנסו להגדרות, סיסמאות וחשבונות, והסירו כל חשבון, כולל חשבון Google. בסוף אפשר להוסיף אותם בחזרה. כדאי להסיר גם משתמש נוסף או פרופיל עבודה.</string>
+    <string name="g3_t">התקנת adb במחשב</string>
+    <string name="g3_b">הורידו את Android platform-tools מהכתובת developer.android.com/tools/releases/platform-tools, חלצו את הקובץ ופתחו חלון טרמינל בתיקייה שלו. חברו את הטלפון בכבל USB ואשרו את ההודעה שמופיעה בטלפון.</string>
+    <string name="g4_t">בדיקת החיבור</string>
+    <string name="g4_b">הריצו: adb devices. הטלפון אמור להופיע עם הסטטוס device, ולא unauthorized.</string>
+    <string name="g5_t">הרצת הפקודה</string>
+    <string name="g5_b">הריצו את הפקודה שלמטה. התשובה אמורה להתחיל במילה Success.</string>
+    <string name="g6_t">סיום</string>
+    <string name="g6_b">פתחו את מגן. מצב חזק אמור להופיע כפעיל. הוסיפו בחזרה את החשבונות. כדי להסיר את מגן בהמשך, השתמשו ב\"אישור הסרה\" בלשונית עוד.</string>
+    <string name="guide_trouble_title">אם משהו נכשל</string>
+    <string name="guide_trouble_body">יש חשבונות: הסירו כל חשבון ונסו שוב.\nיש כמה משתמשים: מחקו את המשתמשים הנוספים.\nXiaomi או Redmi: הפעילו גם \"ניפוי באגים ב-USB (הגדרות אבטחה)\" באפשרויות למפתחים.\nunauthorized: נתקו את הכבל, חברו שוב ואשרו את ההודעה בטלפון.</string>
+    <string name="guide_warn">זכרו את הקוד הראשי. בלעדיו אפשר להסיר את מגן רק באיפוס להגדרות היצרן.</string>
+
+    <string name="setup_title">מתן הרשאות</string>
+    <string name="setup_sub">מגן צריכה את ההרשאות האלה כדי לעבוד. אנדרואיד לא מאפשרת לאפליקציה להפעיל אותן בשקט, ולכן כל כפתור פותח את מסך ההגדרות המתאים.</string>
+    <string name="setup_skip">דלגו לעכשיו</string>
+
+    <string name="grp_connect">קישוריות</string>
+    <string name="grp_privacy">אבטחה ופרטיות</string>
+    <string name="grp_apps">אפליקציות ואחסון</string>
+    <string name="grp_device">מכשיר</string>
+    <string name="grp_system">מערכת</string>
+    <string name="cat_wifi">Wi-Fi</string>
+    <string name="cat_mobile">רשת סלולרית</string>
+    <string name="cat_hotspot">נקודה חמה ושיתוף אינטרנט</string>
+    <string name="cat_datausage">צריכת נתונים</string>
+    <string name="cat_privatedns">DNS פרטי</string>
+    <string name="cat_nfc">NFC</string>
+    <string name="cat_cast">שידור (Cast)</string>
+    <string name="cat_print">הדפסה</string>
+    <string name="cat_usb">USB</string>
+    <string name="cat_screenlock">נעילת מסך</string>
+    <string name="cat_biometrics">טביעת אצבע וזיהוי פנים</string>
+    <string name="cat_credentials">הצפנה ופרטי כניסה</string>
+    <string name="cat_finddevice">איתור המכשיר שלי</string>
+    <string name="cat_admin">אפליקציות ניהול מכשיר</string>
+    <string name="cat_playprotect">Google Play Protect</string>
+    <string name="cat_permissions">מנהל ההרשאות</string>
+    <string name="cat_privacydash">לוח בקרה לפרטיות</string>
+    <string name="cat_pinning">הצמדת מסך</string>
+    <string name="cat_defaultapps">אפליקציות ברירת מחדל</string>
+    <string name="cat_specialaccess">גישה מיוחדת לאפליקציות</string>
+    <string name="cat_unknownapps">התקנת אפליקציות לא מוכרות</string>
+    <string name="cat_wellbeing">רווחה דיגיטלית ובקרת הורים</string>
+    <string name="cat_screentimeout">זמן כיבוי מסך</string>
+    <string name="cat_sound">צליל ורטט</string>
+    <string name="cat_dnd">נא לא להפריע</string>
+    <string name="cat_wallpaper">טפט וסגנון</string>
+    <string name="cat_keyboard">מקלדת</string>
+    <string name="cat_gestures">תנועות וניווט</string>
+    <string name="cat_backup">גיבוי</string>
+    <string name="cat_update">עדכון מערכת</string>
+    <string name="cat_google">שירותי Google</string>
+    <string name="cat_system">דף המערכת וניהול כללי</string>
+    <string name="howto_title">שמות הדפים תלויים בטלפון שלך</string>
+    <string name="howto_body">החסימה פועלת לפי התאמה לכותרת שמופיעה בראש דף הגדרות. הכותרות האלה נקבעות על ידי יצרן הטלפון ושפת הטלפון, ולכן השמות שונים בין Pixel, Samsung, Xiaomi ואחרים, וגם בין עברית לאנגלית. לכן ייתכן שמתג מהרשימה למעלה לא יתפוס דף בטלפון שלך. איפה שקיימת הגבלת מערכת, מצב חזק אוכף אותה בלי קשר לשמות.
+
+כדי לחסום דף בעצמכם:
+1. פתחו את ההגדרות ועברו לדף.
+2. קראו את הכותרת בראש הדף והעתיקו אותה בדיוק, כולל סימנים כמו &amp; ומקפים.
+3. הקלידו אותה בשדה \"חסימת כל דף אחר\" ולחצו על הוספה. גם כל טקסט אחר שמופיע בחלק העליון של הדף ומיוחד לו יעבוד.
+
+איך מוצאים את הנתיב: בהגדרות לחצו על החיפוש והקלידו את שם התכונה. כל תוצאה מציגה מתחתיה את הנתיב שלה, למשל רשת ואינטרנט > אינטרנט. אפשר להקליד את הנתיב כולו עם הסימן > בין החלקים, ומגן שומרת את החלק האחרון, שהוא הדף עצמו.
+
+חסימת דף חוסמת גם את כל מה שבתוכו, כי אי אפשר להיכנס אליו. כדי לחסום רק תת-דף, הוסיפו את שמו והשאירו את הדף שמעליו פתוח.
+
+בדיקה: אחרי ההוספה פתחו את הדף. הוא אמור להיסגר מיד. אם לא, בדקו את האיות או בחרו טקסט אחר ומיוחד מהחלק העליון של הדף.</string>
+</resources>

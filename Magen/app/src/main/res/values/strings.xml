@@ -1,0 +1,212 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Magen</string>
+    <string name="service_label">Magen Guard</string>
+    <string name="service_desc">Magen locks the apps you choose, blocks new installs and protects parts of Settings. It reads on-screen text only to recognise which app or Settings page is open. Nothing leaves your device.</string>
+    <string name="admin_desc">Device admin makes removing Magen require extra steps. Magen does not read or erase your data.</string>
+    <string name="admin_disable_warning">Approve this from inside Magen before removing admin rights.</string>
+
+    <string name="nav_home">Protection</string>
+    <string name="nav_apps">Apps</string>
+    <string name="nav_rules">Rules</string>
+    <string name="nav_more">More</string>
+
+    <string name="welcome_title">Welcome to Magen</string>
+    <string name="welcome_sub">App locking, install blocking and removal protection, all in one place.</string>
+    <string name="start">Get started</string>
+
+    <string name="create_pin">Create your master code</string>
+    <string name="confirm_pin">Confirm your code</string>
+    <string name="pin_hint">4 to 8 digits</string>
+    <string name="pin_mismatch">Codes do not match</string>
+    <string name="enter_code">Enter code</string>
+    <string name="wrong_code">Wrong code</string>
+    <string name="try_again_in">Try again in %1$d s</string>
+
+    <string name="status_active">Protection active</string>
+    <string name="status_incomplete">Setup incomplete</string>
+    <string name="status_steps">%1$d of 2 steps done</string>
+    <string name="perm_access_title">Accessibility service</string>
+    <string name="perm_access_desc">Needed to lock apps and block screens</string>
+    <string name="perm_admin_title">Device admin</string>
+    <string name="perm_admin_desc">Removing the app will need approval inside Magen</string>
+    <string name="perm_owner_title">Strong mode (Device Owner)</string>
+    <string name="perm_owner_desc">Optional. Blocks are enforced by Android itself.</string>
+    <string name="perm_owner_note">Needs a one-time adb command, and only works when no accounts are signed in on the device (you can remove them temporarily).</string>
+    <string name="btn_enable">Enable</string>
+    <string name="status_on">On</string>
+    <string name="restricted_hint">On Android 13 and above, an app installed from an APK file must be allowed first: App info, then the three-dot menu, then Allow restricted settings. Only then can accessibility be enabled.</string>
+    <string name="open_app_info">App info</string>
+    <string name="copy_cmd">Copy command</string>
+    <string name="copied">Copied</string>
+
+    <string name="apps_title">Locked apps</string>
+    <string name="apps_count">%1$d apps locked</string>
+    <string name="search_apps">Search apps</string>
+    <string name="mode_off">Off</string>
+    <string name="mode_pin">Code</string>
+    <string name="mode_main">Main app</string>
+    <string name="apps_hint">Tap an app to cycle: off, code, locked until released from Magen</string>
+
+    <string name="lock_pin_title">App locked</string>
+    <string name="lock_pin_sub">Enter your code to open %1$s</string>
+    <string name="lock_main_desc">%1$s is locked. Open Magen and release it from there.</string>
+    <string name="open_magen">Open Magen</string>
+    <string name="go_back">Back</string>
+
+    <string name="rules_title">Rules</string>
+    <string name="rules_installs">Installs</string>
+    <string name="rule_play">Block new installs from Google Play</string>
+    <string name="rule_play_desc">Updates keep working. The Play Store closes when it shows an Install button.</string>
+    <string name="rule_apk">Block installs from APK files</string>
+    <string name="rule_apk_desc">The installer screen closes immediately. In Strong mode Android itself blocks it.</string>
+    <string name="rules_settings">Restrict parts of Settings</string>
+    <string name="rules_settings_desc">Selected pages close as soon as they open.</string>
+
+    <string name="cat_accessibility">Accessibility</string>
+    <string name="cat_developer">Developer options</string>
+    <string name="cat_network">Network and internet</string>
+    <string name="cat_bluetooth">Bluetooth and connected devices</string>
+    <string name="cat_apps">Apps and app info</string>
+    <string name="cat_accounts">Accounts</string>
+    <string name="cat_security">Security and privacy</string>
+    <string name="cat_datetime">Date and time</string>
+    <string name="cat_reset">Reset options</string>
+
+    <string name="more_title">More</string>
+    <string name="language">Language</string>
+    <string name="lang_system">System</string>
+    <string name="lang_he">עברית</string>
+    <string name="lang_en">English</string>
+    <string name="security">Security</string>
+    <string name="relock_screen_off">Re-lock when the screen turns off</string>
+    <string name="protect_title">Protect Magen from removal</string>
+    <string name="protect_desc">Removal stays blocked until you approve it here.</string>
+    <string name="change_pin">Change master code</string>
+    <string name="approve_uninstall">Approve uninstall</string>
+    <string name="approve_desc">Opens a 10-minute window, removes admin rights and starts the uninstall.</string>
+    <string name="approve_confirm_title">Approve uninstall?</string>
+    <string name="approve_confirm_msg">Protection will be lifted and Magen will start uninstalling.</string>
+    <string name="confirm">Confirm</string>
+    <string name="cancel">Cancel</string>
+
+    <string name="blocked_title">Blocked by Magen</string>
+    <string name="blocked_play">Installing new apps from Google Play is disabled.</string>
+    <string name="blocked_apk">Installing from APK files is disabled.</string>
+    <string name="blocked_settings">This part of Settings is restricted.</string>
+    <string name="blocked_self">Removing Magen needs approval inside the app.</string>
+    <string name="ok">Got it</string>
+
+    <string name="cat_location">Location</string>
+    <string name="cat_notifications">Notifications</string>
+    <string name="cat_battery">Battery</string>
+    <string name="cat_storage">Storage</string>
+    <string name="cat_display">Display</string>
+    <string name="cat_language">Language and input</string>
+    <string name="cat_users">Users</string>
+    <string name="cat_vpn">VPN</string>
+    <string name="cat_about">About phone</string>
+    <string name="custom_title">Block any other page</string>
+    <string name="custom_desc">Type the page title exactly as it appears at the top of the Settings page, in the phone language.</string>
+    <string name="custom_hint">Page title</string>
+    <string name="custom_add">Add</string>
+
+    <string name="btn_continue">Continue</string>
+    <string name="level_title">Protection level</string>
+    <string name="level_regular">Regular</string>
+    <string name="level_strong">Strong</string>
+    <string name="level_regular_sub">Quick setup. Works on any phone.</string>
+    <string name="level_strong_sub">Android itself enforces the rules. Needs a computer once.</string>
+    <string name="cmp1_label">Setup</string>
+    <string name="cmp1_reg">Two taps inside the app</string>
+    <string name="cmp1_str">One-time adb command from a computer</string>
+    <string name="cmp2_label">APK installs</string>
+    <string name="cmp2_reg">The installer screen is closed right after it opens</string>
+    <string name="cmp2_str">Android blocks it before the screen opens</string>
+    <string name="cmp3_label">Settings pages</string>
+    <string name="cmp3_reg">Closed after they open, matched by page title</string>
+    <string name="cmp3_str">Also blocked by the system where Android supports it</string>
+    <string name="cmp4_label">Removal protection</string>
+    <string name="cmp4_reg">Device admin, plus blocking the uninstall screens</string>
+    <string name="cmp4_str">Uninstall blocked by the system. Force stop and safe mode disabled</string>
+    <string name="cmp5_label">If accessibility is switched off</string>
+    <string name="cmp5_reg">All blocking stops</string>
+    <string name="cmp5_str">System-level blocks stay on. App locking still needs accessibility</string>
+    <string name="cmp6_label">Requirements</string>
+    <string name="cmp6_reg">None</string>
+    <string name="cmp6_str">No accounts signed in during setup, and USB debugging</string>
+
+    <string name="guide_open">Strong mode guide</string>
+    <string name="guide_title">Set up Strong mode</string>
+    <string name="guide_intro">Strong mode makes Magen the Device Owner, so Android itself enforces the rules. It is done once from a computer and takes about five minutes.</string>
+    <string name="g1_t">Turn on USB debugging</string>
+    <string name="g1_b">On the phone: Settings, About phone, tap Build number 7 times. Then Settings, System, Developer options, and turn on USB debugging.</string>
+    <string name="g2_t">Remove accounts temporarily</string>
+    <string name="g2_b">Android allows this only while no account is signed in. Go to Settings, Passwords and accounts, and remove every account, including Google. You can add them back at the end. Also remove any extra user or work profile.</string>
+    <string name="g3_t">Install adb on the computer</string>
+    <string name="g3_b">Download Android platform-tools from developer.android.com/tools/releases/platform-tools, unzip it and open a terminal in that folder. Connect the phone with a USB cable and approve the prompt on the phone.</string>
+    <string name="g4_t">Check the connection</string>
+    <string name="g4_b">Run: adb devices. Your phone should be listed as device, not unauthorized.</string>
+    <string name="g5_t">Run the command</string>
+    <string name="g5_b">Run the command below. The answer should start with Success.</string>
+    <string name="g6_t">Finish</string>
+    <string name="g6_b">Open Magen. Strong mode should show On. Add your accounts back. To remove Magen later, use Approve uninstall in the More tab.</string>
+    <string name="guide_trouble_title">If something fails</string>
+    <string name="guide_trouble_body">Accounts exist: remove every account and try again.\nSeveral users: delete the extra users.\nXiaomi or Redmi: also turn on USB debugging (Security settings) in Developer options.\nUnauthorized: unplug the cable, plug it back in and approve the prompt on the phone.</string>
+    <string name="guide_warn">Remember your master code. Without it, Magen can be removed only by a factory reset.</string>
+
+    <string name="setup_title">Grant permissions</string>
+    <string name="setup_sub">Magen needs these to work. Android does not let apps switch them on silently, so each button opens the matching Settings screen.</string>
+    <string name="setup_skip">Skip for now</string>
+
+    <string name="grp_connect">Connectivity</string>
+    <string name="grp_privacy">Security and privacy</string>
+    <string name="grp_apps">Apps and storage</string>
+    <string name="grp_device">Device</string>
+    <string name="grp_system">System</string>
+    <string name="cat_wifi">Wi-Fi</string>
+    <string name="cat_mobile">Mobile network</string>
+    <string name="cat_hotspot">Hotspot and tethering</string>
+    <string name="cat_datausage">Data usage</string>
+    <string name="cat_privatedns">Private DNS</string>
+    <string name="cat_nfc">NFC</string>
+    <string name="cat_cast">Cast</string>
+    <string name="cat_print">Printing</string>
+    <string name="cat_usb">USB</string>
+    <string name="cat_screenlock">Screen lock</string>
+    <string name="cat_biometrics">Fingerprint and face unlock</string>
+    <string name="cat_credentials">Encryption and credentials</string>
+    <string name="cat_finddevice">Find My Device</string>
+    <string name="cat_admin">Device admin apps</string>
+    <string name="cat_playprotect">Google Play Protect</string>
+    <string name="cat_permissions">Permission manager</string>
+    <string name="cat_privacydash">Privacy dashboard</string>
+    <string name="cat_pinning">App pinning</string>
+    <string name="cat_defaultapps">Default apps</string>
+    <string name="cat_specialaccess">Special app access</string>
+    <string name="cat_unknownapps">Install unknown apps</string>
+    <string name="cat_wellbeing">Digital Wellbeing and parental controls</string>
+    <string name="cat_screentimeout">Screen timeout</string>
+    <string name="cat_sound">Sound and vibration</string>
+    <string name="cat_dnd">Do Not Disturb</string>
+    <string name="cat_wallpaper">Wallpaper and style</string>
+    <string name="cat_keyboard">Keyboard</string>
+    <string name="cat_gestures">Gestures and navigation</string>
+    <string name="cat_backup">Backup</string>
+    <string name="cat_update">System update</string>
+    <string name="cat_google">Google services</string>
+    <string name="cat_system">System page and general management</string>
+    <string name="howto_title">Page names depend on your phone</string>
+    <string name="howto_body">Blocking works by matching the title shown at the top of a Settings page. Those titles come from your phone maker and your phone language, so names differ between Pixel, Samsung, Xiaomi and others, and between Hebrew and English. A switch above may therefore miss a page on your phone. Where a system restriction exists, Strong mode enforces it regardless of names.
+
+To block a page yourself:
+1. Open Settings and go to the page.
+2. Read the title at the very top. Copy it exactly, including &amp; and hyphens.
+3. Type it in Block any other page and tap Add. Any text that appears in the top part of that page and is unique to it also works.
+
+Finding the path: in Settings tap the search icon and type the feature name. Each result shows its path under it, for example Network &amp; internet > Internet. You can type the whole path with > between the parts. Magen saves the last part, which is the page itself.
+
+Blocking a page also blocks everything inside it, because it can no longer be opened. To block only a sub-page, add that sub-page and leave its parent unblocked.
+
+Check: after adding, open the page. It should close at once. If it does not, check the spelling or use another unique text from the top of that page.</string>
+</resources>

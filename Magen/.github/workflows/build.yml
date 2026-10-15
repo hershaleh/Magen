@@ -1,0 +1,56 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Works whether the project files sit at the repo root, or you uploaded Magen.zip as-is.
+      - name: Locate project
+        id: loc
+        run: |
+          if [ ! -f settings.gradle.kts ] && [ -f Magen.zip ]; then unzip -oq Magen.zip; fi
+          if [ -f settings.gradle.kts ]; then echo "dir=." >> "$GITHUB_OUTPUT"; else echo "dir=Magen" >> "$GITHUB_OUTPUT"; fi
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: 8.10.2
+
+      - name: Build debug APK
+        working-directory: ${{ steps.loc.outputs.dir }}
+        run: |
+          set -o pipefail
+          gradle assembleDebug --no-daemon --console=plain 2>&1 | tee "$GITHUB_WORKSPACE/build.log"
+
+      # Short, phone-friendly error summary: open the run page and read "Build errors" at the top.
+      - name: Summarize errors
+        if: failure()
+        run: |
+          {
+            echo '## Build errors'
+            echo '```'
+            grep -E '^e: |error:|What went wrong|Execution failed|OutOfMemory|Caused by|not found|Could not' -A2 build.log | head -60 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: build-log
+          path: build.log
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: magen-debug-apk
+          path: ${{ steps.loc.outputs.dir }}/app/build/outputs/apk/debug/app-debug.apk
