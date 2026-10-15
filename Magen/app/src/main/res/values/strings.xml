@@ -210,5 +210,6 @@
     <string name="howto_body">1. Open Settings and search for the option you want to block. 2. Open the result and note the title at the top of the page. 3. Return to Magen > Rules > Restrict parts of Settings > Block any other page. 4. Enter the title exactly as shown and tap Add. You can also paste a full path, such as Network &amp; internet &gt; Internet; Magen uses the final page name. 5. Try opening the page again to test the block. If it still opens, try another title shown on that screen. Names vary by device maker and language. Strong mode can enforce only restrictions Android supports at system level.</string>
     <string name="compare_what_means">What does this mean?</string>
     <string name="compare_title">Regular vs. Strong mode</string>
+    <string name="credit_hearshal">Credit: He\'rshele</string>
 </resources>
 
