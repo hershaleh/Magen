@@ -4,7 +4,7 @@
     <string name="service_label">מגן – שומר</string>
     <string name="service_desc">מגן נועל את האפליקציות שבחרת, חוסם התקנות חדשות ומגן על חלקים מההגדרות. השירות קורא טקסט מהמסך רק כדי לזהות איזו אפליקציה או איזה מסך הגדרות פתוחים. שום מידע לא יוצא מהמכשיר.</string>
     <string name="admin_desc">הרשאת מנהל מכשיר גורמת לכך שהסרת מגן דורשת צעדים נוספים. מגן לא קורא ולא מוחק את הנתונים שלך.</string>
-    <string name="admin_disable_warning">לפני ביטול הרשאת הניהול יש לאשר זאת מתוך מגן.</string>
+    <string name="admin_disable_warning">ביטול הרשאת מנהל המכשיר מחליש את ההגנה. כדי להסיר את מגן, השתמשו ב״אישור הסרה״ בתוך האפליקציה.</string>
 
     <string name="nav_home">הגנה</string>
     <string name="nav_apps">אפליקציות</string>
