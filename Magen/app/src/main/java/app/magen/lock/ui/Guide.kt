@@ -99,6 +99,7 @@ fun rememberPerms(): Perms {
 @Composable
 fun PermissionCards(p: Perms, showOwner: Boolean) {
     val ctx = LocalContext.current
+    var showRestrictedHelp by remember { mutableStateOf(false) }
 
     PermCard(
         icon = Icons.Filled.Accessibility,
@@ -114,16 +115,24 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.End,
             ) {
-                TextButton(onClick = {
-                    androidx.compose.ui.window.Dialog(onDismissRequest = {})
-                }, enabled = false) { }
-                IconButton(onClick = {
-                    android.widget.Toast.makeText(ctx, ctx.getString(R.string.restricted_help), android.widget.Toast.LENGTH_LONG).show()
-                }) {
+                IconButton(onClick = { showRestrictedHelp = true }) {
                     Icon(Icons.Filled.HelpOutline, contentDescription = stringResource(R.string.restricted_help_title))
                 }
             }
         }
+    }
+
+    if (showRestrictedHelp) {
+        AlertDialog(
+            onDismissRequest = { showRestrictedHelp = false },
+            title = { Text(stringResource(R.string.restricted_help_title)) },
+            text = { Text(stringResource(R.string.restricted_help)) },
+            confirmButton = {
+                TextButton(onClick = { showRestrictedHelp = false }) {
+                    Text(stringResource(R.string.confirm))
+                }
+            },
+        )
     }
 
     PermCard(
