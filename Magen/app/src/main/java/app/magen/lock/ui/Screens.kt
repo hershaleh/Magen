@@ -619,10 +619,6 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
 
 @Composable
 fun BlockContent(@StringRes reason: Int, onClose: () -> Unit) {
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        kotlinx.coroutines.delay(3500)
-        onClose()
-    }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             Modifier.fillMaxSize().systemBarsPadding().padding(28.dp),
@@ -632,14 +628,9 @@ fun BlockContent(@StringRes reason: Int, onClose: () -> Unit) {
             ShieldBadge(104.dp)
             Spacer(Modifier.height(24.dp))
             Text(
-                stringResource(R.string.blocked_title),
+                stringResource(R.string.blocked_message),
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                stringResource(reason),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(28.dp))
