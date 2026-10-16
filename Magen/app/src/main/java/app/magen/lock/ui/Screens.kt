@@ -633,7 +633,7 @@ private fun approveUninstall(ctx: Context) {
             ).show()
             runCatching {
                 ctx.startActivity(
-                    Intent(Settings.ACTION_DEVICE_ADMIN_SETTINGS)
+                    Intent(Settings.ACTION_SECURITY_SETTINGS)
                         .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 )
             }
