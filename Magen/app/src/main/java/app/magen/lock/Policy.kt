@@ -37,6 +37,14 @@ object Policy {
         if (!isOwner(ctx)) return
         val d = dpm(ctx)
         val a = admin(ctx)
+
+        // During the explicit uninstall grace period, do not let the accessibility service's
+        // periodic Policy.apply() put strong-mode restrictions back while the user is leaving.
+        if (Store.uninstallAllowed()) {
+            clearOwnerRestrictions(d, a, ctx)
+            return
+        }
+
         val protectNow = Store.protect && !Store.uninstallAllowed()
         runCatching {
             d.setUninstallBlocked(a, ctx.packageName, protectNow)
@@ -85,17 +93,37 @@ object Policy {
         !isOwner(ctx)
     }.getOrDefault(false)
 
-    /** Drops every restriction, Device Owner and admin rights so the app can be uninstalled. */
+    enum class UninstallPreparation {
+        READY,
+        OWNER_STILL_ACTIVE,
+        ADMIN_STILL_ACTIVE,
+    }
+
+    /**
+     * Releases Device Owner and admin status before opening Android's uninstall screen.
+     * Never reports success just because an API call was attempted: the system state is checked
+     * again. Some Android builds may refuse to remove the admin programmatically; in that case
+     * the UI must send the user to Device Admin settings instead of pretending uninstall is ready.
+     */
     @Suppress("DEPRECATION")
-    fun release(ctx: Context) {
-        runCatching {
-            val d = dpm(ctx)
-            val a = admin(ctx)
-            if (isOwner(ctx)) {
-                clearOwnerRestrictions(d, a, ctx)
-                d.clearDeviceOwnerApp(ctx.packageName)
-            }
-            if (d.isAdminActive(a)) d.removeActiveAdmin(a)
+    fun prepareForUninstall(ctx: Context): UninstallPreparation {
+        val d = dpm(ctx)
+        val a = admin(ctx)
+
+        if (isOwner(ctx)) {
+            clearOwnerRestrictions(d, a, ctx)
+            runCatching { d.clearDeviceOwnerApp(ctx.packageName) }
+            if (isOwner(ctx)) return UninstallPreparation.OWNER_STILL_ACTIVE
+        }
+
+        if (d.isAdminActive(a)) {
+            runCatching { d.removeActiveAdmin(a) }
+        }
+
+        return when {
+            isOwner(ctx) -> UninstallPreparation.OWNER_STILL_ACTIVE
+            d.isAdminActive(a) -> UninstallPreparation.ADMIN_STILL_ACTIVE
+            else -> UninstallPreparation.READY
         }
     }
 }
