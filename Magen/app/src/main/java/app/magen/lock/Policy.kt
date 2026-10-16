@@ -55,6 +55,36 @@ object Policy {
         }
     }
 
+    /** Clears every restriction this app ever set as Device Owner. Safe to call even if not owner. */
+    private fun clearOwnerRestrictions(d: DevicePolicyManager, a: ComponentName, ctx: Context) {
+        val keys = Catalog.settings.mapNotNull { it.restriction }.distinct() + listOf(
+            UserManager.DISALLOW_SAFE_BOOT,
+            UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES,
+            UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY,
+        )
+        keys.forEach { runCatching { d.clearUserRestriction(a, it) } }
+        runCatching { d.setUninstallBlocked(a, ctx.packageName, false) }
+        if (Build.VERSION.SDK_INT >= 30) {
+            runCatching { d.setUserControlDisabledPackages(a, emptyList()) }
+        }
+    }
+
+    /**
+     * Drops Device Owner status only: clears every restriction this app set, then gives up
+     * Device Owner, but keeps regular device-admin rights so "regular" mode can still lock and
+     * block via the accessibility service. The app itself stays installed. Safe to call even if
+     * Magen is not currently the Device Owner.
+     */
+    @Suppress("DEPRECATION")
+    fun releaseOwner(ctx: Context): Boolean = runCatching {
+        if (!isOwner(ctx)) return@runCatching true
+        val d = dpm(ctx)
+        val a = admin(ctx)
+        clearOwnerRestrictions(d, a, ctx)
+        d.clearDeviceOwnerApp(ctx.packageName)
+        !isOwner(ctx)
+    }.getOrDefault(false)
+
     /** Drops every restriction, Device Owner and admin rights so the app can be uninstalled. */
     @Suppress("DEPRECATION")
     fun release(ctx: Context) {
@@ -62,16 +92,7 @@ object Policy {
             val d = dpm(ctx)
             val a = admin(ctx)
             if (isOwner(ctx)) {
-                val keys = Catalog.settings.mapNotNull { it.restriction }.distinct() + listOf(
-                    UserManager.DISALLOW_SAFE_BOOT,
-                    UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES,
-                    UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY,
-                )
-                keys.forEach { runCatching { d.clearUserRestriction(a, it) } }
-                runCatching { d.setUninstallBlocked(a, ctx.packageName, false) }
-                if (Build.VERSION.SDK_INT >= 30) {
-                    runCatching { d.setUserControlDisabledPackages(a, emptyList()) }
-                }
+                clearOwnerRestrictions(d, a, ctx)
                 d.clearDeviceOwnerApp(ctx.packageName)
             }
             if (d.isAdminActive(a)) d.removeActiveAdmin(a)

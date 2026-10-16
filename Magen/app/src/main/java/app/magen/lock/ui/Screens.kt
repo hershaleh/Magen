@@ -486,6 +486,9 @@ fun RulesTab() {
 fun MoreTab(onChangePin: () -> Unit) {
     val ctx = LocalContext.current
     var confirm by remember { mutableStateOf(false) }
+    var confirmOwner by remember { mutableStateOf(false) }
+    var ownerCleared by remember { mutableStateOf(false) }
+    val perms = rememberPerms()
 
     TabColumn {
         Text(stringResource(R.string.more_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -498,6 +501,14 @@ fun MoreTab(onChangePin: () -> Unit) {
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
             ) { Text(stringResource(R.string.guide_open)) }
+            if (perms.owner && !ownerCleared) {
+                OutlinedButton(
+                    onClick = { confirmOwner = true },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                ) { Text(stringResource(R.string.remove_owner)) }
+            }
         }
 
         SectionCard(stringResource(R.string.language)) {
@@ -566,6 +577,28 @@ fun MoreTab(onChangePin: () -> Unit) {
                 }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = { TextButton(onClick = { confirm = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+
+    if (confirmOwner) {
+        AlertDialog(
+            onDismissRequest = { confirmOwner = false },
+            title = { Text(stringResource(R.string.remove_owner_confirm_title)) },
+            text = { Text(stringResource(R.string.remove_owner_confirm_msg)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmOwner = false
+                    val ok = Policy.releaseOwner(ctx)
+                    if (ok) {
+                        ownerCleared = true
+                        Store.setLevel("regular")
+                        android.widget.Toast.makeText(ctx, ctx.getString(R.string.remove_owner_done), android.widget.Toast.LENGTH_LONG).show()
+                    } else {
+                        android.widget.Toast.makeText(ctx, ctx.getString(R.string.remove_owner_failed), android.widget.Toast.LENGTH_LONG).show()
+                    }
+                }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmOwner = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 }

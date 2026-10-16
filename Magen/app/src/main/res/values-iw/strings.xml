@@ -118,6 +118,11 @@
     <string name="level_strong">חזקה</string>
     <string name="level_regular_sub">הגדרה פשוטה, ללא מחשב. חלק מהחסימות תלויות בשירות הנגישות.</string>
     <string name="level_strong_sub">המערכת אוכפת חלק מהחסימות ישירות. נדרשת הגדרה חד־פעמית ממחשב.</string>
+    <string name="remove_owner">הסרת מצב Device Owner</string>
+    <string name="remove_owner_confirm_title">להסיר מצב Device Owner?</string>
+    <string name="remove_owner_confirm_msg">מגן יוותר על מעמד Device Owner במכשיר ויעבור להגנה רגילה. כל החסימות שהוגדרו דרך Device Owner יוסרו קודם. האפליקציה עצמה תישאר מותקנת, וחסימה דרך מנהל המכשיר הרגיל תמשיך לעבוד.</string>
+    <string name="remove_owner_done">מצב Device Owner הוסר. מגן עכשיו בהגנה רגילה.</string>
+    <string name="remove_owner_failed">לא ניתן היה להסיר את מצב Device Owner. נסו שוב.</string>
     <string name="cmp1_label">הגדרה</string>
     <string name="cmp1_reg">מפעילים את ההרשאות מתוך מגן; אין צורך במחשב.</string>
     <string name="cmp1_str">נדרשת הגדרה חד־פעמית באמצעות פקודת ADB מהמחשב.</string>
