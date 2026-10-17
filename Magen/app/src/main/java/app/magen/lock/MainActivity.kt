@@ -1,6 +1,10 @@
 package app.magen.lock
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -37,6 +41,8 @@ import app.magen.lock.ui.Session
 import kotlinx.coroutines.delay
 
 class MainActivity : AppCompatActivity() {
+    private val askNotifications = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
         enableEdgeToEdge()
@@ -89,6 +95,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStart() {
         super.onStart()
+        // Needed for the "protection is off" alert on Android 13+.
+        if (Build.VERSION.SDK_INT >= 33 && Store.hasPin &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            runCatching { askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) }
+        }
         // Short grace period so a trip to Settings (to enable a permission) does not demand the code again.
         if (Session.authed && SystemClock.elapsedRealtime() - Session.leftAt > 30_000) Session.authed = false
     }

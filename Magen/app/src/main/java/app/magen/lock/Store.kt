@@ -44,6 +44,10 @@ object Store {
         private set
     var customKeywords by mutableStateOf<Set<String>>(emptySet())
         private set
+    var biometric by mutableStateOf(false)
+        private set
+    var hasRecovery by mutableStateOf(false)
+        private set
 
     fun init(ctx: Context) {
         app = ctx.applicationContext
@@ -61,6 +65,8 @@ object Store {
         allowedUntil = sp.getLong("allowedUntil", 0L)
         level = sp.getString("level", "regular") ?: "regular"
         customKeywords = sp.getStringSet("customKeywords", emptySet()) ?: emptySet()
+        biometric = sp.getBoolean("bio", false)
+        hasRecovery = sp.contains("rhash")
         Policy.apply()
     }
 
@@ -111,7 +117,11 @@ object Store {
         if (lockRemaining() > 0) return false
         val salt = Base64.decode(sp.getString("salt", "") ?: "", Base64.NO_WRAP)
         val want = sp.getString("hash", "") ?: ""
-        val ok = MessageDigest.isEqual(hash(pin, salt).toByteArray(), want.toByteArray())
+        return registerAttempt(MessageDigest.isEqual(hash(pin, salt).toByteArray(), want.toByteArray()))
+    }
+
+    /** Counts a wrong attempt (PIN or recovery code) and starts the lockout delay after five misses. */
+    private fun registerAttempt(ok: Boolean): Boolean {
         val e = sp.edit()
         if (ok) {
             e.putInt("fails", 0)
@@ -125,6 +135,36 @@ object Store {
         }
         e.apply()
         return ok
+    }
+
+    // ---- recovery code -----------------------------------------------------------------------
+
+    /** Creates a fresh one-time recovery code, stores only its hash and returns it for display (XXXX-XXXX-XXXX). */
+    fun newRecoveryCode(): String {
+        val alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
+        val rnd = SecureRandom()
+        val raw = (1..12).map { alphabet[rnd.nextInt(alphabet.length)] }.joinToString("")
+        val salt = ByteArray(16).also { rnd.nextBytes(it) }
+        sp.edit()
+            .putString("rsalt", Base64.encodeToString(salt, Base64.NO_WRAP))
+            .putString("rhash", hash(raw, salt))
+            .apply()
+        hasRecovery = true
+        return raw.chunked(4).joinToString("-")
+    }
+
+    fun checkRecovery(input: String): Boolean {
+        if (lockRemaining() > 0 || !hasRecovery) return false
+        val raw = input.uppercase().filter { it.isLetterOrDigit() }
+        val salt = Base64.decode(sp.getString("rsalt", "") ?: "", Base64.NO_WRAP)
+        val want = sp.getString("rhash", "") ?: ""
+        return registerAttempt(MessageDigest.isEqual(hash(raw, salt).toByteArray(), want.toByteArray()))
+    }
+
+    @JvmName("applyBiometric")
+    fun setBiometric(on: Boolean) {
+        biometric = on
+        sp.edit().putBoolean("bio", on).apply()
     }
 
     // ---- app locking -------------------------------------------------------------------------

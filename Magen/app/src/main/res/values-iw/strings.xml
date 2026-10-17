@@ -217,5 +217,35 @@
     <string name="compare_title">מה ההבדל בין מצב רגיל למצב חזק?</string>
     <string name="credit_hearshal">קרדיט: הערשלה</string>
     <string name="admin_open_failed">לא ניתן לפתוח את מסך אישור מנהל המכשיר.</string>
+    <string name="bio_title">פתיחה בטביעת אצבע / זיהוי פנים</string>
+    <string name="bio_desc">פתיחה מהירה יותר. הקוד הראשי תמיד נשאר זמין.</string>
+    <string name="bio_prompt_title">פתיחת מגן</string>
+    <string name="bio_use_code">שימוש בקוד</string>
+    <string name="forgot_code">שכחתם את הקוד?</string>
+    <string name="recovery_title">קוד שחזור</string>
+    <string name="recovery_enter_sub">הזינו את קוד השחזור ששמרתם בהגדרת מגן, ואז בחרו קוד ראשי חדש.</string>
+    <string name="recovery_wrong">קוד השחזור שגוי.</string>
+    <string name="recovery_verify">המשך</string>
+    <string name="recovery_show_sub">רשמו את הקוד ושמרו אותו במקום בטוח. זו הדרך היחידה לאפס את הקוד הראשי אם תשכחו אותו.</string>
+    <string name="recovery_copy">העתקת הקוד</string>
+    <string name="recovery_warn">הקוד מוצג רק עכשיו ופועל פעם אחת: אחרי השימוש תקבלו קוד חדש. מי שמחזיק בקוד יכול לאפס את הקוד הראשי, לכן אל תשאירו אותו בטלפון הזה.</string>
+    <string name="recovery_saved">שמרתי</string>
+    <string name="recovery_create">יצירת קוד שחזור</string>
+    <string name="recovery_regen">יצירת קוד שחזור חדש</string>
+    <string name="pick_title">בחירת דף מהמסך</string>
+    <string name="pick_desc">פתחו את דף ההגדרות שרוצים לחסום, לחצו על הכפתור הצף ובחרו את הכותרת שלו. בלי להקליד.</string>
+    <string name="pick_start">התחלת בחירה</string>
+    <string name="pick_started">פתחו את דף ההגדרות לחסימה ולחצו על \"חסימת הדף הזה\".</string>
+    <string name="pick_need_service">הפעילו קודם את שירות הנגישות של מגן.</string>
+    <string name="capture_button">חסימת הדף הזה</string>
+    <string name="capture_pick_title">איזו כותרת היא של הדף הזה?</string>
+    <string name="capture_none">לא ניתן לקרוא כאן כותרת דף. פתחו דף הגדרות ונסו שוב.</string>
+    <string name="capture_done">נחסם: %1$s</string>
+    <string name="perm_battery_title">המשך פעולה ברקע</string>
+    <string name="perm_battery_desc">מומלץ. פטור מחיסכון בסוללה כדי שההגנה לא תיעצר.</string>
+    <string name="perm_battery_note">בחלק מהטלפונים (שיאומי, הואוויי, סמסונג, אופו) יש לאפשר גם הפעלה אוטומטית ולהגדיר שימוש בסוללה כ\"ללא הגבלות\" בפרטי האפליקציה.</string>
+    <string name="notif_channel">התראות הגנה</string>
+    <string name="notif_off_title">ההגנה של מגן כבויה</string>
+    <string name="notif_off_text">שירות הנגישות כובה. לחצו כדי להפעיל אותו מחדש.</string>
 </resources>
 

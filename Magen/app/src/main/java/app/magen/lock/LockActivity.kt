@@ -49,6 +49,12 @@ class LockActivity : AppCompatActivity() {
         pkg = intent.getStringExtra(EXTRA_PKG).orEmpty()
     }
 
+    override fun onResume() {
+        super.onResume()
+        // The lock screen is now on top, so the instant cover can go.
+        GuardService.instance?.hideCoverSoon()
+    }
+
     override fun onStop() {
         super.onStop()
         if (!isChangingConfigurations) finish()
