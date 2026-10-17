@@ -17,6 +17,11 @@ object Policy {
     var lastReleaseOwnerError: String? = null
         private set
 
+    /** Diagnostic when uninstall preparation cannot safely remove policy restrictions. */
+    @Volatile
+    var lastUninstallError: String? = null
+        private set
+
     fun admin(ctx: Context) = ComponentName(ctx, AdminReceiver::class.java)
 
     private fun dpm(ctx: Context) = ctx.getSystemService(DevicePolicyManager::class.java)
@@ -60,17 +65,31 @@ object Policy {
         }
     }
 
-    /** Clears every restriction this app ever set as Device Owner. Safe to call even if not owner. */
-    private fun clearOwnerRestrictions(d: DevicePolicyManager, a: ComponentName, ctx: Context) {
+    /**
+     * Clears restrictions before surrendering Device Owner. Crucially, verify Android actually
+     * removed the uninstall block; never drop Device Owner silently while that block may remain.
+     */
+    private fun clearOwnerRestrictions(d: DevicePolicyManager, a: ComponentName, ctx: Context): Boolean {
         val keys = Catalog.settings.mapNotNull { it.restriction }.distinct() + listOf(
             UserManager.DISALLOW_SAFE_BOOT,
             UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES,
             UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY,
         )
         keys.forEach { runCatching { d.clearUserRestriction(a, it) } }
-        runCatching { d.setUninstallBlocked(a, ctx.packageName, false) }
         if (Build.VERSION.SDK_INT >= 30) {
             runCatching { d.setUserControlDisabledPackages(a, emptyList()) }
+        }
+        return try {
+            d.setUninstallBlocked(a, ctx.packageName, false)
+            if (d.isUninstallBlocked(a, ctx.packageName)) {
+                lastUninstallError = "Android still reports Magen as uninstall-blocked. Device Owner was kept active; try again or copy this diagnostic."
+                false
+            } else {
+                true
+            }
+        } catch (e: Throwable) {
+            lastUninstallError = "${e.javaClass.name}: ${e.message ?: "Android refused to clear the uninstall block"}"
+            false
         }
     }
 
@@ -87,7 +106,10 @@ object Policy {
             if (!isOwner(ctx)) return true
             val d = dpm(ctx)
             val a = admin(ctx)
-            clearOwnerRestrictions(d, a, ctx)
+            if (!clearOwnerRestrictions(d, a, ctx)) {
+                lastReleaseOwnerError = lastUninstallError ?: "Could not verify that the uninstall block was cleared."
+                return false
+            }
             d.clearDeviceOwnerApp(ctx.packageName)
             val released = !isOwner(ctx)
             if (!released) {
@@ -103,17 +125,29 @@ object Policy {
     private fun deviceInfo() =
         "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}), ${Build.MANUFACTURER} ${Build.MODEL}"
 
-    /** Drops every restriction, Device Owner and admin rights so the app can be uninstalled. */
+    /**
+     * Prepares Magen for user-approved uninstall. Do not launch Android's uninstall UI unless
+     * the uninstall block was verified clear and Device Owner was actually released.
+     */
     @Suppress("DEPRECATION")
-    fun release(ctx: Context) {
-        runCatching {
+    fun release(ctx: Context): Boolean {
+        lastUninstallError = null
+        return try {
             val d = dpm(ctx)
             val a = admin(ctx)
             if (isOwner(ctx)) {
-                clearOwnerRestrictions(d, a, ctx)
+                if (!clearOwnerRestrictions(d, a, ctx)) return false
                 d.clearDeviceOwnerApp(ctx.packageName)
+                if (isOwner(ctx)) {
+                    lastUninstallError = "Android did not release Device Owner. Magen has not opened the uninstall screen."
+                    return false
+                }
             }
             if (d.isAdminActive(a)) d.removeActiveAdmin(a)
+            true
+        } catch (e: Throwable) {
+            lastUninstallError = "${e.javaClass.name}: ${e.message ?: "Could not prepare Magen for uninstall"}"
+            false
         }
     }
 }
