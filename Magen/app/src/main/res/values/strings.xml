@@ -119,6 +119,8 @@
     <string name="level_regular_sub">Simple setup, no computer. Some blocks depend on Accessibility.</string>
     <string name="level_strong_sub">Android enforces some restrictions directly. One-time computer setup is required.</string>
     <string name="remove_owner">Remove Device Owner mode</string>
+    <string name="remove_owner_section_title">Disable strong mode before uninstall</string>
+    <string name="remove_owner_section_desc">Do this before approving uninstall. Magen will try to release Device Owner and check whether Android allowed it.</string>
     <string name="remove_owner_confirm_title">Remove Device Owner mode?</string>
     <string name="remove_owner_confirm_msg">Magen will give up Device Owner on this device and switch to Regular protection. All Device Owner restrictions are cleared first. Magen itself stays installed, and regular device-admin blocking keeps working.</string>
     <string name="remove_owner_done">Device Owner mode removed. Magen is now in Regular protection.</string>
