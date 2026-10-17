@@ -676,7 +676,14 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
 
 private fun approveUninstall(ctx: Context) {
     Store.allowUninstall(10)
-    Policy.release(ctx)
+    if (!Policy.release(ctx)) {
+        android.widget.Toast.makeText(
+            ctx,
+            Policy.lastUninstallError ?: "Magen could not safely clear its uninstall protection. No uninstall was started.",
+            android.widget.Toast.LENGTH_LONG,
+        ).show()
+        return
+    }
     ctx.startActivity(
         Intent(Intent.ACTION_DELETE, Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
     )
