@@ -647,7 +647,13 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                         Store.setLevel("regular")
                         android.widget.Toast.makeText(ctx, ctx.getString(R.string.remove_owner_done), android.widget.Toast.LENGTH_LONG).show()
                     } else {
-                        android.widget.Toast.makeText(ctx, ctx.getString(R.string.remove_owner_failed), android.widget.Toast.LENGTH_LONG).show()
+                        val detail = Policy.lastReleaseOwnerError
+                        val message = if (detail.isNullOrBlank()) {
+                            ctx.getString(R.string.remove_owner_failed)
+                        } else {
+                            ctx.getString(R.string.remove_owner_failed) + "\n" + detail
+                        }
+                        android.widget.Toast.makeText(ctx, message, android.widget.Toast.LENGTH_LONG).show()
                     }
                 }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
             },
