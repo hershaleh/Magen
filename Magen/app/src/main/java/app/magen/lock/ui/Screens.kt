@@ -527,14 +527,6 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
             ) { Text(stringResource(R.string.guide_open)) }
-            if (perms.owner && !ownerCleared) {
-                OutlinedButton(
-                    onClick = { confirmOwner = true },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-                ) { Text(stringResource(R.string.remove_owner)) }
-            }
         }
 
         SectionCard(stringResource(R.string.language)) {
@@ -583,6 +575,17 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             ) { Text(stringResource(if (Store.hasRecovery) R.string.recovery_regen else R.string.recovery_create)) }
+        }
+
+        if (perms.owner && !ownerCleared) {
+            SectionCard(stringResource(R.string.remove_owner_section_title), stringResource(R.string.remove_owner_section_desc)) {
+                OutlinedButton(
+                    onClick = { confirmOwner = true },
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                ) { Text(stringResource(R.string.remove_owner)) }
+            }
         }
 
         SectionCard(stringResource(R.string.approve_uninstall), stringResource(R.string.approve_desc)) {
