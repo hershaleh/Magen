@@ -251,5 +251,13 @@
     <string name="notif_off_text">שירות הנגישות כובה. לחצו כדי להפעיל אותו מחדש.</string>
     <string name="error_copy">העתקת הפרטים</string>
     <string name="remove_owner_telephony_hint">בקושחת הטלפון חסר ספק הטלפוניה שאנדרואיד חייב לנקות לפני שחרור Device Owner. ממחשב נסו: adb shell pm enable --user 0 com.android.providers.telephony (בדיקה: adb shell pm list packages telephony) ואז נסו שוב. אם החבילה לא קיימת בטלפון, רק איפוס יצרן מסיר Device Owner.</string>
+    <string name="remove_owner_root">הסרה דרך Root (מתקדם)</string>
+    <string name="root_confirm_title">להסיר Device Owner באמצעות Root?</string>
+    <string name="root_confirm_msg">אזהרה: זו אינה שיטת ההסרה הרשמית של אנדרואיד, והיא עלולה לא לעבוד בכל מכשיר או גרסת אנדרואיד. מגן ינקה את ההגבלות שלו, ואז ישתמש ב-Root כדי להעביר את הקובץ ש-Android שומר בו את רישום ה-Device Owner (/data/system/device_owner_2.xml) לקובץ גיבוי לידו. לאחר מכן חובה לאתחל. המידע שלכם לא נמחק. אם המכשיר יגיע למצב לא צפוי, ייתכן שיידרש שחזור קובץ הגיבוי או איפוס יצרן. השתמשו בזה רק אם הכפתור הרגיל נכשל והמכשיר מורשה Root. תתבקש הרשאת Root.</string>
+    <string name="root_done_title">נדרש אתחול</string>
+    <string name="root_done_msg">קובץ רישום ה-Device Owner הועבר לגיבוי. אתחלו כדי לסיים. לאחר מכן מגן יפעל בהגנה רגילה; אפשר לבדוק ממחשב: adb shell su -c \"dpm list-owners\".</string>
+    <string name="root_reboot">אתחול עכשיו</string>
+    <string name="root_later">מאוחר יותר</string>
+    <string name="root_failed_title">ההסרה דרך Root נכשלה</string>
 </resources>
 

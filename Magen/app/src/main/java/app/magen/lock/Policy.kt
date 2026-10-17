@@ -37,6 +37,62 @@ object Policy {
         return enabled.contains(c.flattenToString()) || enabled.contains(c.flattenToShortString())
     }
 
+    /** Set after the root removal moved the owner file: stops [apply] from re-adding restrictions before the reboot. */
+    @Volatile
+    var ownerRemovalPending = false
+
+    private const val OWNER_FILE_NEW = "/data/system/device_owner_2.xml"
+    private const val OWNER_FILE_OLD = "/data/system/device_owner.xml"
+
+    private fun su(cmd: String): Pair<Int, String> {
+        val p = ProcessBuilder("su", "-c", cmd).redirectErrorStream(true).start()
+        val out = p.inputStream.bufferedReader().readText().trim()
+        return p.waitFor() to out
+    }
+
+    /** True when a root shell can be obtained (may show the root manager's prompt). Call off the main thread. */
+    fun rootAvailable(): Boolean = runCatching {
+        val (code, out) = su("id")
+        code == 0 && out.contains("uid=0")
+    }.getOrDefault(false)
+
+    /**
+     * Advanced, unofficial removal for rooted phones: clears Magen's restrictions, then moves the file where
+     * Android stores the Device Owner registration to a backup. A reboot finishes the job. Returns null on
+     * success, or a short English reason. Call off the main thread. Does not work on every device or version.
+     */
+    fun releaseOwnerViaRoot(ctx: Context): String? = try {
+        if (!rootAvailable()) {
+            "Root access is not available or was denied."
+        } else {
+            val file = listOf(OWNER_FILE_NEW, OWNER_FILE_OLD).firstOrNull { su("test -f $it").first == 0 }
+            when {
+                file == null -> "No Device Owner file found in /data/system. Nothing was changed."
+                su("test -e $file.magen-backup").first == 0 ->
+                    "A backup already exists ($file.magen-backup). Nothing was changed; remove or rename it first."
+                else -> {
+                    // Still the owner here, so the system can clean up what Magen set.
+                    if (isOwner(ctx)) clearOwnerRestrictions(dpm(ctx), admin(ctx), ctx)
+                    ownerRemovalPending = true
+                    val (code, out) = su("mv $file $file.magen-backup")
+                    if (code == 0) {
+                        null
+                    } else {
+                        ownerRemovalPending = false
+                        "Moving the file failed (exit $code): $out"
+                    }
+                }
+            }
+        }
+    } catch (e: Throwable) {
+        "${e.javaClass.name}: ${e.message ?: "no details"}"
+    }
+
+    /** Reboots through root so Android reloads the device-management state. */
+    fun rebootViaRoot() {
+        runCatching { su("reboot") }
+    }
+
     private fun restrict(d: DevicePolicyManager, a: ComponentName, key: String, on: Boolean) {
         if (on) d.addUserRestriction(a, key) else d.clearUserRestriction(a, key)
     }
@@ -44,7 +100,7 @@ object Policy {
     /** Re-applies every restriction from the current [Store] values. Safe to call often. */
     fun apply() {
         val ctx = Store.app
-        if (!isOwner(ctx)) return
+        if (!isOwner(ctx) || ownerRemovalPending) return
         val d = dpm(ctx)
         val a = admin(ctx)
         val protectNow = Store.protect && !Store.uninstallAllowed()

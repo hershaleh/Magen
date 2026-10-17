@@ -251,5 +251,13 @@
     <string name="notif_off_text">The accessibility service was turned off. Tap to turn it back on.</string>
     <string name="error_copy">Copy details</string>
     <string name="remove_owner_telephony_hint">This phone\'s firmware is missing the telephony provider that Android must clean up before it releases Device Owner. From a computer, try: adb shell pm enable --user 0 com.android.providers.telephony (check with: adb shell pm list packages telephony), then retry. If the package does not exist on this phone, only a factory reset removes Device Owner.</string>
+    <string name="remove_owner_root">Remove via Root (advanced)</string>
+    <string name="root_confirm_title">Remove Device Owner using Root?</string>
+    <string name="root_confirm_msg">Warning: this is NOT Android\'s official removal method and it may not work on every device or Android version. Magen will clear its restrictions, then use Root to move the file where Android stores the Device Owner registration (/data/system/device_owner_2.xml) to a backup file next to it. You must then reboot. Your data is not erased. If the phone ends up in an unexpected state, restoring the backup file or a factory reset may be needed. Use it only if the normal button fails and your phone is rooted. Root permission will be requested.</string>
+    <string name="root_done_title">Reboot required</string>
+    <string name="root_done_msg">The Device Owner registration file was moved to a backup. Reboot to finish. Afterwards Magen runs in Regular protection; you can check from a computer with: adb shell su -c \"dpm list-owners\".</string>
+    <string name="root_reboot">Reboot now</string>
+    <string name="root_later">Later</string>
+    <string name="root_failed_title">Root removal failed</string>
 </resources>
 

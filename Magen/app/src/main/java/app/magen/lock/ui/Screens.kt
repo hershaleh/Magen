@@ -71,6 +71,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -102,6 +103,7 @@ import app.magen.lock.Policy
 import app.magen.lock.R
 import app.magen.lock.Store
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 /** Process-wide "master code entered" flag, so it survives rotation and language changes. */
@@ -514,6 +516,10 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
     var confirm by remember { mutableStateOf(false) }
     var confirmOwner by remember { mutableStateOf(false) }
     var ownerCleared by remember { mutableStateOf(false) }
+    var confirmRoot by remember { mutableStateOf(false) }
+    var rootRebootNeeded by remember { mutableStateOf(false) }
+    var rootError by remember { mutableStateOf<String?>(null) }
+    val scope = rememberCoroutineScope()
     var ownerError by remember { mutableStateOf<String?>(null) }
     val perms = rememberPerms()
 
@@ -586,6 +592,10 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                     modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                 ) { Text(stringResource(R.string.remove_owner)) }
+                TextButton(
+                    onClick = { confirmRoot = true },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.remove_owner_root), color = MaterialTheme.colorScheme.error) }
             }
         }
 
@@ -654,6 +664,53 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                 }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = { TextButton(onClick = { confirmOwner = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+
+    if (confirmRoot) {
+        AlertDialog(
+            onDismissRequest = { confirmRoot = false },
+            title = { Text(stringResource(R.string.root_confirm_title)) },
+            text = { Text(stringResource(R.string.root_confirm_msg)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmRoot = false
+                    scope.launch {
+                        val result = withContext(Dispatchers.IO) { Policy.releaseOwnerViaRoot(ctx) }
+                        if (result == null) {
+                            Store.setLevel("regular")
+                            rootRebootNeeded = true
+                        } else {
+                            rootError = result
+                        }
+                    }
+                }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmRoot = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+
+    if (rootRebootNeeded) {
+        AlertDialog(
+            onDismissRequest = { },
+            title = { Text(stringResource(R.string.root_done_title)) },
+            text = { Text(stringResource(R.string.root_done_msg)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    scope.launch { withContext(Dispatchers.IO) { Policy.rebootViaRoot() } }
+                }) { Text(stringResource(R.string.root_reboot)) }
+            },
+            dismissButton = { TextButton(onClick = { rootRebootNeeded = false; ownerCleared = true }) { Text(stringResource(R.string.root_later)) } },
+        )
+    }
+
+    val rootErr = rootError
+    if (rootErr != null) {
+        AlertDialog(
+            onDismissRequest = { rootError = null },
+            title = { Text(stringResource(R.string.root_failed_title)) },
+            text = { Text(rootErr) },
+            confirmButton = { TextButton(onClick = { rootError = null }) { Text(stringResource(R.string.confirm)) } },
         )
     }
 
