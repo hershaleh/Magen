@@ -68,13 +68,13 @@ object Policy {
             val file = listOf(OWNER_FILE_NEW, OWNER_FILE_OLD).firstOrNull { su("test -f $it").first == 0 }
             when {
                 file == null -> "No Device Owner file found in /data/system. Nothing was changed."
-                su("test -e $file.magen-backup").first == 0 ->
-                    "A backup already exists ($file.magen-backup). Nothing was changed; remove or rename it first."
                 else -> {
                     // Still the owner here, so the system can clean up what Magen set.
                     if (isOwner(ctx)) clearOwnerRestrictions(dpm(ctx), admin(ctx), ctx)
                     ownerRemovalPending = true
-                    val (code, out) = su("mv $file $file.magen-backup")
+                    // A unique name each time, so an older backup is never overwritten.
+                    val backup = "$file.magen-backup-${System.currentTimeMillis() / 1000}"
+                    val (code, out) = su("test -e $backup || mv $file $backup")
                     if (code == 0) {
                         null
                     } else {
