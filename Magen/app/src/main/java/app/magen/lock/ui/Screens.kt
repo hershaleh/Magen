@@ -662,7 +662,18 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
         AlertDialog(
             onDismissRequest = { ownerError = null },
             title = { Text(stringResource(R.string.remove_owner_failed)) },
-            text = { Text(err) },
+            text = {
+                Column {
+                    Text(err)
+                    if (err.contains("telephony", ignoreCase = true)) {
+                        Text(
+                            stringResource(R.string.remove_owner_telephony_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(top = 12.dp),
+                        )
+                    }
+                }
+            },
             confirmButton = { TextButton(onClick = { ownerError = null }) { Text(stringResource(R.string.confirm)) } },
             dismissButton = {
                 TextButton(onClick = {

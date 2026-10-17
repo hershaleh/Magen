@@ -250,5 +250,6 @@
     <string name="notif_off_title">Magen protection is off</string>
     <string name="notif_off_text">The accessibility service was turned off. Tap to turn it back on.</string>
     <string name="error_copy">Copy details</string>
+    <string name="remove_owner_telephony_hint">This phone\'s firmware is missing the telephony provider that Android must clean up before it releases Device Owner. From a computer, try: adb shell pm enable --user 0 com.android.providers.telephony (check with: adb shell pm list packages telephony), then retry. If the package does not exist on this phone, only a factory reset removes Device Owner.</string>
 </resources>
 
