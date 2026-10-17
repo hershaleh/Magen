@@ -12,6 +12,11 @@ import android.provider.Settings
  * ("Strong mode"). Without it, the accessibility service does the blocking.
  */
 object Policy {
+    /** Diagnostic from the most recent attempt to release Device Owner, for UI troubleshooting. */
+    @Volatile
+    var lastReleaseOwnerError: String? = null
+        private set
+
     fun admin(ctx: Context) = ComponentName(ctx, AdminReceiver::class.java)
 
     private fun dpm(ctx: Context) = ctx.getSystemService(DevicePolicyManager::class.java)
@@ -76,14 +81,24 @@ object Policy {
      * Magen is not currently the Device Owner.
      */
     @Suppress("DEPRECATION")
-    fun releaseOwner(ctx: Context): Boolean = runCatching {
-        if (!isOwner(ctx)) return@runCatching true
-        val d = dpm(ctx)
-        val a = admin(ctx)
-        clearOwnerRestrictions(d, a, ctx)
-        d.clearDeviceOwnerApp(ctx.packageName)
-        !isOwner(ctx)
-    }.getOrDefault(false)
+    fun releaseOwner(ctx: Context): Boolean {
+        lastReleaseOwnerError = null
+        return try {
+            if (!isOwner(ctx)) return true
+            val d = dpm(ctx)
+            val a = admin(ctx)
+            clearOwnerRestrictions(d, a, ctx)
+            d.clearDeviceOwnerApp(ctx.packageName)
+            val released = !isOwner(ctx)
+            if (!released) {
+                lastReleaseOwnerError = "Android returned from clearDeviceOwnerApp(), but still reports this app as Device Owner."
+            }
+            released
+        } catch (e: Exception) {
+            lastReleaseOwnerError = "${e.javaClass.simpleName}: ${e.message ?: "no details"}"
+            false
+        }
+    }
 
     /** Drops every restriction, Device Owner and admin rights so the app can be uninstalled. */
     @Suppress("DEPRECATION")
