@@ -249,5 +249,6 @@
     <string name="notif_channel">Protection alerts</string>
     <string name="notif_off_title">Magen protection is off</string>
     <string name="notif_off_text">The accessibility service was turned off. Tap to turn it back on.</string>
+    <string name="error_copy">Copy details</string>
 </resources>
 

@@ -514,6 +514,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
     var confirm by remember { mutableStateOf(false) }
     var confirmOwner by remember { mutableStateOf(false) }
     var ownerCleared by remember { mutableStateOf(false) }
+    var ownerError by remember { mutableStateOf<String?>(null) }
     val perms = rememberPerms()
 
     TabColumn {
@@ -647,17 +648,28 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                         Store.setLevel("regular")
                         android.widget.Toast.makeText(ctx, ctx.getString(R.string.remove_owner_done), android.widget.Toast.LENGTH_LONG).show()
                     } else {
-                        val detail = Policy.lastReleaseOwnerError
-                        val message = if (detail.isNullOrBlank()) {
-                            ctx.getString(R.string.remove_owner_failed)
-                        } else {
-                            ctx.getString(R.string.remove_owner_failed) + "\n" + detail
-                        }
-                        android.widget.Toast.makeText(ctx, message, android.widget.Toast.LENGTH_LONG).show()
+                        // A dialog (not a Toast) so the exact Android error stays on screen and can be copied.
+                        ownerError = Policy.lastReleaseOwnerError ?: "unknown"
                     }
                 }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = { TextButton(onClick = { confirmOwner = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+
+    val err = ownerError
+    if (err != null) {
+        AlertDialog(
+            onDismissRequest = { ownerError = null },
+            title = { Text(stringResource(R.string.remove_owner_failed)) },
+            text = { Text(err) },
+            confirmButton = { TextButton(onClick = { ownerError = null }) { Text(stringResource(R.string.confirm)) } },
+            dismissButton = {
+                TextButton(onClick = {
+                    val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    cm.setPrimaryClip(android.content.ClipData.newPlainText("error", err))
+                }) { Text(stringResource(R.string.error_copy)) }
+            },
         )
     }
 }

@@ -91,14 +91,17 @@ object Policy {
             d.clearDeviceOwnerApp(ctx.packageName)
             val released = !isOwner(ctx)
             if (!released) {
-                lastReleaseOwnerError = "Android returned from clearDeviceOwnerApp(), but still reports this app as Device Owner."
+                lastReleaseOwnerError = "Android returned from clearDeviceOwnerApp(), but still reports this app as Device Owner.\n${deviceInfo()}"
             }
             released
-        } catch (e: Exception) {
-            lastReleaseOwnerError = "${e.javaClass.simpleName}: ${e.message ?: "no details"}"
+        } catch (e: Throwable) {
+            lastReleaseOwnerError = "${e.javaClass.name}: ${e.message ?: "no details"}\n${deviceInfo()}"
             false
         }
     }
+
+    private fun deviceInfo() =
+        "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}), ${Build.MANUFACTURER} ${Build.MODEL}"
 
     /** Drops every restriction, Device Owner and admin rights so the app can be uninstalled. */
     @Suppress("DEPRECATION")

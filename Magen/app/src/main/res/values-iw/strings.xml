@@ -249,5 +249,6 @@
     <string name="notif_channel">התראות הגנה</string>
     <string name="notif_off_title">ההגנה של מגן כבויה</string>
     <string name="notif_off_text">שירות הנגישות כובה. לחצו כדי להפעיל אותו מחדש.</string>
+    <string name="error_copy">העתקת הפרטים</string>
 </resources>
 
