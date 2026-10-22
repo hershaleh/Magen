@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Magen uses Device Admin for uninstall/deactivation warnings, not destructive policies. -->
+    <uses-policies />
+    <!-- Android 9+: lets Magen Keeper hand Device Owner back to Magen (see Keeper.kt). -->
+    <support-transfer-ownership />
+</device-admin>

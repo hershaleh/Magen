@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Magen Keeper</string>
+    <string name="ok">OK</string>
+    <string name="cancel">Cancel</string>
+    <string name="confirm">Confirm</string>
+    <string name="pin_new">New Keeper code (4-8 digits)</string>
+    <string name="pin_confirm">Repeat the code</string>
+    <string name="pin_enter">Keeper code</string>
+    <string name="pin_short">The code must have at least 4 digits.</string>
+    <string name="pin_mismatch">The codes do not match.</string>
+    <string name="wrong_pin">Wrong code.</string>
+    <string name="try_again_in">Try again in %1$d seconds.</string>
+    <string name="gate_msg">Enter the Keeper code. If this is the first time, create one now.</string>
+    <string name="status_owner">Keeper is the Device Owner of this phone.</string>
+    <string name="status_not_owner">Keeper is not the Device Owner yet.</string>
+    <string name="transfer_title">Hand Device Owner to another app</string>
+    <string name="transfer_desc">Only apps that declare support for receiving Device Owner are listed. After the transfer, Keeper is no longer the owner.</string>
+    <string name="no_targets">No installed app supports receiving Device Owner.</string>
+    <string name="how_to_get_owner">Keeper gets Device Owner when Magen hands it over (Magen: More, Strong mode, Transfer to Keeper), or from a computer with this command:</string>
+    <string name="remembered_title">Apps that can take ownership back</string>
+    <string name="remembered_desc">An app that handed ownership to Keeper can take it back without a code, as long as it has the same signature. Any other app needs the Keeper code.</string>
+    <string name="remembered_none">None yet.</string>
+    <string name="confirm_title">Hand over Device Owner?</string>
+    <string name="confirm_transfer">Keeper will hand Device Owner to %1$s (%2$s). From then on that app controls the device policies, and Keeper no longer does.</string>
+    <string name="transfer_done">Device Owner was handed to %1$s.</string>
+    <string name="transfer_failed">The hand-over failed</string>
+    <string name="handover_confirm">%1$s (%2$s) asks Keeper for Device Owner. This app is not recognised from an earlier hand-over, so Keeper\'s code is required.</string>
+    <string name="err_no_caller">Keeper must be opened by the app that asks for Device Owner.</string>
+    <string name="err_not_owner">Keeper is not the Device Owner.</string>
+    <string name="err_no_support">%1$s does not declare support for receiving Device Owner.</string>
+    <string name="err_cancelled">Cancelled.</string>
+</resources>

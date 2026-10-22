@@ -65,3 +65,9 @@ jobs:
         with:
           name: magen-debug-apk
           path: ${{ steps.loc.outputs.dir }}/app/build/outputs/apk/debug/app-debug.apk
+
+      # Companion app that can hold Device Owner while Magen is removed or reinstalled.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: magen-keeper-debug-apk
+          path: ${{ steps.loc.outputs.dir }}/keeper/build/outputs/apk/debug/keeper-debug.apk

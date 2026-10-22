@@ -4,6 +4,7 @@ import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
 import android.os.Build
+import android.os.PersistableBundle
 import android.os.UserManager
 import android.provider.Settings
 
@@ -86,6 +87,31 @@ object Policy {
         }
     } catch (e: Throwable) {
         "${e.javaClass.name}: ${e.message ?: "no details"}"
+    }
+
+    /**
+     * Hands Device Owner to another app that supports it (Magen Keeper), using the official
+     * transferOwnership() API. Magen's own restrictions are cleared first because a transfer carries
+     * the owner's policies over to the new owner. Returns null on success, else a short reason.
+     */
+    fun transferOwner(ctx: Context, target: ComponentName): String? {
+        if (Build.VERSION.SDK_INT < 28) return "Transferring Device Owner needs Android 9 or newer."
+        return try {
+            if (!isOwner(ctx)) {
+                "Magen is not the Device Owner."
+            } else {
+                val d = dpm(ctx)
+                ownerRemovalPending = true
+                clearOwnerRestrictions(d, admin(ctx), ctx)
+                val extras = PersistableBundle().apply { putString("from_package", ctx.packageName) }
+                d.transferOwnership(admin(ctx), target, extras)
+                ownerRemovalPending = false
+                null
+            }
+        } catch (e: Throwable) {
+            ownerRemovalPending = false
+            "${e.javaClass.name}: ${e.message ?: "no details"}\n${deviceInfo()}"
+        }
     }
 
     /** Reboots through root so Android reloads the device-management state. */

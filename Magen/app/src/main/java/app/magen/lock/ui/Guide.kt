@@ -1,12 +1,15 @@
 package app.magen.lock.ui
 
 import android.app.admin.DevicePolicyManager
+import android.app.Activity
 import android.content.Intent
 import android.os.PowerManager
 import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.StringRes
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -80,6 +83,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import app.magen.lock.Catalog
 import app.magen.lock.GuardService
+import app.magen.lock.Keeper
 import app.magen.lock.Policy
 import app.magen.lock.SGroup
 import app.magen.lock.R
@@ -109,6 +113,15 @@ fun rememberPerms(): Perms {
 fun PermissionCards(p: Perms, showOwner: Boolean) {
     val ctx = LocalContext.current
     var showRestrictedHelp by remember { mutableStateOf(false) }
+    val keeperLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
+        if (res.resultCode == Activity.RESULT_OK) {
+            Store.setLevel("strong")
+            Toast.makeText(ctx, ctx.getString(R.string.keeper_taken), Toast.LENGTH_LONG).show()
+        } else {
+            val reason = res.data?.getStringExtra("error") ?: ctx.getString(R.string.keeper_take_failed)
+            Toast.makeText(ctx, reason, Toast.LENGTH_LONG).show()
+        }
+    }
 
     PermCard(
         icon = Icons.Filled.Accessibility,
@@ -212,6 +225,11 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 TextButton(onClick = { Session.showGuide = true }) { Text(stringResource(R.string.guide_open)) }
+                if (android.os.Build.VERSION.SDK_INT >= 28 && Keeper.installed(ctx)) {
+                    FilledTonalButton(onClick = {
+                        runCatching { keeperLauncher.launch(Keeper.handoverIntent()) }
+                    }) { Text(stringResource(R.string.keeper_take)) }
+                }
             }
         }
     }
@@ -426,6 +444,9 @@ fun GuideScreen(onClose: () -> Unit) {
                 }
             }
 
+            SectionCard(stringResource(R.string.guide_keeper_title)) {
+                Text(stringResource(R.string.guide_keeper_body), style = MaterialTheme.typography.bodyMedium)
+            }
             SectionCard(stringResource(R.string.guide_trouble_title)) {
                 Text(stringResource(R.string.guide_trouble_body), style = MaterialTheme.typography.bodyMedium)
             }

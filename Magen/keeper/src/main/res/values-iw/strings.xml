@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">מגן – שומר בעלות</string>
+    <string name="ok">אישור</string>
+    <string name="cancel">ביטול</string>
+    <string name="confirm">אישור</string>
+    <string name="pin_new">קוד חדש לשומר (4-8 ספרות)</string>
+    <string name="pin_confirm">חזרו על הקוד</string>
+    <string name="pin_enter">קוד השומר</string>
+    <string name="pin_short">הקוד חייב להכיל לפחות 4 ספרות.</string>
+    <string name="pin_mismatch">הקודים אינם זהים.</string>
+    <string name="wrong_pin">קוד שגוי.</string>
+    <string name="try_again_in">נסו שוב בעוד %1$d שניות.</string>
+    <string name="gate_msg">הזינו את קוד השומר. אם זו הפעם הראשונה, צרו קוד עכשיו.</string>
+    <string name="status_owner">השומר הוא בעל המכשיר (Device Owner) בטלפון הזה.</string>
+    <string name="status_not_owner">השומר עדיין אינו בעל המכשיר.</string>
+    <string name="transfer_title">העברת בעלות המכשיר לאפליקציה אחרת</string>
+    <string name="transfer_desc">מוצגות רק אפליקציות שמצהירות על תמיכה בקבלת בעלות. אחרי ההעברה השומר כבר אינו הבעלים.</string>
+    <string name="no_targets">אין אפליקציה מותקנת שתומכת בקבלת בעלות.</string>
+    <string name="how_to_get_owner">השומר מקבל בעלות כשמגן מעביר אותה אליו (במגן: עוד, מצב חזק, העברה לשומר), או ממחשב באמצעות הפקודה:</string>
+    <string name="remembered_title">אפליקציות שיכולות לקבל בחזרה בעלות</string>
+    <string name="remembered_desc">אפליקציה שהעבירה בעלות לשומר יכולה לקבל אותה בחזרה בלי קוד, כל עוד החתימה שלה זהה. כל אפליקציה אחרת מצריכה את קוד השומר.</string>
+    <string name="remembered_none">עדיין אין.</string>
+    <string name="confirm_title">להעביר את הבעלות?</string>
+    <string name="confirm_transfer">השומר יעביר את הבעלות ל-%1$s (%2$s). מרגע זה האפליקציה הזו שולטת במדיניות המכשיר, והשומר לא.</string>
+    <string name="transfer_done">הבעלות הועברה ל-%1$s.</string>
+    <string name="transfer_failed">ההעברה נכשלה</string>
+    <string name="handover_confirm">%1$s (%2$s) מבקשת מהשומר בעלות על המכשיר. האפליקציה הזו לא מוכרת מהעברה קודמת, ולכן נדרש קוד השומר.</string>
+    <string name="err_no_caller">את השומר חייבת לפתוח האפליקציה שמבקשת בעלות.</string>
+    <string name="err_not_owner">השומר אינו בעל המכשיר.</string>
+    <string name="err_no_support">%1$s אינה מצהירה על תמיכה בקבלת בעלות.</string>
+    <string name="err_cancelled">בוטל.</string>
+</resources>

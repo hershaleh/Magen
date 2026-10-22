@@ -98,6 +98,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import app.magen.lock.Bio
 import app.magen.lock.Catalog
+import app.magen.lock.Keeper
 import app.magen.lock.LockMode
 import app.magen.lock.Policy
 import app.magen.lock.R
@@ -517,6 +518,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
     var confirmOwner by remember { mutableStateOf(false) }
     var ownerCleared by remember { mutableStateOf(false) }
     var confirmRoot by remember { mutableStateOf(false) }
+    var confirmKeeper by remember { mutableStateOf(false) }
     var rootRebootNeeded by remember { mutableStateOf(false) }
     var rootError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
@@ -596,6 +598,13 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                     onClick = { confirmRoot = true },
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(stringResource(R.string.remove_owner_root), color = MaterialTheme.colorScheme.error) }
+                if (android.os.Build.VERSION.SDK_INT >= 28) {
+                    OutlinedButton(
+                        onClick = { confirmKeeper = true },
+                        shape = RoundedCornerShape(16.dp),
+                        modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    ) { Text(stringResource(R.string.remove_owner_keeper)) }
+                }
             }
         }
 
@@ -664,6 +673,32 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                 }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = { TextButton(onClick = { confirmOwner = false }) { Text(stringResource(R.string.cancel)) } },
+        )
+    }
+
+    if (confirmKeeper) {
+        AlertDialog(
+            onDismissRequest = { confirmKeeper = false },
+            title = { Text(stringResource(R.string.keeper_confirm_title)) },
+            text = { Text(stringResource(R.string.keeper_confirm_msg)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmKeeper = false
+                    if (!Keeper.installed(ctx)) {
+                        ownerError = ctx.getString(R.string.keeper_missing)
+                    } else {
+                        val result = Policy.transferOwner(ctx, Keeper.receiver())
+                        if (result == null) {
+                            Store.setLevel("regular")
+                            ownerCleared = true
+                            android.widget.Toast.makeText(ctx, ctx.getString(R.string.keeper_done), android.widget.Toast.LENGTH_LONG).show()
+                        } else {
+                            ownerError = result
+                        }
+                    }
+                }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
+            },
+            dismissButton = { TextButton(onClick = { confirmKeeper = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
 

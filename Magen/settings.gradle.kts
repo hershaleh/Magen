@@ -14,3 +14,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Magen"
 include(":app")
+include(":keeper")

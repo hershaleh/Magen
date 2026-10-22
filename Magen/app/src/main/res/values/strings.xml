@@ -259,5 +259,15 @@
     <string name="root_reboot">Reboot now</string>
     <string name="root_later">Later</string>
     <string name="root_failed_title">Root removal failed</string>
+    <string name="remove_owner_keeper">Transfer to Magen Keeper (recommended)</string>
+    <string name="keeper_confirm_title">Transfer Device Owner to Magen Keeper?</string>
+    <string name="keeper_confirm_msg">Magen clears its restrictions and hands Device Owner to the small Magen Keeper app, using Android\'s official transfer. Magen is then no longer the owner and can be uninstalled. Later, a reinstalled Magen can take ownership back from Keeper (More, Strong mode). Needs Android 9 or newer and Magen Keeper installed.</string>
+    <string name="keeper_missing">Magen Keeper is not installed. Install the Magen Keeper app first, then try again.</string>
+    <string name="keeper_done">Device Owner was handed to Magen Keeper. Magen is now in Regular protection.</string>
+    <string name="keeper_take">Take Device Owner from Magen Keeper</string>
+    <string name="keeper_taken">Magen is the Device Owner again.</string>
+    <string name="keeper_take_failed">Magen Keeper did not hand over Device Owner.</string>
+    <string name="guide_keeper_title">Magen Keeper (companion app)</string>
+    <string name="guide_keeper_body">If removing Device Owner from Magen fails on your phone, install the small Magen Keeper app and use \"Transfer to Magen Keeper\" in More. Magen then stops being the owner and can be uninstalled. After installing Magen again, the Strong mode card shows \"Take Device Owner from Magen Keeper\", with no adb needed. Keeper can also hand ownership to any other app that supports it. Needs Android 9 or newer.</string>
 </resources>
 

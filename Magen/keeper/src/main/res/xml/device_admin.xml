@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<device-admin xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-policies />
+    <!-- Lets other apps (such as Magen) hand Device Owner to Keeper. -->
+    <support-transfer-ownership />
+</device-admin>
