@@ -12,8 +12,20 @@ android {
         applicationId = "app.magen.lock"
         minSdk = 23
         targetSdk = 35
-        versionCode = 2
+        // Grows with every CI run so updates always install over the previous build.
+        versionCode = maxOf(2, System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 2)
         versionName = "1.1"
+    }
+
+    // One fixed key for every build, so a new APK always installs over the old one and Magen Keeper
+    // can recognise Magen by its signature. The key file sits next to settings.gradle.kts.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("magen-debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {

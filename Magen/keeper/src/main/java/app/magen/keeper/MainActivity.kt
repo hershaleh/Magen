@@ -3,6 +3,8 @@ package app.magen.keeper
 import android.app.Activity
 import android.app.AlertDialog
 import android.app.Dialog
+import android.app.admin.DevicePolicyManager
+import android.content.Intent
 import android.graphics.Typeface
 import android.os.Bundle
 import android.view.View
@@ -57,6 +59,24 @@ class MainActivity : Activity() {
         root.addView(text(R.string.app_name, 24f, true))
         root.addView(text(if (owner) R.string.status_owner else R.string.status_not_owner, 16f, true))
 
+        // Android only hands ownership to an app that is already an enabled device admin.
+        if (!Transfer.isActive(this, Transfer.ownReceiver(this))) {
+            root.addView(text(R.string.admin_needed))
+            root.addView(
+                Button(this).apply {
+                    text = getString(R.string.admin_activate)
+                    isAllCaps = false
+                    setOnClickListener {
+                        startActivity(
+                            Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
+                                .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, Transfer.ownReceiver(this@MainActivity))
+                                .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, getString(R.string.admin_explain)),
+                        )
+                    }
+                },
+            )
+        }
+
         if (owner) {
             root.addView(text(R.string.transfer_title, 18f, true))
             root.addView(text(R.string.transfer_desc))
@@ -67,7 +87,8 @@ class MainActivity : Activity() {
                 targets.forEach { t ->
                     root.addView(
                         Button(this).apply {
-                            text = "${t.label}  (${t.component.packageName})"
+                            val note = if (Transfer.isActive(this@MainActivity, t.component)) "" else getString(R.string.target_inactive)
+                            text = "${t.label}  (${t.component.packageName})$note"
                             isAllCaps = false
                             setOnClickListener { confirmTransfer(t) }
                         },

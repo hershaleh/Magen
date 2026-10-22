@@ -226,9 +226,18 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
                 )
                 TextButton(onClick = { Session.showGuide = true }) { Text(stringResource(R.string.guide_open)) }
                 if (android.os.Build.VERSION.SDK_INT >= 28 && Keeper.installed(ctx)) {
-                    FilledTonalButton(onClick = {
-                        runCatching { keeperLauncher.launch(Keeper.handoverIntent()) }
-                    }) { Text(stringResource(R.string.keeper_take)) }
+                    if (p.admin) {
+                        FilledTonalButton(onClick = {
+                            runCatching { keeperLauncher.launch(Keeper.handoverIntent()) }
+                        }) { Text(stringResource(R.string.keeper_take)) }
+                    } else {
+                        // Android only hands ownership to an app that is already an enabled device admin.
+                        Text(
+                            stringResource(R.string.keeper_need_admin),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
             }
         }

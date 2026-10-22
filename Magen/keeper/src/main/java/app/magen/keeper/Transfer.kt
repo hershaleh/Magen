@@ -17,6 +17,9 @@ object Transfer {
 
     fun ownReceiver(c: Context) = ComponentName(c, KeeperAdminReceiver::class.java)
 
+    /** transferOwnership() only accepts a target that is already an active device admin. */
+    fun isActive(c: Context, component: ComponentName): Boolean = dpm(c).isAdminActive(component)
+
     fun isOwner(c: Context): Boolean = dpm(c).isDeviceOwnerApp(c.packageName)
 
     /** Installed apps whose device-admin receiver declares support for receiving ownership (optionally one package). */

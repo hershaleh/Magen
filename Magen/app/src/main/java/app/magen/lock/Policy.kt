@@ -29,6 +29,9 @@ object Policy {
 
     fun isAdmin(ctx: Context): Boolean = dpm(ctx).isAdminActive(admin(ctx))
 
+    /** True when [component] (for example Magen Keeper's receiver) is an enabled device admin. */
+    fun isActiveAdmin(ctx: Context, component: ComponentName): Boolean = dpm(ctx).isAdminActive(component)
+
     fun isOwner(ctx: Context): Boolean = dpm(ctx).isDeviceOwnerApp(ctx.packageName)
 
     fun accessibilityOn(ctx: Context): Boolean {

@@ -269,5 +269,8 @@
     <string name="keeper_take_failed">Magen Keeper did not hand over Device Owner.</string>
     <string name="guide_keeper_title">Magen Keeper (companion app)</string>
     <string name="guide_keeper_body">If removing Device Owner from Magen fails on your phone, install the small Magen Keeper app and use \"Transfer to Magen Keeper\" in More. Magen then stops being the owner and can be uninstalled. After installing Magen again, the Strong mode card shows \"Take Device Owner from Magen Keeper\", with no adb needed. Keeper can also hand ownership to any other app that supports it. Needs Android 9 or newer.</string>
+    <string name="keeper_inactive">Magen Keeper is installed but its device-admin is not enabled. Open Magen Keeper, tap \"Enable device admin\", then try again.</string>
+    <string name="keeper_need_admin">To take Device Owner from Magen Keeper, first enable Magen as a device administrator (the card above).</string>
+    <string name="owner_versions_info">Which method works on which Android:\n• Simple removal: Android 6 and newer (Magen\'s minimum). Google marked it deprecated in Android 8, no upper limit is documented, but it can fail on some phones.\n• Transfer to Magen Keeper: Android 9 (API 28) and newer only. Keeper must be installed and its device admin enabled.\n• Root removal: unofficial, depends on the phone.\nYour phone: Android %1$s (API %2$d).</string>
 </resources>
 

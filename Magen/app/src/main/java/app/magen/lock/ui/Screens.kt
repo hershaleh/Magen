@@ -588,6 +588,12 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
 
         if (perms.owner && !ownerCleared) {
             SectionCard(stringResource(R.string.remove_owner_section_title), stringResource(R.string.remove_owner_section_desc)) {
+                Text(
+                    stringResource(R.string.owner_versions_info, android.os.Build.VERSION.RELEASE, android.os.Build.VERSION.SDK_INT),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
                 OutlinedButton(
                     onClick = { confirmOwner = true },
                     shape = RoundedCornerShape(16.dp),
@@ -686,6 +692,8 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                     confirmKeeper = false
                     if (!Keeper.installed(ctx)) {
                         ownerError = ctx.getString(R.string.keeper_missing)
+                    } else if (!Policy.isActiveAdmin(ctx, Keeper.receiver())) {
+                        ownerError = ctx.getString(R.string.keeper_inactive)
                     } else {
                         val result = Policy.transferOwner(ctx, Keeper.receiver())
                         if (result == null) {

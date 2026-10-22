@@ -30,4 +30,9 @@
     <string name="err_not_owner">השומר אינו בעל המכשיר.</string>
     <string name="err_no_support">%1$s אינה מצהירה על תמיכה בקבלת בעלות.</string>
     <string name="err_cancelled">בוטל.</string>
+    <string name="admin_needed">אנדרואיד מעביר בעלות רק לאפליקציה שהיא מנהל מכשיר מופעל. הפעילו אותה קודם.</string>
+    <string name="admin_activate">הפעלת מנהל מכשיר</string>
+    <string name="admin_explain">נדרש כדי שמגן יוכל להעביר בעלות לשומר.</string>
+    <string name="target_inactive">  (מנהל המכשיר לא מופעל)</string>
+    <string name="err_target_inactive">%1$s עדיין אינה מנהל מכשיר מופעל. הפעילו אותה ונסו שוב.</string>
 </resources>

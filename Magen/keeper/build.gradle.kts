@@ -12,8 +12,19 @@ android {
         // transferOwnership() needs Android 9.
         minSdk = 28
         targetSdk = 34
-        versionCode = 1
+        versionCode = maxOf(1, System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1)
         versionName = "1.0"
+    }
+
+    // One fixed key for every build, so a new APK always installs over the old one and Magen Keeper
+    // can recognise Magen by its signature. The key file sits next to settings.gradle.kts.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = rootProject.file("magen-debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {

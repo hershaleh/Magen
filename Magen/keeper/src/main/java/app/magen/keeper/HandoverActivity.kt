@@ -23,7 +23,13 @@ class HandoverActivity : Activity() {
             finishWith(getString(R.string.err_not_owner))
         } else {
             val target = Transfer.targets(this, caller).firstOrNull()
-            if (target == null) finishWith(getString(R.string.err_no_support, caller)) else decide(caller, target)
+            if (target == null) {
+                finishWith(getString(R.string.err_no_support, caller))
+            } else if (!Transfer.isActive(this, target.component)) {
+                finishWith(getString(R.string.err_target_inactive, target.label))
+            } else {
+                decide(caller, target)
+            }
         }
     }
 

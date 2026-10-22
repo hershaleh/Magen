@@ -30,4 +30,9 @@
     <string name="err_not_owner">Keeper is not the Device Owner.</string>
     <string name="err_no_support">%1$s does not declare support for receiving Device Owner.</string>
     <string name="err_cancelled">Cancelled.</string>
+    <string name="admin_needed">Android hands Device Owner only to an app that is an enabled device administrator. Enable it first.</string>
+    <string name="admin_activate">Enable device admin</string>
+    <string name="admin_explain">Required so that Magen can hand Device Owner to Magen Keeper.</string>
+    <string name="target_inactive">  (device admin not enabled)</string>
+    <string name="err_target_inactive">%1$s is not an enabled device administrator yet. Enable it first, then try again.</string>
 </resources>
