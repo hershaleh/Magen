@@ -35,6 +35,7 @@ import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.DeleteForever
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
@@ -94,6 +95,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import app.magen.lock.Bio
 import app.magen.lock.Catalog
 import app.magen.lock.LockMode
 import app.magen.lock.Policy
@@ -108,6 +110,8 @@ object Session {
     var leftAt = 0L
     var showGuide by mutableStateOf(false)
     var skipSetup by mutableStateOf(false)
+    /** A freshly created recovery code that must be shown (once) before the app continues. */
+    var recoveryToShow by mutableStateOf<String?>(null)
 }
 
 object Lang {
@@ -124,11 +128,16 @@ object Lang {
 fun Root() {
     val perms = rememberPerms()
     val needsSetup = !perms.acc || !perms.admin || (Store.level == "strong" && !perms.owner)
+    val recovery = Session.recoveryToShow
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         when {
+            recovery != null -> RecoveryCodeScreen(recovery) {
+                Session.recoveryToShow = null
+                Session.authed = true
+            }
             Session.showGuide -> GuideScreen { Session.showGuide = false }
             !Store.hasPin -> Onboarding()
-            !Session.authed -> PinGate(title = stringResource(R.string.enter_code), subtitle = null) {
+            !Session.authed -> PinGate(title = stringResource(R.string.enter_code), subtitle = null, allowAlt = true) {
                 Session.authed = true
             }
             needsSetup && !Session.skipSetup -> SetupWizard()
@@ -177,7 +186,8 @@ fun Onboarding() {
     } else {
         CreatePinFlow {
             Store.setPin(it)
-            Session.authed = true
+            // The recovery code is shown once by Root before the app continues.
+            Session.recoveryToShow = Store.newRecoveryCode()
         }
     }
 }
@@ -205,9 +215,12 @@ fun LanguagePicker() {
 fun MainScaffold() {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var changingPin by remember { mutableStateOf(false) }
+    var recoveryMode by remember { mutableStateOf(false) }
 
     if (changingPin) {
         ChangePin { changingPin = false }
+    } else if (recoveryMode) {
+        NewRecovery { recoveryMode = false }
     } else {
         val items = listOf(
             R.string.nav_home to Icons.Filled.Security,
@@ -235,7 +248,7 @@ fun MainScaffold() {
                     0 -> HomeTab()
                     1 -> AppsTab()
                     2 -> RulesTab()
-                    else -> MoreTab(onChangePin = { changingPin = true })
+                    else -> MoreTab(onChangePin = { changingPin = true }, onRecovery = { recoveryMode = true })
                 }
             }
         }
@@ -252,6 +265,17 @@ private fun ChangePin(onClose: () -> Unit) {
             Store.setPin(it)
             onClose()
         }
+    }
+}
+
+@Composable
+private fun NewRecovery(onClose: () -> Unit) {
+    var code by remember { mutableStateOf<String?>(null) }
+    val c = code
+    if (c == null) {
+        PinGate(title = stringResource(R.string.enter_code), subtitle = null, onCancel = onClose) { code = Store.newRecoveryCode() }
+    } else {
+        RecoveryCodeScreen(c, onClose)
     }
 }
 
@@ -474,6 +498,8 @@ fun RulesTab() {
 
         SettingsGroups()
 
+        PickFromScreenCard()
+
         CustomKeywordsCard()
 
         HowToCard()
@@ -483,7 +509,7 @@ fun RulesTab() {
 // ---- tab: more -------------------------------------------------------------------------------
 
 @Composable
-fun MoreTab(onChangePin: () -> Unit) {
+fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
     val ctx = LocalContext.current
     var confirm by remember { mutableStateOf(false) }
     var confirmOwner by remember { mutableStateOf(false) }
@@ -528,11 +554,35 @@ fun MoreTab(onChangePin: () -> Unit) {
                 stringResource(R.string.protect_desc),
                 Store.protect,
             ) { Store.setProtect(it) }
+            if (Bio.available(ctx)) {
+                SwitchRow(
+                    Icons.Filled.Fingerprint,
+                    stringResource(R.string.bio_title),
+                    stringResource(R.string.bio_desc),
+                    Store.biometric,
+                ) { on ->
+                    if (!on) {
+                        Store.setBiometric(false)
+                    } else {
+                        val act = Bio.activity(ctx)
+                        if (act != null) {
+                            Bio.prompt(act, ctx.getString(R.string.bio_prompt_title), ctx.getString(R.string.cancel)) {
+                                Store.setBiometric(true)
+                            }
+                        }
+                    }
+                }
+            }
             OutlinedButton(
                 onClick = onChangePin,
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             ) { Text(stringResource(R.string.change_pin)) }
+            OutlinedButton(
+                onClick = onRecovery,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            ) { Text(stringResource(if (Store.hasRecovery) R.string.recovery_regen else R.string.recovery_create)) }
         }
 
         SectionCard(stringResource(R.string.approve_uninstall), stringResource(R.string.approve_desc)) {
@@ -692,6 +742,7 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
                 subtitle = stringResource(R.string.lock_pin_sub, label),
                 icon = { AppBadge(icon) },
                 onCancel = onBack,
+                allowAlt = true,
                 onSuccess = onUnlocked,
             )
         }

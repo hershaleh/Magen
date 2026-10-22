@@ -2,6 +2,7 @@ package app.magen.lock.ui
 
 import android.app.admin.DevicePolicyManager
 import android.content.Intent
+import android.os.PowerManager
 import android.net.Uri
 import android.provider.Settings
 import android.widget.Toast
@@ -31,6 +32,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.filled.BatteryChargingFull
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
@@ -77,6 +79,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import app.magen.lock.Catalog
+import app.magen.lock.GuardService
 import app.magen.lock.Policy
 import app.magen.lock.SGroup
 import app.magen.lock.R
@@ -86,7 +89,7 @@ const val ADB_CMD = "adb shell dpm set-device-owner app.magen.lock/.AdminReceive
 
 // ---- permission state ------------------------------------------------------------------------
 
-class Perms(val acc: Boolean, val admin: Boolean, val owner: Boolean)
+class Perms(val acc: Boolean, val admin: Boolean, val owner: Boolean, val battery: Boolean = true)
 
 /** Current permission state, re-read every time the app comes back to the foreground. */
 @Composable
@@ -94,7 +97,12 @@ fun rememberPerms(): Perms {
     val ctx = LocalContext.current
     var tick by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { tick++ }
-    return remember(tick) { Perms(Policy.accessibilityOn(ctx), Policy.isAdmin(ctx), Policy.isOwner(ctx)) }
+    return remember(tick) {
+        val battery = runCatching {
+            ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
+        }.getOrDefault(true)
+        Perms(Policy.accessibilityOn(ctx), Policy.isAdmin(ctx), Policy.isOwner(ctx), battery)
+    }
 }
 
 @Composable
@@ -159,6 +167,34 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
             }
         },
     )
+
+    // Recommended, not required: keeps the guard from being stopped by battery savers.
+    PermCard(
+        icon = Icons.Filled.BatteryChargingFull,
+        title = R.string.perm_battery_title,
+        desc = R.string.perm_battery_desc,
+        on = p.battery,
+        onEnable = {
+            val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${ctx.packageName}"))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            try {
+                ctx.startActivity(direct)
+            } catch (error: Exception) {
+                runCatching {
+                    ctx.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
+            }
+        },
+    ) {
+        if (!p.battery) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.perm_battery_note),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
 
     if (showOwner) {
         PermCard(
@@ -422,6 +458,28 @@ private fun CommandBox(cmd: String) {
 }
 
 // ---- custom settings keywords ----------------------------------------------------------------
+
+/** One-tap blocking: opens Settings with a floating button that offers the current page title to block. */
+@Composable
+fun PickFromScreenCard() {
+    val ctx = LocalContext.current
+    SectionCard(stringResource(R.string.pick_title), stringResource(R.string.pick_desc)) {
+        Button(
+            onClick = {
+                val guard = GuardService.instance
+                if (guard == null) {
+                    Toast.makeText(ctx, R.string.pick_need_service, Toast.LENGTH_LONG).show()
+                } else {
+                    guard.armCapture()
+                    Toast.makeText(ctx, R.string.pick_started, Toast.LENGTH_LONG).show()
+                    ctx.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                }
+            },
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+        ) { Text(stringResource(R.string.pick_start)) }
+    }
+}
 
 @Composable
 fun CustomKeywordsCard() {

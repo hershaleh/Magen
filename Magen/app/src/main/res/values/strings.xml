@@ -217,5 +217,35 @@
     <string name="compare_title">Regular vs. Strong mode</string>
     <string name="credit_hearshal">Credit: He\'rshele</string>
     <string name="admin_open_failed">Could not open the device administrator approval screen.</string>
+    <string name="bio_title">Unlock with fingerprint / face</string>
+    <string name="bio_desc">Faster unlocking. The master code always stays available.</string>
+    <string name="bio_prompt_title">Unlock Magen</string>
+    <string name="bio_use_code">Use code</string>
+    <string name="forgot_code">Forgot code?</string>
+    <string name="recovery_title">Recovery code</string>
+    <string name="recovery_enter_sub">Enter the recovery code you saved when you set up Magen, then choose a new master code.</string>
+    <string name="recovery_wrong">That recovery code is not correct.</string>
+    <string name="recovery_verify">Continue</string>
+    <string name="recovery_show_sub">Write this code down and keep it somewhere safe. It is the only way to reset your master code if you forget it.</string>
+    <string name="recovery_copy">Copy code</string>
+    <string name="recovery_warn">It is shown only now and works once: after using it you get a new one. Anyone with this code can reset your master code, so do not leave it on this phone.</string>
+    <string name="recovery_saved">I saved it</string>
+    <string name="recovery_create">Create recovery code</string>
+    <string name="recovery_regen">Create a new recovery code</string>
+    <string name="pick_title">Pick a page from the screen</string>
+    <string name="pick_desc">Open the Settings page you want to block, tap the floating button and choose its title. No typing needed.</string>
+    <string name="pick_start">Start picking</string>
+    <string name="pick_started">Open the Settings page to block and tap \"Block this page\".</string>
+    <string name="pick_need_service">Turn on the Magen accessibility service first.</string>
+    <string name="capture_button">Block this page</string>
+    <string name="capture_pick_title">Which title is this page?</string>
+    <string name="capture_none">Could not read a page title here. Open a Settings page and try again.</string>
+    <string name="capture_done">Blocked: %1$s</string>
+    <string name="perm_battery_title">Keep running in the background</string>
+    <string name="perm_battery_desc">Recommended. Exempt Magen from battery saving so protection is not stopped.</string>
+    <string name="perm_battery_note">On some phones (Xiaomi, Huawei, Samsung, Oppo) also allow auto-start and set battery use to \"No restrictions\" in the app info.</string>
+    <string name="notif_channel">Protection alerts</string>
+    <string name="notif_off_title">Magen protection is off</string>
+    <string name="notif_off_text">The accessibility service was turned off. Tap to turn it back on.</string>
 </resources>
 

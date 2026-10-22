@@ -19,10 +19,16 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -42,15 +48,19 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import app.magen.lock.Bio
 import app.magen.lock.R
 import app.magen.lock.Store
 import kotlinx.coroutines.delay
@@ -83,6 +93,7 @@ fun PinPad(
     enabled: Boolean = true,
     icon: @Composable () -> Unit = { ShieldBadge() },
     onCancel: (() -> Unit)? = null,
+    extra: (@Composable () -> Unit)? = null,
     onSubmit: (String) -> Unit,
 ) {
     var pin by remember { mutableStateOf("") }
@@ -155,6 +166,7 @@ fun PinPad(
                 }
             }
         }
+        extra?.invoke()
         if (onCancel != null) {
             TextButton(onClick = onCancel, modifier = Modifier.padding(top = 8.dp)) { Text(stringResource(R.string.go_back)) }
         }
@@ -174,22 +186,53 @@ private fun Key(enabled: Boolean, onClick: () -> Unit, content: @Composable () -
     }
 }
 
-/** Keypad that verifies against the master code, including the wrong-attempt lockout. */
+/**
+ * Keypad that verifies against the master code, including the wrong-attempt lockout.
+ * With [allowAlt] it also offers fingerprint unlock (when enabled) and the recovery-code reset.
+ */
 @Composable
 fun PinGate(
     title: String,
     subtitle: String?,
     icon: @Composable () -> Unit = { ShieldBadge() },
     onCancel: (() -> Unit)? = null,
+    allowAlt: Boolean = false,
     onSuccess: () -> Unit,
 ) {
     val ctx = LocalContext.current
     var error by remember { mutableStateOf<String?>(null) }
     var wait by remember { mutableIntStateOf(Store.lockRemaining()) }
+    var recovering by remember { mutableStateOf(false) }
     LaunchedEffect(wait) {
         if (wait > 0) {
             delay(1000)
             wait = Store.lockRemaining()
+        }
+    }
+    val bioOk = remember { Bio.available(ctx) }
+    val useBio = allowAlt && Store.biometric && bioOk
+    val askBio = {
+        val act = Bio.activity(ctx)
+        if (act != null) {
+            Bio.prompt(act, ctx.getString(R.string.bio_prompt_title), ctx.getString(R.string.bio_use_code), onSuccess)
+        }
+    }
+    LaunchedEffect(useBio) { if (useBio && !recovering) askBio() }
+
+    if (recovering) {
+        RecoveryFlow(onCancel = { recovering = false }, onDone = onSuccess)
+        return
+    }
+    val altUi: @Composable () -> Unit = {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (useBio) {
+                IconButton(onClick = { askBio() }) {
+                    Icon(Icons.Filled.Fingerprint, stringResource(R.string.bio_prompt_title), tint = MaterialTheme.colorScheme.primary)
+                }
+            }
+            if (Store.hasRecovery) {
+                TextButton(onClick = { recovering = true }) { Text(stringResource(R.string.forgot_code)) }
+            }
         }
     }
     PinPad(
@@ -199,6 +242,7 @@ fun PinGate(
         enabled = wait == 0,
         icon = icon,
         onCancel = onCancel,
+        extra = if (allowAlt && (useBio || Store.hasRecovery)) altUi else null,
     ) { pin ->
         if (Store.checkPin(pin)) {
             onSuccess()
@@ -206,6 +250,115 @@ fun PinGate(
             error = ctx.getString(R.string.wrong_code)
             wait = Store.lockRemaining()
         }
+    }
+}
+
+/** Reset the master code with the recovery code, then show the replacement recovery code. */
+@Composable
+fun RecoveryFlow(onCancel: () -> Unit, onDone: () -> Unit) {
+    val ctx = LocalContext.current
+    var step by remember { mutableIntStateOf(0) }
+    var code by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf<String?>(null) }
+    var fresh by remember { mutableStateOf("") }
+    when (step) {
+        0 -> Column(
+            Modifier.fillMaxSize().systemBarsPadding().padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            ShieldBadge()
+            Spacer(Modifier.height(20.dp))
+            Text(stringResource(R.string.recovery_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Text(
+                stringResource(R.string.recovery_enter_sub),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center,
+                modifier = Modifier.padding(top = 6.dp, bottom = 18.dp),
+            )
+            OutlinedTextField(
+                value = code,
+                onValueChange = { code = it.take(20) },
+                singleLine = true,
+                placeholder = { Text("XXXX-XXXX-XXXX") },
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+            )
+            Text(error ?: " ", color = MaterialTheme.colorScheme.error, modifier = Modifier.padding(vertical = 10.dp))
+            Button(
+                onClick = {
+                    val wait = Store.lockRemaining()
+                    if (wait > 0) {
+                        error = ctx.getString(R.string.try_again_in, wait)
+                    } else if (Store.checkRecovery(code)) {
+                        error = null
+                        step = 1
+                    } else {
+                        error = ctx.getString(R.string.recovery_wrong)
+                    }
+                },
+                shape = RoundedCornerShape(18.dp),
+                modifier = Modifier.fillMaxWidth().height(54.dp),
+            ) { Text(stringResource(R.string.recovery_verify)) }
+            TextButton(onClick = onCancel) { Text(stringResource(R.string.go_back)) }
+        }
+        1 -> CreatePinFlow(onCancel = onCancel) {
+            Store.setPin(it)
+            fresh = Store.newRecoveryCode()
+            step = 2
+        }
+        else -> RecoveryCodeScreen(fresh, onDone)
+    }
+}
+
+/** Shows a recovery code once, with copy, until the person confirms they saved it. */
+@Composable
+fun RecoveryCodeScreen(code: String, onDone: () -> Unit) {
+    val clipboard = LocalClipboardManager.current
+    Column(
+        Modifier.fillMaxSize().systemBarsPadding().padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
+    ) {
+        ShieldBadge()
+        Spacer(Modifier.height(20.dp))
+        Text(stringResource(R.string.recovery_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        Text(
+            stringResource(R.string.recovery_show_sub),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(top = 6.dp, bottom = 20.dp),
+        )
+        CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
+            Text(
+                code,
+                fontFamily = FontFamily.Monospace,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+        OutlinedButton(
+            onClick = { clipboard.setText(AnnotatedString(code)) },
+            shape = RoundedCornerShape(16.dp),
+            modifier = Modifier.padding(top = 16.dp),
+        ) {
+            Icon(Icons.Filled.ContentCopy, null, modifier = Modifier.size(18.dp))
+            Spacer(Modifier.size(8.dp))
+            Text(stringResource(R.string.recovery_copy))
+        }
+        Text(
+            stringResource(R.string.recovery_warn),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.error,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(vertical = 20.dp),
+        )
+        Button(
+            onClick = onDone,
+            shape = RoundedCornerShape(18.dp),
+            modifier = Modifier.fillMaxWidth().height(54.dp),
+        ) { Text(stringResource(R.string.recovery_saved)) }
     }
 }
 
