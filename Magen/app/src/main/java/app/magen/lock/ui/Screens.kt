@@ -654,11 +654,41 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
 }
 
 private fun approveUninstall(ctx: Context) {
+    // This also temporarily clears strong-mode restrictions so they cannot block the exit flow.
     Store.allowUninstall(10)
-    Policy.release(ctx)
-    ctx.startActivity(
-        Intent(Intent.ACTION_DELETE, Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-    )
+
+    when (Policy.prepareForUninstall(ctx)) {
+        Policy.UninstallPreparation.READY -> {
+            Store.setLevel("regular")
+            ctx.startActivity(
+                Intent(Intent.ACTION_DELETE, Uri.parse("package:${ctx.packageName}"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+            )
+        }
+
+        Policy.UninstallPreparation.OWNER_STILL_ACTIVE -> {
+            android.widget.Toast.makeText(
+                ctx,
+                "לא הצלחתי להסיר את מצב הבעלים של המכשיר. לא פתחתי את מסך ההסרה, כי Android עדיין עלול לחסום אותה. אל תפעיל שוב את המצב החזק עד לבדיקת התקלה.",
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
+        }
+
+        Policy.UninstallPreparation.ADMIN_STILL_ACTIVE -> {
+            Store.setLevel("regular")
+            android.widget.Toast.makeText(
+                ctx,
+                "מצב הבעלים הוסר, אך הרשאת מנהל המכשיר עדיין פעילה. במסך הבא בטל את מנהל מגן, חזור למגן ולחץ שוב על אישור הסרה.",
+                android.widget.Toast.LENGTH_LONG,
+            ).show()
+            runCatching {
+                ctx.startActivity(
+                    Intent(Settings.ACTION_SECURITY_SETTINGS)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+                )
+            }
+        }
+    }
 }
 
 // ---- lock screen content ---------------------------------------------------------------------
