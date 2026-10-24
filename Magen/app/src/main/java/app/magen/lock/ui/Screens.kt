@@ -790,7 +790,8 @@ private fun approveUninstall(ctx: Context) {
     if (!Policy.release(ctx)) {
         android.widget.Toast.makeText(
             ctx,
-            Policy.lastUninstallError ?: "Magen could not safely clear its uninstall protection. No uninstall was started.",
+            (Policy.lastUninstallError ?: "Magen could not safely clear its uninstall protection. No uninstall was started.") +
+                "\n" + Policy.stateSummary(ctx),
             android.widget.Toast.LENGTH_LONG,
         ).show()
         return

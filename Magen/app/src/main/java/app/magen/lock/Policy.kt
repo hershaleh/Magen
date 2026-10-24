@@ -207,6 +207,11 @@ object Policy {
         }
     }
 
+    /** One line each for what Magen can see, plus the command that shows what Android itself has recorded. */
+    fun stateSummary(ctx: Context): String =
+        "Device Owner: ${if (isOwner(ctx)) "yes" else "no"} / Device admin: ${if (isAdmin(ctx)) "yes" else "no"}\n" +
+            "Android's own record: adb shell dumpsys device_policy"
+
     private fun deviceInfo() =
         "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}), ${Build.MANUFACTURER} ${Build.MODEL}"
 
@@ -228,7 +233,16 @@ object Policy {
                     return false
                 }
             }
-            if (d.isAdminActive(a)) d.removeActiveAdmin(a)
+            if (d.isAdminActive(a)) {
+                d.removeActiveAdmin(a)
+                // Android may take a moment to drop the admin record; never open the uninstall screen before it is gone.
+                var tries = 0
+                while (d.isAdminActive(a) && tries++ < 10) Thread.sleep(200)
+                if (d.isAdminActive(a)) {
+                    lastUninstallError = "Android still lists Magen as an active device administrator, so it cannot be uninstalled yet."
+                    return false
+                }
+            }
             true
         } catch (e: Throwable) {
             lastUninstallError = "${e.javaClass.name}: ${e.message ?: "Could not prepare Magen for uninstall"}"
