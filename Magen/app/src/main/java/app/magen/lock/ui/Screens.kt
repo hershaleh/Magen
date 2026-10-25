@@ -535,6 +535,9 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
     var rootError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     var ownerError by remember { mutableStateOf<String?>(null) }
+    // Set when Android's own removal failed because this phone's firmware lacks the telephony provider.
+    val removalPrefs = ctx.getSharedPreferences("magen", Context.MODE_PRIVATE)
+    var normalBroken by remember { mutableStateOf(removalPrefs.getBoolean("normalRemovalBroken", false)) }
     val perms = rememberPerms()
 
     TabColumn {
@@ -626,12 +629,25 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
-                OutlinedButton(
-                    onClick = { confirmOwner = true },
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-                ) { Text(stringResource(R.string.remove_owner)) }
+                if (normalBroken) {
+                    Text(
+                        stringResource(R.string.remove_owner_unavailable),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(bottom = 4.dp),
+                    )
+                    TextButton(
+                        onClick = { confirmOwner = true },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) { Text(stringResource(R.string.remove_owner_try_anyway)) }
+                } else {
+                    OutlinedButton(
+                        onClick = { confirmOwner = true },
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                    ) { Text(stringResource(R.string.remove_owner)) }
+                }
                 TextButton(
                     onClick = { confirmRoot = true },
                     modifier = Modifier.fillMaxWidth(),
@@ -701,12 +717,19 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                     confirmOwner = false
                     val ok = Policy.releaseOwner(ctx)
                     if (ok) {
+                        removalPrefs.edit().remove("normalRemovalBroken").apply()
                         ownerCleared = true
                         Store.setLevel("regular")
                         android.widget.Toast.makeText(ctx, ctx.getString(R.string.remove_owner_done), android.widget.Toast.LENGTH_LONG).show()
                     } else {
                         // A dialog (not a Toast) so the exact Android error stays on screen and can be copied.
                         ownerError = Policy.lastReleaseOwnerError ?: "unknown"
+                        if (ownerError!!.contains("enforce_managed", ignoreCase = true) ||
+                            ownerError!!.contains("telephony", ignoreCase = true)
+                        ) {
+                            removalPrefs.edit().putBoolean("normalRemovalBroken", true).apply()
+                            normalBroken = true
+                        }
                     }
                 }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
             },
