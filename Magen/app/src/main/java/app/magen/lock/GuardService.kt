@@ -60,6 +60,12 @@ class GuardService : AccessibilityService() {
     private var capturePanel: View? = null
     private var captureArmedAt = 0L
     private val hideCoverRunnable = Runnable { removeCover() }
+    private var recheckPkg: String? = null
+    private val recheck = Runnable {
+        val p = recheckPkg ?: return@Runnable
+        recheckPkg = null
+        if (Store.hasPin && Store.locked.containsKey(p) && activeIs(p)) enforceLock(p)
+    }
 
     private var currentApp = ""
     private val tempUnlocked = HashSet<String>()
@@ -324,7 +330,7 @@ class GuardService : AccessibilityService() {
     override fun onAccessibilityEvent(e: AccessibilityEvent) {
         val pkg = e.packageName?.toString() ?: return
         val state = e.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
-        if (state) onForeground(pkg)
+        if (state) onForeground(pkg, e.className?.toString())
         maintain()
 
         if (Store.hasPin && Store.locked.containsKey(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
@@ -358,10 +364,16 @@ class GuardService : AccessibilityService() {
 
     // ---- app lock ----------------------------------------------------------------------------
 
-    private fun onForeground(pkg: String) {
-        if (pkg == packageName || isTransient(pkg)) return
+    private fun onForeground(pkg: String, cls: String?) {
+        if (isTransient(pkg)) return
+        if (pkg == packageName) {
+            // Magen's own lock/block screens appear over the app that is being guarded: not "leaving" it.
+            // Magen's main window, on the other hand, means the person left the guarded app.
+            if (cls != MainActivity::class.java.name) return
+        }
         if (pkg != currentApp) {
-            tempUnlocked.remove(currentApp)
+            // Another app (or Magen) is now in front: every temporary unlock except the new one ends here.
+            tempUnlocked.retainAll { it == pkg }
             currentApp = pkg
         }
     }
@@ -386,7 +398,14 @@ class GuardService : AccessibilityService() {
         if (pkg in tempUnlocked) return
         if (mode == LockMode.MAIN && pkg in Store.mainUnlocked) return
         val now = SystemClock.uptimeMillis()
-        if (now - lastLaunch < 600) return
+        if (now - lastLaunch < 600) {
+            // The event arrived too soon after the previous lock screen. It may be the only one this app
+            // produces, so look again shortly instead of leaving the app unprotected.
+            recheckPkg = pkg
+            handler.removeCallbacks(recheck)
+            handler.postDelayed(recheck, 700)
+            return
+        }
         lastLaunch = now
         showCover()
         startActivity(

@@ -77,25 +77,36 @@ class MainActivity : Activity() {
             )
         }
 
-        if (owner) {
-            root.addView(text(R.string.transfer_title, 18f, true))
-            root.addView(text(R.string.transfer_desc))
-            val targets = Transfer.targets(this)
-            if (targets.isEmpty()) {
-                root.addView(text(R.string.no_targets))
-            } else {
-                targets.forEach { t ->
-                    root.addView(
-                        Button(this).apply {
-                            val note = if (Transfer.isActive(this@MainActivity, t.component)) "" else getString(R.string.target_inactive)
-                            text = "${t.label}  (${t.component.packageName})$note"
-                            isAllCaps = false
-                            setOnClickListener { confirmTransfer(t) }
-                        },
-                    )
-                }
-            }
+        // The list is always shown, so it is clear whether an app (Magen) is found at all.
+        root.addView(text(R.string.transfer_title, 18f, true))
+        root.addView(text(R.string.transfer_desc))
+        val targets = Transfer.targets(this)
+        if (targets.isEmpty()) {
+            root.addView(text(R.string.no_targets))
         } else {
+            targets.forEach { t ->
+                root.addView(
+                    Button(this).apply {
+                        val active = Transfer.isActive(this@MainActivity, t.component)
+                        val note = if (active) "" else getString(R.string.target_inactive)
+                        text = "${t.label}  (${t.component.packageName})$note"
+                        isAllCaps = false
+                        isEnabled = owner
+                        setOnClickListener {
+                            if (active) {
+                                confirmTransfer(t)
+                            } else {
+                                AlertDialog.Builder(this@MainActivity)
+                                    .setMessage(getString(R.string.err_target_inactive, t.label))
+                                    .setPositiveButton(R.string.ok, null)
+                                    .show()
+                            }
+                        }
+                    },
+                )
+            }
+        }
+        if (!owner) {
             root.addView(text(R.string.how_to_get_owner))
             root.addView(
                 TextView(this).apply {

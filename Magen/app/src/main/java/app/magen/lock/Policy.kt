@@ -23,6 +23,14 @@ object Policy {
     var lastUninstallError: String? = null
         private set
 
+    /** Until this uptime, losing the device-admin status is expected (release, transfer) and raises no alert. */
+    @Volatile
+    var adminLossExpectedUntil = 0L
+
+    fun expectAdminLoss() {
+        adminLossExpectedUntil = android.os.SystemClock.uptimeMillis() + 30_000L
+    }
+
     fun admin(ctx: Context) = ComponentName(ctx, AdminReceiver::class.java)
 
     private fun dpm(ctx: Context) = ctx.getSystemService(DevicePolicyManager::class.java)
@@ -112,6 +120,7 @@ object Policy {
             } else {
                 val d = dpm(ctx)
                 ownerRemovalPending = true
+                expectAdminLoss()
                 if (!clearOwnerRestrictions(d, admin(ctx), ctx)) {
                     ownerRemovalPending = false
                     return lastUninstallError ?: "Could not clear Magen's uninstall block first. Nothing was changed."
@@ -247,7 +256,18 @@ object Policy {
     /** One line each for what Magen can see, plus the command that shows what Android itself has recorded. */
     fun stateSummary(ctx: Context): String =
         "Device Owner: ${if (isOwner(ctx)) "yes" else "no"} / Device admin: ${if (isAdmin(ctx)) "yes" else "no"}\n" +
+            lastAdminLoss(ctx) +
             "Android's own record: adb shell dumpsys device_policy"
+
+    /** When Android last removed Magen as device admin, and whether Magen itself had asked for it. */
+    private fun lastAdminLoss(ctx: Context): String {
+        val sp = ctx.applicationContext.getSharedPreferences("magen", Context.MODE_PRIVATE)
+        val at = sp.getLong("adminLostAt", 0L)
+        if (at == 0L) return ""
+        val whenText = java.text.DateFormat.getDateTimeInstance().format(java.util.Date(at))
+        val why = if (sp.getBoolean("adminLostExpected", false)) "requested by Magen" else "NOT requested by Magen"
+        return "Last device-admin loss: $whenText ($why)\n"
+    }
 
     private fun deviceInfo() =
         "Android ${Build.VERSION.RELEASE} (API ${Build.VERSION.SDK_INT}), ${Build.MANUFACTURER} ${Build.MODEL}"
@@ -258,6 +278,7 @@ object Policy {
      */
     fun release(ctx: Context): Boolean {
         ownerRemovalPending = true
+        expectAdminLoss()
         val ready = releaseNow(ctx)
         ownerRemovalPending = false
         return ready

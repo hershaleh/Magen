@@ -111,6 +111,18 @@ import kotlinx.coroutines.withContext
 object Session {
     var authed by mutableStateOf(false)
     var leftAt = 0L
+
+    /** Set by [trip] just before Magen sends the person to a system screen (Settings, uninstall, Keeper). */
+    var tripUntil = 0L
+    var tripPending = false
+
+    /**
+     * The code is asked for again every time Magen leaves the screen, except for a trip that Magen itself
+     * started (to switch on a permission, say). The exception lasts three minutes and is used up on return.
+     */
+    fun trip() {
+        tripUntil = android.os.SystemClock.elapsedRealtime() + 3 * 60_000L
+    }
     var showGuide by mutableStateOf(false)
     var skipSetup by mutableStateOf(false)
     /** A freshly created recovery code that must be shown (once) before the app continues. */
@@ -816,6 +828,7 @@ private fun approveUninstall(ctx: Context) {
         ).show()
         return
     }
+    Session.trip()
     ctx.startActivity(
         Intent(Intent.ACTION_DELETE, Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
     )

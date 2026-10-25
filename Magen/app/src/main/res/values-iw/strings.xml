@@ -249,6 +249,8 @@
     <string name="notif_channel">התראות הגנה</string>
     <string name="notif_off_title">ההגנה של מגן כבויה</string>
     <string name="notif_off_text">שירות הנגישות כובה. לחצו כדי להפעיל אותו מחדש.</string>
+    <string name="notif_admin_off_title">ניהול המכשיר של מגן כובה</string>
+    <string name="notif_admin_off_text">אנדרואיד הסיר את מגן מניהול המכשיר. לחצו כדי לפתוח את מגן ולהפעיל מחדש.</string>
     <string name="error_copy">העתקת הפרטים</string>
     <string name="remove_owner_telephony_hint">בקושחת הטלפון חסר ספק הטלפוניה שאנדרואיד חייב לנקות לפני שחרור Device Owner. ממחשב נסו: adb shell pm enable --user 0 com.android.providers.telephony (בדיקה: adb shell pm list packages telephony) ואז נסו שוב. אם החבילה לא קיימת בטלפון, רק איפוס יצרן מסיר Device Owner.</string>
     <string name="remove_owner_root">הסרה דרך Root (מתקדם)</string>

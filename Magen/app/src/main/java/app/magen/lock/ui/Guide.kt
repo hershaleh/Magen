@@ -128,7 +128,7 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
         title = R.string.perm_access_title,
         desc = R.string.perm_access_desc,
         on = p.acc,
-        onEnable = { ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) },
+        onEnable = { Session.trip(); ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) },
     ) {
         if (!p.acc) {
             Spacer(Modifier.height(6.dp))
@@ -170,6 +170,7 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
             }
             // Launch the system's dedicated device-admin approval screen, not general Settings.
             try {
+                Session.trip()
                 ctx.startActivity(request)
             } catch (error: Exception) {
                 Toast.makeText(
@@ -191,9 +192,11 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
             val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${ctx.packageName}"))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             try {
+                Session.trip()
                 ctx.startActivity(direct)
             } catch (error: Exception) {
                 runCatching {
+                    Session.trip()
                     ctx.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }
             }
@@ -228,6 +231,7 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
                 if (android.os.Build.VERSION.SDK_INT >= 28 && Keeper.installed(ctx)) {
                     if (p.admin) {
                         FilledTonalButton(onClick = {
+                            Session.trip()
                             runCatching { keeperLauncher.launch(Keeper.handoverIntent()) }
                         }) { Text(stringResource(R.string.keeper_take)) }
                     } else {
@@ -502,6 +506,7 @@ fun PickFromScreenCard() {
                 } else {
                     guard.armCapture()
                     Toast.makeText(ctx, R.string.pick_started, Toast.LENGTH_LONG).show()
+                    Session.trip()
                     ctx.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
                 }
             },

@@ -101,12 +101,22 @@ class MainActivity : AppCompatActivity() {
         ) {
             runCatching { askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) }
         }
-        // Short grace period so a trip to Settings (to enable a permission) does not demand the code again.
-        if (Session.authed && SystemClock.elapsedRealtime() - Session.leftAt > 30_000) Session.authed = false
+        // Coming back from a trip that Magen started itself (Settings, uninstall screen, Keeper): allowed
+        // for a few minutes. Any other return demands the code again (see onStop).
+        if (Session.tripPending) {
+            Session.tripPending = false
+            if (SystemClock.elapsedRealtime() > Session.tripUntil) Session.authed = false
+        }
     }
 
     override fun onStop() {
         super.onStop()
-        if (!isChangingConfigurations) Session.leftAt = SystemClock.elapsedRealtime()
+        if (!isChangingConfigurations) {
+            val now = SystemClock.elapsedRealtime()
+            Session.leftAt = now
+            // Leaving the app locks it at once; the process often stays alive (the accessibility service
+            // keeps it running), so the old "still unlocked" flag must not survive until the next visit.
+            if (now <= Session.tripUntil) Session.tripPending = true else Session.authed = false
+        }
     }
 }
