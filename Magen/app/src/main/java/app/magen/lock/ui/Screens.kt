@@ -586,6 +586,26 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
             ) { Text(stringResource(if (Store.hasRecovery) R.string.recovery_regen else R.string.recovery_create)) }
         }
 
+        val staleBlock = remember(perms) { Policy.staleUninstallBlock(ctx) }
+        if (staleBlock) {
+            SectionCard(stringResource(R.string.stale_block_title), stringResource(R.string.stale_block_body)) {
+                Text(
+                    ADB_CMD,
+                    style = MaterialTheme.typography.bodySmall,
+                    fontFamily = androidx.compose.ui.text.font.FontFamily.Monospace,
+                    modifier = Modifier.padding(vertical = 6.dp),
+                )
+                OutlinedButton(
+                    onClick = {
+                        val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                        cm.setPrimaryClip(android.content.ClipData.newPlainText("adb", ADB_CMD))
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(R.string.copy_cmd)) }
+            }
+        }
+
         if (perms.owner && !ownerCleared) {
             SectionCard(stringResource(R.string.remove_owner_section_title), stringResource(R.string.remove_owner_section_desc)) {
                 Text(

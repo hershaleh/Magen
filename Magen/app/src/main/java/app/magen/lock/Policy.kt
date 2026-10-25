@@ -73,17 +73,24 @@ object Policy {
             when {
                 file == null -> "No Device Owner file found in /data/system. Nothing was changed."
                 else -> {
-                    // Still the owner here, so the system can clean up what Magen set.
-                    if (isOwner(ctx)) clearOwnerRestrictions(dpm(ctx), admin(ctx), ctx)
+                    // Stop apply() first, then clear while Magen is still the owner (only the owner can clear
+                    // the system's uninstall block). If that cannot be verified, do NOT move the file: ownership
+                    // would end with the block still stored by Android.
                     ownerRemovalPending = true
-                    // A unique name each time, so an older backup is never overwritten.
-                    val backup = "$file.magen-backup-${System.currentTimeMillis() / 1000}"
-                    val (code, out) = su("test -e $backup || mv $file $backup")
-                    if (code == 0) {
-                        null
-                    } else {
+                    val cleared = !isOwner(ctx) || clearOwnerRestrictions(dpm(ctx), admin(ctx), ctx)
+                    if (!cleared) {
                         ownerRemovalPending = false
-                        "Moving the file failed (exit $code): $out"
+                        lastUninstallError ?: "Could not clear Magen's uninstall block first. Nothing was changed."
+                    } else {
+                        // A unique name each time, so an older backup is never overwritten.
+                        val backup = "$file.magen-backup-${System.currentTimeMillis() / 1000}"
+                        val (code, out) = su("test -e $backup || mv $file $backup")
+                        if (code == 0) {
+                            null
+                        } else {
+                            ownerRemovalPending = false
+                            "Moving the file failed (exit $code): $out"
+                        }
                     }
                 }
             }
@@ -105,7 +112,10 @@ object Policy {
             } else {
                 val d = dpm(ctx)
                 ownerRemovalPending = true
-                clearOwnerRestrictions(d, admin(ctx), ctx)
+                if (!clearOwnerRestrictions(d, admin(ctx), ctx)) {
+                    ownerRemovalPending = false
+                    return lastUninstallError ?: "Could not clear Magen's uninstall block first. Nothing was changed."
+                }
                 val extras = PersistableBundle().apply { putString("from_package", ctx.packageName) }
                 d.transferOwnership(admin(ctx), target, extras)
                 ownerRemovalPending = false
@@ -133,8 +143,8 @@ object Policy {
         val d = dpm(ctx)
         val a = admin(ctx)
         val protectNow = Store.protect && !Store.uninstallAllowed()
+        runCatching { clearLegacyUninstallBlock(d, a, ctx) }
         runCatching {
-            d.setUninstallBlocked(a, ctx.packageName, protectNow)
             if (Build.VERSION.SDK_INT >= 30) {
                 d.setUserControlDisabledPackages(a, if (protectNow) listOf(ctx.packageName) else emptyList())
             }
@@ -149,6 +159,24 @@ object Policy {
             }
         }
     }
+
+    /**
+     * Older Magen versions called setUninstallBlocked(true). Android stores that flag persistently (in
+     * package-restrictions.xml) and it does NOT disappear when Device Owner ends, which left Magen impossible
+     * to uninstall (DELETE_FAILED_OWNER_BLOCKED) even with `dpm list-owners` saying "no owners". The Device Owner
+     * package is already protected from uninstall by Android itself, so Magen no longer sets the flag at all and
+     * removes any leftover while it is still the owner.
+     */
+    private fun clearLegacyUninstallBlock(d: DevicePolicyManager, a: ComponentName, ctx: Context) {
+        if (d.isUninstallBlocked(a, ctx.packageName)) d.setUninstallBlocked(a, ctx.packageName, false)
+    }
+
+    /**
+     * True when Android still blocks uninstalling Magen although Magen is not the Device Owner. Only a Device
+     * Owner can clear that block, so recovery means becoming Device Owner once (Magen then clears it itself).
+     */
+    fun staleUninstallBlock(ctx: Context): Boolean =
+        !isOwner(ctx) && runCatching { dpm(ctx).isUninstallBlocked(null, ctx.packageName) }.getOrDefault(false)
 
     /**
      * Clears restrictions before surrendering Device Owner. Crucially, verify Android actually
@@ -184,8 +212,17 @@ object Policy {
      * block via the accessibility service. The app itself stays installed. Safe to call even if
      * Magen is not currently the Device Owner.
      */
-    @Suppress("DEPRECATION")
     fun releaseOwner(ctx: Context): Boolean {
+        ownerRemovalPending = true
+        val released = releaseOwnerNow(ctx)
+        // Pause apply() only while a release is in flight. Afterwards it must run again: either Magen is still
+        // the owner (protection must continue) or it is not, and a later re-provisioning must not be ignored.
+        ownerRemovalPending = false
+        return released
+    }
+
+    @Suppress("DEPRECATION")
+    private fun releaseOwnerNow(ctx: Context): Boolean {
         lastReleaseOwnerError = null
         return try {
             if (!isOwner(ctx)) return true
@@ -219,8 +256,15 @@ object Policy {
      * Prepares Magen for user-approved uninstall. Do not launch Android's uninstall UI unless
      * the uninstall block was verified clear and Device Owner was actually released.
      */
-    @Suppress("DEPRECATION")
     fun release(ctx: Context): Boolean {
+        ownerRemovalPending = true
+        val ready = releaseNow(ctx)
+        ownerRemovalPending = false
+        return ready
+    }
+
+    @Suppress("DEPRECATION")
+    private fun releaseNow(ctx: Context): Boolean {
         lastUninstallError = null
         return try {
             val d = dpm(ctx)
@@ -242,6 +286,10 @@ object Policy {
                     lastUninstallError = "Android still lists Magen as an active device administrator, so it cannot be uninstalled yet."
                     return false
                 }
+            }
+            if (staleUninstallBlock(ctx)) {
+                lastUninstallError = "Android still blocks uninstalling Magen (a leftover from an older Strong mode). See More, \"Leftover uninstall block\"."
+                return false
             }
             true
         } catch (e: Throwable) {

@@ -272,5 +272,7 @@
     <string name="keeper_inactive">Magen Keeper is installed but its device-admin is not enabled. Open Magen Keeper, tap \"Enable device admin\", then try again.</string>
     <string name="keeper_need_admin">To take Device Owner from Magen Keeper, first enable Magen as a device administrator (the card above).</string>
     <string name="owner_versions_info">Which method works on which Android:\n• Simple removal: Android 6 and newer (Magen\'s minimum). Google marked it deprecated in Android 8, no upper limit is documented, but it can fail on some phones.\n• Transfer to Magen Keeper: Android 9 (API 28) and newer only. Keeper must be installed and its device admin enabled.\n• Root removal: unofficial, depends on the phone.\nYour phone: Android %1$s (API %2$d).</string>
+    <string name="stale_block_title">Leftover uninstall block</string>
+    <string name="stale_block_body">Android still blocks uninstalling Magen, although Magen is no longer the Device Owner. It is a leftover from an older Strong mode, and only a Device Owner can clear it. One-time fix: run the command below from a computer (it may require removing accounts first). Magen then clears the block by itself within seconds. After that, remove Device Owner again if needed and uninstall. Magen does not edit system files for this.</string>
 </resources>
 
