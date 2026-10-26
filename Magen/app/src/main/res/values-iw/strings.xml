@@ -9,7 +9,7 @@
     <string name="nav_home">הגנה</string>
     <string name="nav_apps">אפליקציות</string>
     <string name="nav_rules">מתקדם</string>
-    <string name="nav_more">עוד</string>
+    <string name="nav_more">הגדרות</string>
 
     <string name="welcome_title">ברוכים הבאים למגן</string>
     <string name="welcome_sub">נעילת אפליקציות, חסימת התקנות והגנה מהסרה – הכול במקום אחד.</string>

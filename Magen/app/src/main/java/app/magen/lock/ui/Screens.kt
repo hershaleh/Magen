@@ -40,7 +40,7 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Settings as SettingsIcon
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
@@ -208,9 +208,15 @@ fun Onboarding() {
 }
 
 @Composable
-fun LanguagePicker() {
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+fun LanguagePicker(modifier: Modifier = Modifier) {
     var cur by remember { mutableStateOf(Lang.current()) }
-    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    // Wraps onto a second line on narrow screens instead of squeezing a chip into a sliver.
+    androidx.compose.foundation.layout.FlowRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
         listOf("" to R.string.lang_system, "he" to R.string.lang_he, "en" to R.string.lang_en).forEach { (tag, label) ->
             FilterChip(
                 selected = if (tag.isEmpty()) cur.isEmpty() else cur.startsWith(tag),
@@ -241,7 +247,7 @@ fun MainScaffold() {
             R.string.nav_home to Icons.Filled.Security,
             R.string.nav_apps to Icons.Filled.Apps,
             R.string.nav_rules to Icons.Filled.Tune,
-            R.string.nav_more to Icons.Filled.MoreHoriz,
+            R.string.nav_more to Icons.Filled.SettingsIcon,
         )
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -556,7 +562,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
         SectionCard(stringResource(R.string.language)) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 IconTile(Icons.Filled.Language)
-                LanguagePicker()
+                LanguagePicker(Modifier.weight(1f))
             }
         }
 

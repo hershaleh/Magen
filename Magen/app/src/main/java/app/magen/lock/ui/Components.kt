@@ -1,5 +1,9 @@
 package app.magen.lock.ui
 
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -98,8 +102,13 @@ fun PinPad(
 ) {
     var pin by remember { mutableStateOf("") }
     val maxLen = 8
+    // Short or zoomed screens: the pad scrolls instead of cutting off the bottom row (with the confirm key),
+    // and the keys shrink a little when there is little height.
+    BoxWithConstraints(Modifier.fillMaxSize().systemBarsPadding()) {
+    val viewport = maxHeight
+    val keySize = if (viewport < 640.dp) 60.dp else 76.dp
     Column(
-        Modifier.fillMaxSize().systemBarsPadding().padding(24.dp),
+        Modifier.fillMaxWidth().heightIn(min = viewport).verticalScroll(rememberScrollState()).padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -142,7 +151,7 @@ fun PinPad(
                 ).forEach { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                         row.forEach { k ->
-                            Key(enabled, onClick = {
+                            Key(enabled, keySize, onClick = {
                                 if (k == "<") {
                                     pin = pin.dropLast(1)
                                 } else if (k == ">") {
@@ -171,16 +180,17 @@ fun PinPad(
             TextButton(onClick = onCancel, modifier = Modifier.padding(top = 8.dp)) { Text(stringResource(R.string.go_back)) }
         }
     }
+    }
 }
 
 @Composable
-private fun Key(enabled: Boolean, onClick: () -> Unit, content: @Composable () -> Unit) {
+private fun Key(enabled: Boolean, size: androidx.compose.ui.unit.Dp, onClick: () -> Unit, content: @Composable () -> Unit) {
     Surface(
         onClick = onClick,
         enabled = enabled,
         shape = CircleShape,
         color = MaterialTheme.colorScheme.surfaceVariant,
-        modifier = Modifier.size(76.dp),
+        modifier = Modifier.size(size),
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { content() }
     }
