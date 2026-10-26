@@ -6,10 +6,10 @@
     <string name="admin_desc">הרשאת מנהל מכשיר גורמת לכך שהסרת מגן דורשת צעדים נוספים. מגן לא קורא ולא מוחק את הנתונים שלך.</string>
     <string name="admin_disable_warning">ביטול הרשאת מנהל המכשיר מחליש את ההגנה. כדי להסיר את מגן, השתמשו ב״אישור הסרה״ בתוך האפליקציה.</string>
 
-    <string name="nav_home">הגנה</string>
+    <string name="nav_home">בית</string>
     <string name="nav_apps">אפליקציות</string>
     <string name="nav_rules">מתקדם</string>
-    <string name="nav_more">הגדרות</string>
+    <string name="nav_more">עוד</string>
 
     <string name="welcome_title">ברוכים הבאים למגן</string>
     <string name="welcome_sub">נעילת אפליקציות, חסימת התקנות והגנה מהסרה – הכול במקום אחד.</string>
@@ -278,5 +278,22 @@
     <string name="owner_versions_info">איזו שיטה עובדת באיזה אנדרואיד:\n• הסרה פשוטה: אנדרואיד 6 ומעלה (המינימום של מגן). גוגל סימנה אותה כמיושנת באנדרואיד 8, לא מתועדת גרסה מקסימלית, אבל היא עלולה להיכשל בחלק מהטלפונים.\n• העברה ל\"שומר בעלות\": אנדרואיד 9 (API 28) ומעלה בלבד. השומר חייב להיות מותקן ומנהל המכשיר שלו מופעל.\n• הסרה דרך Root: לא רשמית, תלויה בטלפון.\nהטלפון שלכם: אנדרואיד %1$s (API %2$d).</string>
     <string name="stale_block_title">חסימת הסרה שנשארה</string>
     <string name="stale_block_body">אנדרואיד עדיין חוסמת את הסרת מגן, אף שמגן כבר אינו בעל המכשיר. זו שארית ממצב חזק ישן, ורק בעל המכשיר יכול לנקות אותה. תיקון חד-פעמי: הריצו ממחשב את הפקודה שלמטה (ייתכן שצריך קודם להסיר חשבונות). מגן ינקה את החסימה בעצמו תוך שניות. אחר כך אפשר להסיר שוב את בעלות המכשיר אם צריך, ולהסיר את האפליקציה. מגן לא עורך קובצי מערכת בשביל זה.</string>
+    <string name="nav_times">זמנים</string>
+    <string name="nav_protection">הגנה</string>
+    <string name="times_title">זמנים</string>
+    <string name="times_soon_title">בקרוב</string>
+    <string name="times_soon_body">כאן יופיעו בעתיד לוחות זמנים, פרופילים ומגבלות שימוש. האפשרויות עדיין אינן זמינות.</string>
+    <string name="protection_title">הגנה</string>
+    <string name="protection_adv_title">הגנה מתקדמת</string>
+    <string name="protection_adv_desc">מצב הגנה רגיל או חזק, ההשוואה והמדריך למצב חזק.</string>
+    <string name="protection_adv_open">פתיחת הגנה מתקדמת</string>
+    <string name="adv_perms_title">ניהול מכשיר ובעלות</string>
+    <string name="adv_perms_desc">המצב וההפעלה שלהם נמצאים בלשונית בית.</string>
+    <string name="adv_perms_open">מעבר לבית</string>
+    <string name="more_code_title">קוד ואימות</string>
+    <string name="more_perms_title">הרשאות ומדריכים</string>
+    <string name="more_perms_open">פתיחת ההרשאות</string>
+    <string name="more_release_title">שחרור ושחזור</string>
+    <string name="more_release_desc">השתמשו בהן רק כשרוצים להסיר את מגן או לוותר על Device Owner. אלו פעולות נפרדות.</string>
 </resources>
 

@@ -6,10 +6,10 @@
     <string name="admin_desc">Device admin makes removing Magen require extra steps. Magen does not read or erase your data.</string>
     <string name="admin_disable_warning">Disabling Magen\'s device-admin permission weakens protection. To remove Magen, use “Approve uninstall” inside the app.</string>
 
-    <string name="nav_home">Protection</string>
+    <string name="nav_home">Home</string>
     <string name="nav_apps">Apps</string>
     <string name="nav_rules">Advanced</string>
-    <string name="nav_more">Settings</string>
+    <string name="nav_more">More</string>
 
     <string name="welcome_title">Welcome to Magen</string>
     <string name="welcome_sub">App locking, install blocking and removal protection, all in one place.</string>
@@ -278,5 +278,22 @@
     <string name="owner_versions_info">Which method works on which Android:\n• Simple removal: Android 6 and newer (Magen\'s minimum). Google marked it deprecated in Android 8, no upper limit is documented, but it can fail on some phones.\n• Transfer to Magen Keeper: Android 9 (API 28) and newer only. Keeper must be installed and its device admin enabled.\n• Root removal: unofficial, depends on the phone.\nYour phone: Android %1$s (API %2$d).</string>
     <string name="stale_block_title">Leftover uninstall block</string>
     <string name="stale_block_body">Android still blocks uninstalling Magen, although Magen is no longer the Device Owner. It is a leftover from an older Strong mode, and only a Device Owner can clear it. One-time fix: run the command below from a computer (it may require removing accounts first). Magen then clears the block by itself within seconds. After that, remove Device Owner again if needed and uninstall. Magen does not edit system files for this.</string>
+    <string name="nav_times">Times</string>
+    <string name="nav_protection">Protection</string>
+    <string name="times_title">Times</string>
+    <string name="times_soon_title">Coming soon</string>
+    <string name="times_soon_body">Schedules, profiles and usage limits will appear here. They are not available yet.</string>
+    <string name="protection_title">Protection</string>
+    <string name="protection_adv_title">Advanced protection</string>
+    <string name="protection_adv_desc">Protection level (regular or strong), the comparison and the strong mode guide.</string>
+    <string name="protection_adv_open">Open advanced protection</string>
+    <string name="adv_perms_title">Device admin and ownership</string>
+    <string name="adv_perms_desc">Their status and activation are on the Home tab.</string>
+    <string name="adv_perms_open">Go to Home</string>
+    <string name="more_code_title">Code and authentication</string>
+    <string name="more_perms_title">Permissions and guides</string>
+    <string name="more_perms_open">Open permissions</string>
+    <string name="more_release_title">Release and recovery</string>
+    <string name="more_release_desc">Use these only when you want to uninstall Magen or give up Device Owner. They are separate actions.</string>
 </resources>
 

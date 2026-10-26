@@ -1,5 +1,6 @@
 package app.magen.lock.ui
 
+import androidx.activity.compose.BackHandler
 import android.app.admin.DevicePolicyManager
 import android.content.Context
 import android.content.Intent
@@ -40,7 +41,8 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
-import androidx.compose.material.icons.filled.Settings as SettingsIcon
+import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.Shield
@@ -244,10 +246,11 @@ fun MainScaffold() {
         NewRecovery { recoveryMode = false }
     } else {
         val items = listOf(
-            R.string.nav_home to Icons.Filled.Security,
+            R.string.nav_home to Icons.Filled.Home,
             R.string.nav_apps to Icons.Filled.Apps,
-            R.string.nav_rules to Icons.Filled.Tune,
-            R.string.nav_more to Icons.Filled.SettingsIcon,
+            R.string.nav_times to Icons.Filled.Schedule,
+            R.string.nav_protection to Icons.Filled.Security,
+            R.string.nav_more to Icons.Filled.MoreHoriz,
         )
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -268,8 +271,13 @@ fun MainScaffold() {
                 when (tab) {
                     0 -> HomeTab()
                     1 -> AppsTab()
-                    2 -> RulesTab()
-                    else -> MoreTab(onChangePin = { changingPin = true }, onRecovery = { recoveryMode = true })
+                    2 -> TimesTab()
+                    3 -> ProtectionTab(onOpenHome = { tab = 0 })
+                    else -> MoreTab(
+                        onChangePin = { changingPin = true },
+                        onRecovery = { recoveryMode = true },
+                        onOpenHome = { tab = 0 },
+                    )
                 }
             }
         }
@@ -498,9 +506,14 @@ private fun ModePill(mode: LockMode?) {
 // ---- tab: rules ------------------------------------------------------------------------------
 
 @Composable
-fun RulesTab() {
+fun ProtectionTab(onOpenHome: () -> Unit) {
+    var advanced by rememberSaveable { mutableStateOf(false) }
+    if (advanced) {
+        AdvancedProtection(onBack = { advanced = false }, onOpenHome = onOpenHome)
+        return
+    }
     TabColumn {
-        Text(stringResource(R.string.rules_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(stringResource(R.string.protection_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
         SectionCard(stringResource(R.string.rules_installs)) {
             SwitchRow(
@@ -524,13 +537,67 @@ fun RulesTab() {
         CustomKeywordsCard()
 
         HowToCard()
+
+        SectionCard(stringResource(R.string.protection_adv_title), stringResource(R.string.protection_adv_desc)) {
+            OutlinedButton(
+                onClick = { advanced = true },
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+            ) { Text(stringResource(R.string.protection_adv_open)) }
+        }
+    }
+}
+
+/** Sub-screen of the Protection tab: protection level, comparison, strong-mode guide, admin/owner pointers. */
+@Composable
+private fun AdvancedProtection(onBack: () -> Unit, onOpenHome: () -> Unit) {
+    BackHandler(onBack = onBack)
+    TabColumn {
+        TextButton(onClick = onBack) { Text(stringResource(R.string.go_back)) }
+        Text(stringResource(R.string.protection_adv_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+
+        SectionCard(stringResource(R.string.level_title)) {
+            LevelSelector(Store.level) { Store.setLevel(it) }
+            CompareDialogLink()
+            OutlinedButton(
+                onClick = { Session.showGuide = true },
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+            ) { Text(stringResource(R.string.guide_open)) }
+        }
+
+        SectionCard(stringResource(R.string.adv_perms_title), stringResource(R.string.adv_perms_desc)) {
+            OutlinedButton(
+                onClick = onOpenHome,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+            ) { Text(stringResource(R.string.adv_perms_open)) }
+        }
+    }
+}
+
+// ---- tab: times ------------------------------------------------------------------------------
+
+/** Placeholder for the future schedules, profiles and usage limits. Nothing here saves or enforces anything. */
+@Composable
+fun TimesTab() {
+    TabColumn {
+        Text(stringResource(R.string.times_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        SectionCard(stringResource(R.string.times_soon_title), stringResource(R.string.times_soon_body)) {
+            Icon(
+                Icons.Filled.Schedule,
+                null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(40.dp),
+            )
+        }
     }
 }
 
 // ---- tab: more -------------------------------------------------------------------------------
 
 @Composable
-fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
+fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit) {
     val ctx = LocalContext.current
     var confirm by remember { mutableStateOf(false) }
     var confirmOwner by remember { mutableStateOf(false) }
@@ -549,24 +616,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
     TabColumn {
         Text(stringResource(R.string.more_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
-        SectionCard(stringResource(R.string.level_title)) {
-            LevelSelector(Store.level) { Store.setLevel(it) }
-            CompareDialogLink()
-            OutlinedButton(
-                onClick = { Session.showGuide = true },
-                shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-            ) { Text(stringResource(R.string.guide_open)) }
-        }
-
-        SectionCard(stringResource(R.string.language)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconTile(Icons.Filled.Language)
-                LanguagePicker(Modifier.weight(1f))
-            }
-        }
-
-        SectionCard(stringResource(R.string.security)) {
+        SectionCard(stringResource(R.string.more_code_title)) {
             SwitchRow(Icons.Filled.Lock, stringResource(R.string.relock_screen_off), null, Store.relockOnScreenOff) {
                 Store.setRelock(it)
             }
@@ -607,6 +657,30 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
             ) { Text(stringResource(if (Store.hasRecovery) R.string.recovery_regen else R.string.recovery_create)) }
         }
 
+        SectionCard(stringResource(R.string.more_perms_title)) {
+            OutlinedButton(
+                onClick = onOpenHome,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.more_perms_open)) }
+            OutlinedButton(
+                onClick = { Session.showGuide = true },
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+            ) { Text(stringResource(R.string.guide_open)) }
+        }
+
+        Text(
+            stringResource(R.string.more_release_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 10.dp),
+        )
+        Text(
+            stringResource(R.string.more_release_desc),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         val staleBlock = remember(perms) { Policy.staleUninstallBlock(ctx) }
         if (staleBlock) {
             SectionCard(stringResource(R.string.stale_block_title), stringResource(R.string.stale_block_body)) {
@@ -678,6 +752,13 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit) {
                 Icon(Icons.Filled.DeleteForever, null, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.size(8.dp))
                 Text(stringResource(R.string.approve_uninstall), color = Color.White)
+            }
+        }
+
+        SectionCard(stringResource(R.string.language)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                IconTile(Icons.Filled.Language)
+                LanguagePicker(Modifier.weight(1f))
             }
         }
 
