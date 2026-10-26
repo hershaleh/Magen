@@ -701,7 +701,8 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
             }
         }
 
-        if (perms.owner && !ownerCleared) {
+        run {
+            val canRelease = perms.owner && !ownerCleared
             SectionCard(stringResource(R.string.remove_owner_section_title), stringResource(R.string.remove_owner_section_desc)) {
                 Text(
                     stringResource(R.string.owner_versions_info, android.os.Build.VERSION.RELEASE, android.os.Build.VERSION.SDK_INT),
@@ -709,6 +710,14 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
+                if (!canRelease) {
+                    Text(
+                        stringResource(R.string.remove_owner_not_owner),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                }
                 if (normalBroken) {
                     Text(
                         stringResource(R.string.remove_owner_unavailable),
@@ -718,11 +727,13 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                     )
                     TextButton(
                         onClick = { confirmOwner = true },
+                        enabled = canRelease,
                         modifier = Modifier.fillMaxWidth(),
                     ) { Text(stringResource(R.string.remove_owner_try_anyway)) }
                 } else {
                     OutlinedButton(
                         onClick = { confirmOwner = true },
+                        enabled = canRelease,
                         shape = RoundedCornerShape(16.dp),
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
@@ -730,11 +741,13 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                 }
                 TextButton(
                     onClick = { confirmRoot = true },
+                    enabled = canRelease,
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(stringResource(R.string.remove_owner_root), color = MaterialTheme.colorScheme.error) }
                 if (android.os.Build.VERSION.SDK_INT >= 28) {
                     OutlinedButton(
                         onClick = { confirmKeeper = true },
+                        enabled = canRelease,
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
                     ) { Text(stringResource(R.string.remove_owner_keeper)) }

@@ -295,5 +295,6 @@
     <string name="more_perms_open">Open permissions</string>
     <string name="more_release_title">Release and recovery</string>
     <string name="more_release_desc">Use these only when you want to uninstall Magen or give up Device Owner. They are separate actions.</string>
+    <string name="remove_owner_not_owner">These actions work only while Magen is the Device Owner. Right now it is not, so they are disabled.</string>
 </resources>
 

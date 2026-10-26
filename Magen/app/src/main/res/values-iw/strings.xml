@@ -295,5 +295,6 @@
     <string name="more_perms_open">פתיחת ההרשאות</string>
     <string name="more_release_title">שחרור ושחזור</string>
     <string name="more_release_desc">השתמשו בהן רק כשרוצים להסיר את מגן או לוותר על Device Owner. אלו פעולות נפרדות.</string>
+    <string name="remove_owner_not_owner">הפעולות האלה פועלות רק כשמגן היא בעלת המכשיר (Device Owner). כרגע היא אינה, ולכן הן מושבתות.</string>
 </resources>
 
