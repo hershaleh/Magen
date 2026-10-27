@@ -341,5 +341,17 @@
     <string name="fix_notifications">Open notification settings</string>
     <string name="fix_strong_guide">Open strong mode guide</string>
     <string name="fix_more">Go to More</string>
+    <string name="apps_summary">%1$d of %2$d apps selected</string>
+    <string name="filter_all">All</string>
+    <string name="filter_selected">Selected</string>
+    <string name="filter_unselected">Not selected</string>
+    <string name="bulk_select">Select shown (%1$d)</string>
+    <string name="bulk_deselect">Deselect shown (%1$d)</string>
+    <string name="bulk_confirm_title">Apply to the shown apps?</string>
+    <string name="bulk_select_msg">%1$d shown apps will be locked with the code. Apps that are already locked keep their mode, and apps that are not shown are not changed.</string>
+    <string name="bulk_deselect_msg">The lock will be removed from %1$d shown apps. Apps that are not shown are not changed.</string>
+    <string name="apps_none">No launchable apps were found on this device.</string>
+    <string name="apps_no_results">No apps match your search or filter.</string>
+    <string name="apps_clear_search">Clear search and filter</string>
 </resources>
 

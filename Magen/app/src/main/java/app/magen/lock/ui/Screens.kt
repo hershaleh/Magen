@@ -378,18 +378,44 @@ private fun loadApps(ctx: Context): List<AppItem> {
         .sortedBy { it.label.lowercase() }
 }
 
+private const val FILTER_ALL = 0
+private const val FILTER_SELECTED = 1
+private const val FILTER_UNSELECTED = 2
+
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 fun AppsTab() {
     val ctx = LocalContext.current
-    val apps by produceState(emptyList<AppItem>()) { value = withContext(Dispatchers.Default) { loadApps(ctx) } }
-    var q by remember { mutableStateOf("") }
-    val shown = remember(apps, q) { apps.filter { it.label.contains(q, ignoreCase = true) } }
+    // null while the list is still loading, so "no apps" is not shown by mistake.
+    val loaded by produceState<List<AppItem>?>(null) { value = withContext(Dispatchers.Default) { loadApps(ctx) } }
+    val apps = loaded
+    var q by rememberSaveable { mutableStateOf("") }
+    var filter by rememberSaveable { mutableIntStateOf(FILTER_ALL) }
+    var bulk by remember { mutableStateOf<Int?>(null) } // 1 = select shown, 2 = deselect shown
+
+    // Search and filter only decide what is displayed; they never touch the saved lock list.
+    val locked = Store.locked
+    val query = q.trim()
+    val shown = remember(apps, query, filter, locked) {
+        (apps ?: emptyList()).filter { a ->
+            (query.isEmpty() || a.label.contains(query, ignoreCase = true) || a.pkg.contains(query, ignoreCase = true)) &&
+                when (filter) {
+                    FILTER_SELECTED -> a.pkg in locked
+                    FILTER_UNSELECTED -> a.pkg !in locked
+                    else -> true
+                }
+        }
+    }
+    val total = apps?.size ?: 0
+    val selectedCount = apps?.count { it.pkg in locked } ?: 0
+    val toSelect = shown.filter { it.pkg !in locked }
+    val toDeselect = shown.filter { it.pkg in locked }
 
     Column(Modifier.fillMaxSize().padding(horizontal = 20.dp)) {
         Spacer(Modifier.height(16.dp))
         Text(stringResource(R.string.apps_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Text(
-            stringResource(R.string.apps_count, Store.locked.size),
+            stringResource(R.string.apps_summary, selectedCount, total),
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Medium,
         )
@@ -405,19 +431,98 @@ fun AppsTab() {
             placeholder = { Text(stringResource(R.string.search_apps)) },
             leadingIcon = { Icon(Icons.Filled.Search, null) },
             shape = RoundedCornerShape(16.dp),
-            modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+            modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
         )
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            contentPadding = PaddingValues(bottom = 16.dp),
+        androidx.compose.foundation.layout.FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(vertical = 6.dp),
         ) {
-            items(shown, key = { it.pkg }) { AppRow(it) }
+            listOf(
+                FILTER_ALL to R.string.filter_all,
+                FILTER_SELECTED to R.string.filter_selected,
+                FILTER_UNSELECTED to R.string.filter_unselected,
+            ).forEach { (id, label) ->
+                FilterChip(selected = filter == id, onClick = { filter = id }, label = { Text(stringResource(label)) })
+            }
         }
+        if (apps != null && shown.isNotEmpty()) {
+            Row(Modifier.fillMaxWidth().padding(bottom = 6.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = { bulk = 1 },
+                    enabled = toSelect.isNotEmpty(),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.weight(1f),
+                ) { Text(stringResource(R.string.bulk_select, toSelect.size), maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
+                OutlinedButton(
+                    onClick = { bulk = 2 },
+                    enabled = toDeselect.isNotEmpty(),
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.weight(1f),
+                ) { Text(stringResource(R.string.bulk_deselect, toDeselect.size), maxLines = 2, textAlign = androidx.compose.ui.text.style.TextAlign.Center) }
+            }
+        }
+        when {
+            apps == null -> Box(Modifier.fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+                androidx.compose.material3.CircularProgressIndicator()
+            }
+            apps.isEmpty() -> Text(
+                stringResource(R.string.apps_none),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.fillMaxWidth().padding(32.dp),
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+            )
+            shown.isEmpty() -> Column(
+                Modifier.fillMaxWidth().padding(32.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                Text(
+                    stringResource(R.string.apps_no_results),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+                OutlinedButton(
+                    onClick = {
+                        q = ""
+                        filter = FILTER_ALL
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                ) { Text(stringResource(R.string.apps_clear_search)) }
+            }
+            else -> LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                contentPadding = PaddingValues(bottom = 16.dp),
+            ) {
+                items(shown, key = { it.pkg }) { AppRow(it, showPkg = query.isNotEmpty()) }
+            }
+        }
+    }
+
+    val action = bulk
+    if (action != null) {
+        // Only the apps in the current results are changed; hidden apps and their modes stay as they are.
+        val targets = if (action == 1) toSelect else toDeselect
+        AlertDialog(
+            onDismissRequest = { bulk = null },
+            title = { Text(stringResource(R.string.bulk_confirm_title)) },
+            text = {
+                Text(
+                    stringResource(if (action == 1) R.string.bulk_select_msg else R.string.bulk_deselect_msg, targets.size),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    bulk = null
+                    targets.forEach { a -> Store.setMode(a.pkg, if (action == 1) LockMode.PIN else null) }
+                }) { Text(stringResource(R.string.confirm)) }
+            },
+            dismissButton = { TextButton(onClick = { bulk = null }) { Text(stringResource(R.string.cancel)) } },
+        )
     }
 }
 
 @Composable
-private fun AppRow(a: AppItem) {
+private fun AppRow(a: AppItem, showPkg: Boolean) {
     val mode = Store.locked[a.pkg]
     val released = a.pkg in Store.mainUnlocked
     Surface(
@@ -441,7 +546,18 @@ private fun AppRow(a: AppItem) {
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Image(a.icon, null, Modifier.size(44.dp).clip(RoundedCornerShape(12.dp)))
-            Text(a.label, Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
+            Column(Modifier.weight(1f)) {
+                Text(a.label, maxLines = 1, overflow = TextOverflow.Ellipsis, fontWeight = FontWeight.Medium)
+                if (showPkg) {
+                    Text(
+                        a.pkg,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
             ModePill(mode)
             if (mode == LockMode.MAIN) {
                 IconButton(onClick = { Store.toggleMainUnlocked(a.pkg) }) {

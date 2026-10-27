@@ -341,5 +341,17 @@
     <string name="fix_notifications">פתיחת הגדרות ההתראות</string>
     <string name="fix_strong_guide">פתיחת המדריך למצב חזק</string>
     <string name="fix_more">מעבר ל„עוד”</string>
+    <string name="apps_summary">%1$d מתוך %2$d אפליקציות נבחרו</string>
+    <string name="filter_all">הכול</string>
+    <string name="filter_selected">נבחרו</string>
+    <string name="filter_unselected">לא נבחרו</string>
+    <string name="bulk_select">בחירת המוצגות (%1$d)</string>
+    <string name="bulk_deselect">ביטול בחירת המוצגות (%1$d)</string>
+    <string name="bulk_confirm_title">להחיל על האפליקציות המוצגות?</string>
+    <string name="bulk_select_msg">%1$d אפליקציות מוצגות ינעלו בקוד. אפליקציות שכבר נעולות שומרות על המצב שלהן, ואפליקציות שאינן מוצגות לא ישתנו.</string>
+    <string name="bulk_deselect_msg">הנעילה תוסר מ־%1$d אפליקציות מוצגות. אפליקציות שאינן מוצגות לא ישתנו.</string>
+    <string name="apps_none">לא נמצאו במכשיר אפליקציות שניתן לפתוח.</string>
+    <string name="apps_no_results">אין אפליקציות שמתאימות לחיפוש או לסינון.</string>
+    <string name="apps_clear_search">ניקוי חיפוש וסינון</string>
 </resources>
 
