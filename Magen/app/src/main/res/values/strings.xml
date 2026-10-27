@@ -290,8 +290,8 @@
     <string name="adv_perms_title">Device admin and ownership</string>
     <string name="adv_perms_desc">Their status and activation are on the Home tab.</string>
     <string name="adv_perms_open">Go to Home</string>
-    <string name="more_code_title">Code and authentication</string>
-    <string name="more_perms_title">Permissions and guides</string>
+    <string name="more_code_title">App security</string>
+    <string name="more_perms_title">Permissions and Android settings</string>
     <string name="more_perms_open">Open permissions</string>
     <string name="more_release_title">Release and recovery</string>
     <string name="more_release_desc">Use these only when you want to uninstall Magen or give up Device Owner. They are separate actions.</string>
@@ -382,5 +382,15 @@
     <string name="ln_self_no_admin">On, but device admin is off, so the Settings pages of Magen itself are not blocked.</string>
     <string name="ln_self_no_service">On, but the accessibility service is not running. Only the device admin approval remains.</string>
     <string name="ln_self_none">On, but neither the accessibility service nor device admin is active, so Magen is not protected.</string>
+    <string name="more_perms_desc">Shortcuts to the screens where permissions are switched on. Nothing changes from here.</string>
+    <string name="more_to_protection">Open the Protection tab</string>
+    <string name="more_to_protection_desc">Self-protection, install blocks and Settings blocks are in the Protection tab, so each setting has one place.</string>
+    <string name="more_guides_title">Guides and help</string>
+    <string name="more_guides_desc">Step-by-step help for strong mode (Device Owner).</string>
+    <string name="relock_desc">Asks for the code again after the screen was off.</string>
+    <string name="recovery_desc_more">A one-time code that opens Magen if you forget the master code. It is shown once, so keep it somewhere safe.</string>
+    <string name="rel_normal_desc">Normal removal: asks Android to release Device Owner. Works on most phones; on some it fails with a telephony error.</string>
+    <string name="rel_root_desc">Root removal: only for rooted phones. It moves a system file and reboots, so use it only if the normal removal fails.</string>
+    <string name="rel_keeper_desc">Transfer: hands Device Owner to the small Magen Keeper app, which can give it back to Magen later.</string>
 </resources>
 

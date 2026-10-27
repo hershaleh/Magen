@@ -278,6 +278,7 @@ fun MainScaffold() {
                         onChangePin = { changingPin = true },
                         onRecovery = { recoveryMode = true },
                         onOpenHome = { tab = 0 },
+                        onOpenProtection = { tab = 3 },
                     )
                 }
             }
@@ -755,7 +756,7 @@ fun TimesTab() {
 // ---- tab: more -------------------------------------------------------------------------------
 
 @Composable
-fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit) {
+fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit, onOpenProtection: () -> Unit) {
     val ctx = LocalContext.current
     var confirm by remember { mutableStateOf(false) }
     var confirmOwner by remember { mutableStateOf(false) }
@@ -775,7 +776,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
         Text(stringResource(R.string.more_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
         SectionCard(stringResource(R.string.more_code_title)) {
-            SwitchRow(Icons.Filled.Lock, stringResource(R.string.relock_screen_off), null, Store.relockOnScreenOff) {
+            SwitchRow(Icons.Filled.Lock, stringResource(R.string.relock_screen_off), stringResource(R.string.relock_desc), Store.relockOnScreenOff) {
                 Store.setRelock(it)
             }
             if (Bio.available(ctx)) {
@@ -807,18 +808,45 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
             ) { Text(stringResource(if (Store.hasRecovery) R.string.recovery_regen else R.string.recovery_create)) }
+            Text(
+                stringResource(R.string.recovery_desc_more),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp),
+            )
         }
 
-        SectionCard(stringResource(R.string.more_perms_title)) {
+        SectionCard(stringResource(R.string.more_perms_title), stringResource(R.string.more_perms_desc)) {
             OutlinedButton(
                 onClick = onOpenHome,
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.more_perms_open)) }
+            // Shortcuts that only open the matching Android screen; nothing is changed from here.
+            listOf(Fix.ACCESSIBILITY, Fix.NOTIFICATIONS, Fix.BATTERY).forEach { f ->
+                TextButton(
+                    onClick = { openFix(ctx, f) {} },
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text(stringResource(fixLabel(f))) }
+            }
+            OutlinedButton(
+                onClick = onOpenProtection,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+            ) { Text(stringResource(R.string.more_to_protection)) }
+            Text(
+                stringResource(R.string.more_to_protection_desc),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 6.dp),
+            )
+        }
+
+        SectionCard(stringResource(R.string.more_guides_title), stringResource(R.string.more_guides_desc)) {
             OutlinedButton(
                 onClick = { Session.showGuide = true },
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.guide_open)) }
         }
 
@@ -870,6 +898,12 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                         modifier = Modifier.padding(bottom = 8.dp),
                     )
                 }
+                Text(
+                    stringResource(R.string.rel_normal_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
                 if (normalBroken) {
                     Text(
                         stringResource(R.string.remove_owner_unavailable),
@@ -891,11 +925,23 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                         modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
                     ) { Text(stringResource(R.string.remove_owner)) }
                 }
+                Text(
+                    stringResource(R.string.rel_root_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
                 TextButton(
                     onClick = { confirmRoot = true },
                     enabled = canRelease,
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text(stringResource(R.string.remove_owner_root), color = MaterialTheme.colorScheme.error) }
+                Text(
+                    stringResource(R.string.rel_keeper_desc),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
                 if (android.os.Build.VERSION.SDK_INT >= 28) {
                     OutlinedButton(
                         onClick = { confirmKeeper = true },

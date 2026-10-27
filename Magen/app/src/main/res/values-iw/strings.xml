@@ -290,8 +290,8 @@
     <string name="adv_perms_title">ניהול מכשיר ובעלות</string>
     <string name="adv_perms_desc">המצב וההפעלה שלהם נמצאים בלשונית בית.</string>
     <string name="adv_perms_open">מעבר לבית</string>
-    <string name="more_code_title">קוד ואימות</string>
-    <string name="more_perms_title">הרשאות ומדריכים</string>
+    <string name="more_code_title">אבטחת האפליקציה</string>
+    <string name="more_perms_title">הרשאות והגדרות Android</string>
     <string name="more_perms_open">פתיחת ההרשאות</string>
     <string name="more_release_title">שחרור ושחזור</string>
     <string name="more_release_desc">השתמשו בהן רק כשרוצים להסיר את מגן או לוותר על Device Owner. אלו פעולות נפרדות.</string>
@@ -382,5 +382,15 @@
     <string name="ln_self_no_admin">מופעל, אך ניהול המכשיר כבוי ולכן דפי ההגדרות של מגן אינם חסומים.</string>
     <string name="ln_self_no_service">מופעל, אך שירות הנגישות אינו פועל. נשאר רק אישור ניהול המכשיר.</string>
     <string name="ln_self_none">מופעל, אך לא שירות הנגישות ולא ניהול המכשיר פעילים, ולכן מגן אינה מוגנת.</string>
+    <string name="more_perms_desc">קיצורי דרך למסכים שבהם מפעילים הרשאות. שום דבר לא משתנה מכאן.</string>
+    <string name="more_to_protection">פתיחת לשונית ההגנה</string>
+    <string name="more_to_protection_desc">הגנה עצמית, חסימות התקנה וחסימות הגדרות נמצאות בלשונית ההגנה, כך שלכל הגדרה יש מקום אחד.</string>
+    <string name="more_guides_title">מדריכים ועזרה</string>
+    <string name="more_guides_desc">עזרה צעד אחר צעד למצב חזק (Device Owner).</string>
+    <string name="relock_desc">מבקש את הקוד שוב אחרי שהמסך היה כבוי.</string>
+    <string name="recovery_desc_more">קוד חד־פעמי שפותח את מגן אם שכחתם את הקוד הראשי. הוא מוצג פעם אחת, לכן שמרו אותו במקום בטוח.</string>
+    <string name="rel_normal_desc">הסרה רגילה: מבקשת מאנדרואיד לשחרר את Device Owner. עובדת ברוב הטלפונים; בחלקם נכשלת בשגיאת טלפוניה.</string>
+    <string name="rel_root_desc">הסרה דרך Root: רק לטלפונים עם רוט. היא מזיזה קובץ מערכת ומאתחלת, לכן השתמשו בה רק אם ההסרה הרגילה נכשלה.</string>
+    <string name="rel_keeper_desc">העברה: מעבירה את Device Owner לאפליקציית השומר הקטנה, שיכולה להחזיר אותו למגן בהמשך.</string>
 </resources>
 
