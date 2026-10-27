@@ -281,7 +281,7 @@
     <string name="nav_times">זמנים</string>
     <string name="nav_protection">הגנה</string>
     <string name="times_title">זמנים</string>
-    <string name="times_soon_title">בקרוב</string>
+    <string name="times_soon_title">עדיין לא זמין</string>
     <string name="times_soon_body">כאן יופיעו בעתיד לוחות זמנים, פרופילים ומגבלות שימוש. האפשרויות עדיין אינן זמינות.</string>
     <string name="protection_title">הגנה</string>
     <string name="protection_adv_title">הגנה מתקדמת</string>
@@ -353,5 +353,13 @@
     <string name="apps_none">לא נמצאו במכשיר אפליקציות שניתן לפתוח.</string>
     <string name="apps_no_results">אין אפליקציות שמתאימות לחיפוש או לסינון.</string>
     <string name="apps_clear_search">ניקוי חיפוש וסינון</string>
+    <string name="times_now_title">פועל כעת</string>
+    <string name="times_now_desc">התנהגות מבוססת זמן שיש למגן בפועל כיום.</string>
+    <string name="times_pause_active">אישור ההסרה פעיל עד %1$s. ההגנה מושהית עד אז.</string>
+    <string name="times_pause_none">אין השהיה מבוססת זמן פעילה.</string>
+    <string name="times_item_schedules">לוחות זמנים (הפעלה וכיבוי בשעות וימים שנבחרו)</string>
+    <string name="times_item_profiles">פרופילים (למשל עבודה, לילה)</string>
+    <string name="times_item_limits">מגבלות שימוש יומיות</string>
+    <string name="times_not_enforced">אלה עדיין לא קיימים. שום דבר במסך הזה אינו מתוזמן או נאכף, ושום לוח זמנים אינו נשמר.</string>
 </resources>
 

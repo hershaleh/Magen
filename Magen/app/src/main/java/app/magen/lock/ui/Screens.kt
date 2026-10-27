@@ -665,17 +665,56 @@ private fun AdvancedProtection(onBack: () -> Unit, onOpenHome: () -> Unit) {
 
 // ---- tab: times ------------------------------------------------------------------------------
 
-/** Placeholder for the future schedules, profiles and usage limits. Nothing here saves or enforces anything. */
+/**
+ * The only time-based behaviour Magen has today is the short uninstall-approval window, shown here read-only.
+ * Schedules, profiles and usage limits do not exist yet, so nothing here saves or enforces them.
+ */
 @Composable
 fun TimesTab() {
+    // Re-read the clock so the status flips by itself when the approval window ends.
+    val now by produceState(System.currentTimeMillis()) {
+        while (true) {
+            value = System.currentTimeMillis()
+            kotlinx.coroutines.delay(15_000)
+        }
+    }
+    val until = Store.allowedUntil
+    val active = now < until
     TabColumn {
         Text(stringResource(R.string.times_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+
+        SectionCard(stringResource(R.string.times_now_title), stringResource(R.string.times_now_desc)) {
+            Text(
+                if (active) {
+                    stringResource(
+                        R.string.times_pause_active,
+                        java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT).format(java.util.Date(until)),
+                    )
+                } else {
+                    stringResource(R.string.times_pause_none)
+                },
+                color = if (active) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Medium,
+            )
+        }
+
         SectionCard(stringResource(R.string.times_soon_title), stringResource(R.string.times_soon_body)) {
-            Icon(
-                Icons.Filled.Schedule,
-                null,
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(40.dp),
+            listOf(R.string.times_item_schedules, R.string.times_item_profiles, R.string.times_item_limits).forEach {
+                Row(Modifier.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Filled.Schedule,
+                        null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp),
+                    )
+                    Text(stringResource(it), modifier = Modifier.padding(start = 10.dp))
+                }
+            }
+            Text(
+                stringResource(R.string.times_not_enforced),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(top = 8.dp),
             )
         }
     }
