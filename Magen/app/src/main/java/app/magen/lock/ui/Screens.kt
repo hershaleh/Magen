@@ -69,6 +69,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -118,6 +119,9 @@ object Session {
     /** Set by [trip] just before Magen sends the person to a system screen (Settings, uninstall, Keeper). */
     var tripUntil = 0L
     var tripPending = false
+
+    /** Set by the help screen to ask the main screen to open a given tab once it is shown again. */
+    var goTab by mutableStateOf<Int?>(null)
 
     /**
      * The code is asked for again every time Magen leaves the screen, except for a trip that Magen itself
@@ -240,6 +244,12 @@ fun MainScaffold() {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var changingPin by remember { mutableStateOf(false) }
     var recoveryMode by remember { mutableStateOf(false) }
+    LaunchedEffect(Session.goTab) {
+        Session.goTab?.let {
+            tab = it
+            Session.goTab = null
+        }
+    }
 
     if (changingPin) {
         ChangePin { changingPin = false }
@@ -847,7 +857,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                 onClick = { Session.showGuide = true },
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
-            ) { Text(stringResource(R.string.guide_open)) }
+            ) { Text(stringResource(R.string.help_open)) }
         }
 
         Text(

@@ -407,6 +407,7 @@ fun LevelStep(onNext: () -> Unit) {
 // ---- strong mode guide -----------------------------------------------------------------------
 
 @Composable
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 fun GuideScreen(onClose: () -> Unit) {
     BackHandler(onBack = onClose)
     val clipboard = LocalClipboardManager.current
@@ -427,6 +428,38 @@ fun GuideScreen(onClose: () -> Unit) {
                 IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
                 Text(stringResource(R.string.guide_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             }
+            Text(stringResource(R.string.help_intro), color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+            SectionCard(stringResource(R.string.help_map_title)) {
+                Text(stringResource(R.string.help_map_body), style = MaterialTheme.typography.bodyMedium)
+                // Each link closes this screen and opens the tab that exists in the main menu.
+                androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    listOf(
+                        0 to R.string.nav_home, 1 to R.string.nav_apps, 2 to R.string.nav_times,
+                        3 to R.string.nav_protection, 4 to R.string.nav_more,
+                    ).forEach { (tab, label) ->
+                        TextButton(onClick = {
+                            Session.goTab = tab
+                            onClose()
+                        }) { Text(stringResource(label)) }
+                    }
+                }
+            }
+            SectionCard(stringResource(R.string.help_regular_title)) {
+                Text(stringResource(R.string.help_regular_body), style = MaterialTheme.typography.bodyMedium)
+            }
+            SectionCard(stringResource(R.string.help_status_title)) {
+                Text(stringResource(R.string.help_status_body), style = MaterialTheme.typography.bodyMedium)
+            }
+            SectionCard(stringResource(R.string.help_strong_title)) {
+                Text(stringResource(R.string.help_strong_body), style = MaterialTheme.typography.bodyMedium)
+                CompareDialogLink()
+            }
+            SectionCard(stringResource(R.string.help_release_title)) {
+                Text(stringResource(R.string.help_release_body), style = MaterialTheme.typography.bodyMedium)
+            }
+
+            Text(stringResource(R.string.guide_steps_title), style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 6.dp))
             Text(stringResource(R.string.guide_intro), color = MaterialTheme.colorScheme.onSurfaceVariant)
 
             steps.forEachIndexed { i, (t, b) ->
