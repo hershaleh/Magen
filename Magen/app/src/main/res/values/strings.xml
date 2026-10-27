@@ -423,5 +423,13 @@ Before you start: keep your master code and recovery code safe, and know the way
 • Transfer to Magen Keeper: hands it to the small Keeper app, which can give it back later. Android 9 or newer.
 • Removal via Root: only for rooted phones. It changes a system file and reboots, so use it as a last resort.
 “Approve uninstall” is different: it opens a 10-minute window, removes admin rights and starts uninstalling Magen. If Magen is still the Device Owner it also tries the normal removal first. It does not replace Keeper or Root when the normal removal fails on your phone.</string>
+    <string name="settings_open_failed">Could not open that Android screen on this device.</string>
+    <string name="adm_title">Device admin (regular)</string>
+    <string name="adm_on">Device admin is active (checked with Android). Uninstalling Magen needs approval inside Magen. This is not Device Owner.</string>
+    <string name="adm_off">Device admin is off (checked with Android). Uninstalling Magen will not need approval inside Magen. This is separate from Device Owner.</string>
+    <string name="own_title">Device Owner (strong mode)</string>
+    <string name="own_on">Device Owner is active (checked with Android). It is a separate, stronger role than device admin.</string>
+    <string name="own_missing">Strong mode is selected, but Device Owner is not active. Device admin above is a different thing and does not replace it.</string>
+    <string name="own_na">Device Owner is not active. It is not needed in regular mode, and device admin is a different thing.</string>
 </resources>
 

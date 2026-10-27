@@ -194,9 +194,22 @@ internal fun fixLabel(f: Fix): Int = when (f) {
 
 /** Opens the screen where the person can fix the problem. Nothing is changed without their action there. */
 internal fun openFix(ctx: Context, fix: Fix, onNavigate: (Int) -> Unit) {
-    fun go(i: Intent) {
+    // Same launch as the buttons on the Home tab. The device-admin approval screen must be started from
+    // an Activity WITHOUT FLAG_ACTIVITY_NEW_TASK (the Home button does exactly that); other Settings
+    // screens are opened as before. A failure is reported instead of being swallowed.
+    fun go(i: Intent, newTask: Boolean = true, @StringRes failed: Int = R.string.settings_open_failed) {
+        val activity = generateSequence(ctx) { (it as? android.content.ContextWrapper)?.baseContext }
+            .firstOrNull { it is android.app.Activity }
         Session.trip()
-        runCatching { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
+        try {
+            if (activity != null && !newTask) {
+                activity.startActivity(i)
+            } else {
+                ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            }
+        } catch (e: Exception) {
+            android.widget.Toast.makeText(ctx, ctx.getString(failed), android.widget.Toast.LENGTH_LONG).show()
+        }
     }
     when (fix) {
         Fix.ACCESSIBILITY -> go(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
@@ -204,6 +217,8 @@ internal fun openFix(ctx: Context, fix: Fix, onNavigate: (Int) -> Unit) {
             Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN)
                 .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, Policy.admin(ctx))
                 .putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ctx.getString(R.string.admin_desc)),
+            newTask = false,
+            failed = R.string.admin_open_failed,
         )
         Fix.BATTERY -> go(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS))
         Fix.NOTIFICATIONS ->
@@ -305,7 +320,13 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
 // ---- Protection tab: per-option state (Stage 5) ----------------------------------------------
 
 /** One line under an option: what its saved setting is, and whether a running mechanism enforces it. */
-class Line(val sev: Sev, @StringRes val text: Int, val fix: Fix? = null, val args: List<Any> = emptyList())
+class Line(
+    val sev: Sev,
+    @StringRes val text: Int,
+    val fix: Fix? = null,
+    val args: List<Any> = emptyList(),
+    @StringRes val title: Int? = null,
+)
 
 private fun androidRestricts(ctx: Context, key: String): Boolean =
     runCatching { ctx.getSystemService(android.os.UserManager::class.java).hasUserRestriction(key) }.getOrDefault(false)
@@ -347,20 +368,26 @@ fun selfLine(p: Perms, running: Boolean): Line = when {
     else -> Line(Sev.BAD, R.string.ln_self_none, Fix.ACCESSIBILITY)
 }
 
+// Device Owner and the regular device admin are different things; each line names itself and says so.
 fun ownerLine(p: Perms): Line = when {
-    p.owner -> Line(Sev.OK, R.string.chk_owner_ok)
-    Store.level == "strong" -> Line(Sev.WARN, R.string.chk_owner_missing, Fix.STRONG_GUIDE)
-    else -> Line(Sev.INFO, R.string.chk_owner_na)
+    p.owner -> Line(Sev.OK, R.string.own_on, title = R.string.own_title)
+    Store.level == "strong" -> Line(Sev.WARN, R.string.own_missing, Fix.STRONG_GUIDE, title = R.string.own_title)
+    else -> Line(Sev.INFO, R.string.own_na, title = R.string.own_title)
 }
 
 fun adminLine(p: Perms): Line =
-    if (p.admin) Line(Sev.OK, R.string.chk_admin_ok) else Line(Sev.WARN, R.string.chk_admin_off, Fix.ADMIN)
+    if (p.admin) {
+        Line(Sev.OK, R.string.adm_on, title = R.string.adm_title)
+    } else {
+        Line(Sev.WARN, R.string.adm_off, Fix.ADMIN, title = R.string.adm_title)
+    }
 
 @Composable
 fun StatusLine(line: Line, onFix: (Fix) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.Top) {
         Icon(sevIcon(line.sev), null, tint = sevColor(line.sev), modifier = Modifier.size(20.dp))
         Column(Modifier.weight(1f).padding(start = 8.dp)) {
+            if (line.title != null) Text(stringResource(line.title), fontWeight = FontWeight.SemiBold)
             Text(
                 stringResource(line.text, *line.args.toTypedArray()),
                 style = MaterialTheme.typography.bodySmall,
