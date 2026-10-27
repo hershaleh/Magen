@@ -214,7 +214,7 @@
     <string name="cat_installapps">התקנת אפליקציות</string>
     <string name="cat_system">דף המערכת וניהול כללי</string>
     <string name="howto_title">איך למצוא דף הגדרות לחסימה</string>
-    <string name="howto_body">1. פתחו את הגדרות הטלפון וחפשו את האפשרות שברצונכם לחסום. 2. פתחו את תוצאת החיפוש ורשמו את הכותרת שמופיעה בראש הדף. 3. חזרו למגן > חוקים > חסימת חלקים מההגדרות > חסימת כל דף אחר. 4. הזינו את הכותרת בדיוק כפי שהיא מופיעה בטלפון ולחצו על „הוספה”. אפשר גם להדביק נתיב מלא, למשל Network &amp; internet &gt; Internet; מגן תשתמש בשם הדף האחרון. 5. נסו לפתוח שוב את הדף ובדקו אם הוא נחסם. אם לא, נסו כותרת אחרת שמופיעה באותו מסך. השמות משתנים בין יצרנים ובין שפות. גם במצב חזק אפשר לחסום ברמת המערכת רק אפשרויות שאנדרואיד מאפשרת להגביל.</string>
+    <string name="howto_body">1. פתחו את הגדרות הטלפון וחפשו את האפשרות שברצונכם לחסום. 2. פתחו את תוצאת החיפוש ורשמו את הכותרת שמופיעה בראש הדף. 3. חזרו למגן > הגנה > חסימת כל דף אחר. 4. הזינו את הכותרת בדיוק כפי שהיא מופיעה בטלפון ולחצו על „הוספה”. אפשר גם להדביק נתיב מלא, למשל Network &amp; internet &gt; Internet; מגן תשתמש בשם הדף האחרון. 5. נסו לפתוח שוב את הדף ובדקו אם הוא נחסם. אם לא, נסו כותרת אחרת שמופיעה באותו מסך. השמות משתנים בין יצרנים ובין שפות. גם במצב חזק אפשר לחסום ברמת המערכת רק אפשרויות שאנדרואיד מאפשרת להגביל.</string>
     <string name="compare_what_means">מה זה אומר?</string>
     <string name="compare_title">מה ההבדל בין מצב רגיל למצב חזק?</string>
     <string name="credit_hearshal">קרדיט: הערשלה</string>
@@ -361,5 +361,26 @@
     <string name="times_item_profiles">פרופילים (למשל עבודה, לילה)</string>
     <string name="times_item_limits">מגבלות שימוש יומיות</string>
     <string name="times_not_enforced">אלה עדיין לא קיימים. שום דבר במסך הזה אינו מתוזמן או נאכף, ושום לוח זמנים אינו נשמר.</string>
+    <string name="grp_play">חנות Google Play</string>
+    <string name="grp_play_desc">חוסם התקנות חדשות מהחנות. עדכונים ממשיכים לעבוד.</string>
+    <string name="grp_apk">התקנות APK</string>
+    <string name="grp_apk_desc">חוסם התקנת אפליקציות מקבצים שהורדו.</string>
+    <string name="grp_settings">הגדרות וחסימות מערכת</string>
+    <string name="grp_settings_desc">סוגר דפי הגדרות אנדרואיד שבחרתם. שמות הדפים שונים בין יצרנים ושפות; ההסבר בהמשך מראה איך למצוא אותם.</string>
+    <string name="grp_self">הגנה עצמית</string>
+    <string name="grp_self_desc">מונע כיבוי או הסרה של מגן בלי אישור כאן.</string>
+    <string name="ln_off">כבוי.</string>
+    <string name="ln_needs_service">מופעל, אך שירות הנגישות אינו פועל ולכן אינו נאכף.</string>
+    <string name="ln_play_ok">מופעל. נאכף על ידי שירות הנגישות הפועל.</string>
+    <string name="ln_apk_both">מופעל. נאכף על ידי שירות הנגישות הפועל ועל ידי הגבלה של אנדרואיד (Device Owner).</string>
+    <string name="ln_apk_service">מופעל. נאכף רק על ידי שירות הנגישות הפועל. אנדרואיד עצמו חוסם רק במצב חזק.</string>
+    <string name="ln_apk_android_only">מופעל. הגבלת אנדרואיד פעילה, אך שירות הנגישות אינו פועל.</string>
+    <string name="ln_settings_none">עדיין לא נבחר דבר.</string>
+    <string name="ln_settings_ok">%1$d קבוצות ו־%2$d מילים מותאמות נמצאות במעקב שירות הנגישות הפועל.</string>
+    <string name="ln_self_ok">מופעל. נאכף על ידי שירות הנגישות הפועל וניהול המכשיר.</string>
+    <string name="ln_self_paused">מופעל, אך מושהה לכמה דקות בגלל אישור ההסרה.</string>
+    <string name="ln_self_no_admin">מופעל, אך ניהול המכשיר כבוי ולכן דפי ההגדרות של מגן אינם חסומים.</string>
+    <string name="ln_self_no_service">מופעל, אך שירות הנגישות אינו פועל. נשאר רק אישור ניהול המכשיר.</string>
+    <string name="ln_self_none">מופעל, אך לא שירות הנגישות ולא ניהול המכשיר פעילים, ולכן מגן אינה מוגנת.</string>
 </resources>
 

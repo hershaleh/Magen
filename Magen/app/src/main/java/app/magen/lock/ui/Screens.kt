@@ -100,6 +100,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import app.magen.lock.Bio
 import app.magen.lock.Catalog
+import app.magen.lock.GuardService
 import app.magen.lock.Keeper
 import app.magen.lock.LockMode
 import app.magen.lock.Policy
@@ -599,22 +600,37 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
         AdvancedProtection(onBack = { advanced = false }, onOpenHome = onOpenHome)
         return
     }
+    val ctx = LocalContext.current
+    // Read again every time the person returns from Android settings.
+    val p = rememberPerms()
+    val running = GuardService.instance != null
+    val fix: (Fix) -> Unit = { openFix(ctx, it) {} }
+
     TabColumn {
         Text(stringResource(R.string.protection_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
-        SectionCard(stringResource(R.string.rules_installs)) {
+        SectionCard(stringResource(R.string.grp_play), stringResource(R.string.grp_play_desc)) {
             SwitchRow(
                 Icons.Filled.Storefront,
                 stringResource(R.string.rule_play),
                 stringResource(R.string.rule_play_desc),
                 Store.blockPlay,
             ) { Store.setBlockPlay(it) }
+            StatusLine(playLine(running), fix)
+        }
+
+        SectionCard(stringResource(R.string.grp_apk), stringResource(R.string.grp_apk_desc)) {
             SwitchRow(
                 Icons.Filled.Android,
                 stringResource(R.string.rule_apk),
                 stringResource(R.string.rule_apk_desc),
                 Store.blockApk,
             ) { Store.setBlockApk(it) }
+            StatusLine(apkLine(ctx, p, running), fix)
+        }
+
+        SectionCard(stringResource(R.string.grp_settings), stringResource(R.string.grp_settings_desc)) {
+            StatusLine(settingsLine(running), fix)
         }
 
         SettingsGroups()
@@ -625,12 +641,28 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
 
         HowToCard()
 
+        SectionCard(stringResource(R.string.grp_self), stringResource(R.string.grp_self_desc)) {
+            SwitchRow(
+                Icons.Filled.Security,
+                stringResource(R.string.protect_title),
+                stringResource(R.string.protect_desc),
+                Store.protect,
+            ) { Store.setProtect(it) }
+            StatusLine(selfLine(p, running), fix)
+        }
+
         SectionCard(stringResource(R.string.protection_adv_title), stringResource(R.string.protection_adv_desc)) {
+            StatusLine(ownerLine(p), fix)
+            StatusLine(adminLine(p), fix)
             OutlinedButton(
                 onClick = { advanced = true },
                 shape = RoundedCornerShape(16.dp),
-                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                modifier = Modifier.fillMaxWidth().padding(top = 10.dp),
             ) { Text(stringResource(R.string.protection_adv_open)) }
+            TextButton(
+                onClick = { Session.showGuide = true },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.guide_open)) }
         }
     }
 }
@@ -746,12 +778,6 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
             SwitchRow(Icons.Filled.Lock, stringResource(R.string.relock_screen_off), null, Store.relockOnScreenOff) {
                 Store.setRelock(it)
             }
-            SwitchRow(
-                Icons.Filled.Security,
-                stringResource(R.string.protect_title),
-                stringResource(R.string.protect_desc),
-                Store.protect,
-            ) { Store.setProtect(it) }
             if (Bio.available(ctx)) {
                 SwitchRow(
                     Icons.Filled.Fingerprint,

@@ -214,7 +214,7 @@
     <string name="cat_installapps">App installation</string>
     <string name="cat_system">System page and general management</string>
     <string name="howto_title">How to find a Settings page to block</string>
-    <string name="howto_body">1. Open Settings and search for the option you want to block. 2. Open the result and note the title at the top of the page. 3. Return to Magen > Rules > Restrict parts of Settings > Block any other page. 4. Enter the title exactly as shown and tap Add. You can also paste a full path, such as Network &amp; internet &gt; Internet; Magen uses the final page name. 5. Try opening the page again to test the block. If it still opens, try another title shown on that screen. Names vary by device maker and language. Strong mode can enforce only restrictions Android supports at system level.</string>
+    <string name="howto_body">1. Open Settings and search for the option you want to block. 2. Open the result and note the title at the top of the page. 3. Return to Magen > Protection > Block any other page. 4. Enter the title exactly as shown and tap Add. You can also paste a full path, such as Network &amp; internet &gt; Internet; Magen uses the final page name. 5. Try opening the page again to test the block. If it still opens, try another title shown on that screen. Names vary by device maker and language. Strong mode can enforce only restrictions Android supports at system level.</string>
     <string name="compare_what_means">What does this mean?</string>
     <string name="compare_title">Regular vs. Strong mode</string>
     <string name="credit_hearshal">Credit: He\'rshele</string>
@@ -361,5 +361,26 @@
     <string name="times_item_profiles">Profiles (for example work, night)</string>
     <string name="times_item_limits">Daily usage limits</string>
     <string name="times_not_enforced">These do not exist yet. Nothing on this screen is scheduled or enforced, and no schedule is saved.</string>
+    <string name="grp_play">Google Play store</string>
+    <string name="grp_play_desc">Stops new installs from the store. Updates keep working.</string>
+    <string name="grp_apk">APK installs</string>
+    <string name="grp_apk_desc">Stops installing apps from downloaded files.</string>
+    <string name="grp_settings">Settings and system blocks</string>
+    <string name="grp_settings_desc">Closes the Android Settings pages you choose. Page names differ between manufacturers and languages; the how-to below explains how to find them.</string>
+    <string name="grp_self">Self-protection</string>
+    <string name="grp_self_desc">Keeps Magen from being switched off or removed without approval here.</string>
+    <string name="ln_off">Off.</string>
+    <string name="ln_needs_service">On, but the accessibility service is not running, so it is not enforced.</string>
+    <string name="ln_play_ok">On. Enforced by the running accessibility service.</string>
+    <string name="ln_apk_both">On. Enforced by the running accessibility service and by an Android restriction (Device Owner).</string>
+    <string name="ln_apk_service">On. Enforced by the running accessibility service only. Android itself blocks it only in strong mode.</string>
+    <string name="ln_apk_android_only">On. Android restriction is active, but the accessibility service is not running.</string>
+    <string name="ln_settings_none">Nothing selected yet.</string>
+    <string name="ln_settings_ok">%1$d groups and %2$d custom words are watched by the running accessibility service.</string>
+    <string name="ln_self_ok">On. Enforced by the running accessibility service and device admin.</string>
+    <string name="ln_self_paused">On, but paused for a few minutes by the uninstall approval.</string>
+    <string name="ln_self_no_admin">On, but device admin is off, so the Settings pages of Magen itself are not blocked.</string>
+    <string name="ln_self_no_service">On, but the accessibility service is not running. Only the device admin approval remains.</string>
+    <string name="ln_self_none">On, but neither the accessibility service nor device admin is active, so Magen is not protected.</string>
 </resources>
 

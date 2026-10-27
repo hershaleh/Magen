@@ -147,7 +147,7 @@ fun computeHealth(ctx: Context): Health {
 // ---- UI --------------------------------------------------------------------------------------
 
 @Composable
-private fun sevColor(sev: Sev): Color {
+internal fun sevColor(sev: Sev): Color {
     val dark = isSystemInDarkTheme()
     return when (sev) {
         Sev.OK -> if (dark) Color(0xFF66BB6A) else Color(0xFF2E7D32)
@@ -157,7 +157,7 @@ private fun sevColor(sev: Sev): Color {
     }
 }
 
-private fun sevIcon(sev: Sev): ImageVector = when (sev) {
+internal fun sevIcon(sev: Sev): ImageVector = when (sev) {
     Sev.OK -> Icons.Filled.CheckCircle
     Sev.WARN -> Icons.Filled.Warning
     Sev.BAD -> Icons.Filled.Error
@@ -183,7 +183,7 @@ private fun CheckRow(c: Check, showFix: Boolean, onFix: (Fix) -> Unit) {
 }
 
 @StringRes
-private fun fixLabel(f: Fix): Int = when (f) {
+internal fun fixLabel(f: Fix): Int = when (f) {
     Fix.ACCESSIBILITY -> R.string.fix_accessibility
     Fix.ADMIN -> R.string.fix_admin
     Fix.BATTERY -> R.string.fix_battery
@@ -193,7 +193,7 @@ private fun fixLabel(f: Fix): Int = when (f) {
 }
 
 /** Opens the screen where the person can fix the problem. Nothing is changed without their action there. */
-private fun openFix(ctx: Context, fix: Fix, onNavigate: (Int) -> Unit) {
+internal fun openFix(ctx: Context, fix: Fix, onNavigate: (Int) -> Unit) {
     fun go(i: Intent) {
         Session.trip()
         runCatching { ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
@@ -299,5 +299,77 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
         }
 
         PermissionCards(p, showOwner = true)
+    }
+}
+
+// ---- Protection tab: per-option state (Stage 5) ----------------------------------------------
+
+/** One line under an option: what its saved setting is, and whether a running mechanism enforces it. */
+class Line(val sev: Sev, @StringRes val text: Int, val fix: Fix? = null, val args: List<Any> = emptyList())
+
+private fun androidRestricts(ctx: Context, key: String): Boolean =
+    runCatching { ctx.getSystemService(android.os.UserManager::class.java).hasUserRestriction(key) }.getOrDefault(false)
+
+fun playLine(running: Boolean): Line = when {
+    !Store.blockPlay -> Line(Sev.INFO, R.string.ln_off)
+    running -> Line(Sev.OK, R.string.ln_play_ok)
+    else -> Line(Sev.BAD, R.string.ln_needs_service, Fix.ACCESSIBILITY)
+}
+
+fun apkLine(ctx: Context, p: Perms, running: Boolean): Line {
+    if (!Store.blockApk) return Line(Sev.INFO, R.string.ln_off)
+    // With Device Owner, Android keeps its own restriction; read it from Android, not from the saved setting.
+    val androidOn = p.owner && androidRestricts(ctx, android.os.UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES)
+    return when {
+        running && androidOn -> Line(Sev.OK, R.string.ln_apk_both)
+        running -> Line(Sev.OK, R.string.ln_apk_service)
+        androidOn -> Line(Sev.WARN, R.string.ln_apk_android_only, Fix.ACCESSIBILITY)
+        else -> Line(Sev.BAD, R.string.ln_needs_service, Fix.ACCESSIBILITY)
+    }
+}
+
+fun settingsLine(running: Boolean): Line {
+    val groups = Store.blockedSettings.size
+    val words = Store.customKeywords.size
+    return when {
+        groups + words == 0 -> Line(Sev.INFO, R.string.ln_settings_none)
+        running -> Line(Sev.OK, R.string.ln_settings_ok, null, listOf(groups, words))
+        else -> Line(Sev.BAD, R.string.ln_needs_service, Fix.ACCESSIBILITY)
+    }
+}
+
+fun selfLine(p: Perms, running: Boolean): Line = when {
+    !Store.protect -> Line(Sev.INFO, R.string.ln_off)
+    Store.uninstallAllowed() -> Line(Sev.WARN, R.string.ln_self_paused)
+    running && p.admin -> Line(Sev.OK, R.string.ln_self_ok)
+    running -> Line(Sev.WARN, R.string.ln_self_no_admin, Fix.ADMIN)
+    p.admin -> Line(Sev.WARN, R.string.ln_self_no_service, Fix.ACCESSIBILITY)
+    else -> Line(Sev.BAD, R.string.ln_self_none, Fix.ACCESSIBILITY)
+}
+
+fun ownerLine(p: Perms): Line = when {
+    p.owner -> Line(Sev.OK, R.string.chk_owner_ok)
+    Store.level == "strong" -> Line(Sev.WARN, R.string.chk_owner_missing, Fix.STRONG_GUIDE)
+    else -> Line(Sev.INFO, R.string.chk_owner_na)
+}
+
+fun adminLine(p: Perms): Line =
+    if (p.admin) Line(Sev.OK, R.string.chk_admin_ok) else Line(Sev.WARN, R.string.chk_admin_off, Fix.ADMIN)
+
+@Composable
+fun StatusLine(line: Line, onFix: (Fix) -> Unit) {
+    Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.Top) {
+        Icon(sevIcon(line.sev), null, tint = sevColor(line.sev), modifier = Modifier.size(20.dp))
+        Column(Modifier.weight(1f).padding(start = 8.dp)) {
+            Text(
+                stringResource(line.text, *line.args.toTypedArray()),
+                style = MaterialTheme.typography.bodySmall,
+                color = if (line.sev == Sev.BAD || line.sev == Sev.WARN) sevColor(line.sev) else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            val fix = line.fix
+            if (fix != null && (line.sev == Sev.WARN || line.sev == Sev.BAD)) {
+                TextButton(onClick = { onFix(fix) }) { Text(stringResource(fixLabel(fix))) }
+            }
+        }
     }
 }
