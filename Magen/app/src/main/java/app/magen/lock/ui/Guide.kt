@@ -425,7 +425,7 @@ fun GuideScreen(onClose: () -> Unit) {
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
+                IconButton(onClick = onClose) { Icon(Icons.AutoMirrored.Filled.ArrowBack, stringResource(R.string.go_back)) }
                 Text(stringResource(R.string.guide_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
             }
             Text(stringResource(R.string.help_intro), color = MaterialTheme.colorScheme.onSurfaceVariant)
@@ -574,7 +574,7 @@ fun CustomKeywordsCard() {
         Store.customKeywords.sorted().forEach { k ->
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                 Text(k, Modifier.weight(1f))
-                IconButton(onClick = { Store.removeKeyword(k) }) { Icon(Icons.Filled.Close, null) }
+                IconButton(onClick = { Store.removeKeyword(k) }) { Icon(Icons.Filled.Close, stringResource(R.string.remove_item)) }
             }
         }
     }

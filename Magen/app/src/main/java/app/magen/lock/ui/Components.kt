@@ -1,5 +1,6 @@
 package app.magen.lock.ui
 
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.layout.heightIn
@@ -441,7 +442,8 @@ fun IconTile(icon: ImageVector) {
 @Composable
 fun SwitchRow(icon: ImageVector, title: String, desc: String? = null, checked: Boolean, onChange: (Boolean) -> Unit) {
     Row(
-        Modifier.fillMaxWidth().padding(vertical = 8.dp),
+        // One accessibility node per row, so a screen reader announces "title, description, switch, on/off".
+        Modifier.fillMaxWidth().semantics(mergeDescendants = true) {}.padding(vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(14.dp),
     ) {

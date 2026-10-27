@@ -272,7 +272,7 @@ fun MainScaffold() {
                             selected = tab == i,
                             onClick = { tab = i },
                             icon = { Icon(icon, null) },
-                            label = { Text(stringResource(label)) },
+                            label = { Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         )
                     }
                 }
@@ -565,7 +565,8 @@ private fun AppRow(a: AppItem, showPkg: Boolean) {
                         a.pkg,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.labelSmall,
+                        // Package names are always left-to-right, also in the Hebrew layout.
+                        style = MaterialTheme.typography.labelSmall.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Ltr),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
@@ -575,7 +576,7 @@ private fun AppRow(a: AppItem, showPkg: Boolean) {
                 IconButton(onClick = { Store.toggleMainUnlocked(a.pkg) }) {
                     Icon(
                         if (released) Icons.Filled.LockOpen else Icons.Filled.Lock,
-                        null,
+                        stringResource(if (released) R.string.release_on else R.string.release_off),
                         tint = if (released) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
                     )
                 }

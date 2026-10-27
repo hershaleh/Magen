@@ -157,6 +157,15 @@ internal fun sevColor(sev: Sev): Color {
     }
 }
 
+@StringRes
+internal fun sevLabel(sev: Sev): Int = when (sev) {
+    Sev.OK -> R.string.sev_ok
+    Sev.WARN -> R.string.sev_warn
+    Sev.BAD -> R.string.sev_bad
+    Sev.INFO -> R.string.sev_info
+    Sev.UNKNOWN -> R.string.sev_unknown
+}
+
 internal fun sevIcon(sev: Sev): ImageVector = when (sev) {
     Sev.OK -> Icons.Filled.CheckCircle
     Sev.WARN -> Icons.Filled.Warning
@@ -167,7 +176,7 @@ internal fun sevIcon(sev: Sev): ImageVector = when (sev) {
 @Composable
 private fun CheckRow(c: Check, showFix: Boolean, onFix: (Fix) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Top) {
-        Icon(sevIcon(c.sev), null, tint = sevColor(c.sev), modifier = Modifier.size(22.dp))
+        Icon(sevIcon(c.sev), stringResource(sevLabel(c.sev)), tint = sevColor(c.sev), modifier = Modifier.size(22.dp))
         Column(Modifier.weight(1f).padding(start = 10.dp)) {
             Text(stringResource(c.title), fontWeight = FontWeight.SemiBold)
             Text(
@@ -276,7 +285,7 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
                 .forEach { CheckRow(it, showFix = false, onFix = {}) }
             Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Top) {
                 val sev = if (health.issues == 0) Sev.OK else Sev.WARN
-                Icon(sevIcon(sev), null, tint = sevColor(sev), modifier = Modifier.size(22.dp))
+                Icon(sevIcon(sev), stringResource(sevLabel(sev)), tint = sevColor(sev), modifier = Modifier.size(22.dp))
                 Column(Modifier.weight(1f).padding(start = 10.dp)) {
                     Text(stringResource(R.string.glance_issues_title), fontWeight = FontWeight.SemiBold)
                     Text(
@@ -385,7 +394,7 @@ fun adminLine(p: Perms): Line =
 @Composable
 fun StatusLine(line: Line, onFix: (Fix) -> Unit) {
     Row(Modifier.fillMaxWidth().padding(top = 6.dp), verticalAlignment = Alignment.Top) {
-        Icon(sevIcon(line.sev), null, tint = sevColor(line.sev), modifier = Modifier.size(20.dp))
+        Icon(sevIcon(line.sev), stringResource(sevLabel(line.sev)), tint = sevColor(line.sev), modifier = Modifier.size(20.dp))
         Column(Modifier.weight(1f).padding(start = 8.dp)) {
             if (line.title != null) Text(stringResource(line.title), fontWeight = FontWeight.SemiBold)
             Text(

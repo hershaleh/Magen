@@ -8,7 +8,6 @@
 
     <string name="nav_home">Home</string>
     <string name="nav_apps">Apps</string>
-    <string name="nav_rules">Advanced</string>
     <string name="nav_more">More</string>
 
     <string name="welcome_title">Welcome to Magen</string>
@@ -53,8 +52,6 @@
     <string name="lock_main_desc">%1$s is locked. Open Magen and release it from there.</string>
     <string name="open_magen">Open Magen</string>
     <string name="go_back">Back</string>
-
-    <string name="rules_title">Rules</string>
     <string name="rules_installs">Installs</string>
     <string name="rule_play">Block new installs from Google Play</string>
     <string name="rule_play_desc">Updates keep working. The Play Store closes when it shows an Install button.</string>
@@ -396,33 +393,15 @@
     <string name="help_intro">Help by topic. The step-by-step setup for strong mode is at the end.</string>
     <string name="guide_steps_title">Set up strong mode, step by step</string>
     <string name="help_map_title">Where things are</string>
-    <string name="help_map_body">Home: protection status and the “Protection check”.
-Apps: choose which apps are locked.
-Times: shows the time-based state only. Schedules and profiles are not available yet.
-Protection: Play, APK and Settings blocks, self-protection and advanced protection.
-More: code and recovery, permission shortcuts, release and recovery, language.</string>
+    <string name="help_map_body">Home: protection status and the “Protection check”.\nApps: choose which apps are locked.\nTimes: shows the time-based state only. Schedules and profiles are not available yet.\nProtection: Play, APK and Settings blocks, self-protection and advanced protection.\nMore: code and recovery, permission shortcuts, release and recovery, language.</string>
     <string name="help_regular_title">Regular protection: what is needed</string>
-    <string name="help_regular_body">Regular protection needs no computer. It relies on permissions you switch on yourself:
-• Accessibility service: lets Magen see which app or Settings page is open, so it can show the lock and close blocked pages. Without it, app locks and blocks do not work.
-• Device admin: uninstalling Magen then needs approval inside Magen.
-Recommended: allow Magen to run in the background (battery settings) and keep notifications on, so Magen can warn you if protection stops.
-To check: open the Home tab and press “Protection check”. Every item is shown as working, needing attention, or not verifiable.</string>
+    <string name="help_regular_body">Regular protection needs no computer. It relies on permissions you switch on yourself:\n• Accessibility service: lets Magen see which app or Settings page is open, so it can show the lock and close blocked pages. Without it, app locks and blocks do not work.\n• Device admin: uninstalling Magen then needs approval inside Magen.\nRecommended: allow Magen to run in the background (battery settings) and keep notifications on, so Magen can warn you if protection stops.\nTo check: open the Home tab and press “Protection check”. Every item is shown as working, needing attention, or not verifiable.</string>
     <string name="help_status_title">On, running, or verified?</string>
-    <string name="help_status_body">Three things can look alike:
-• A permission you switched on: Android says you allowed it. This alone does not prove that anything works.
-• A service running now: Magen sees that its accessibility service is really started. Android can stop it, for example to save battery, even while the permission stays on.
-• Enforcement Magen can verify: only a few things, such as Device Owner (asked from Android) and Android restrictions it can read. Magen cannot test from the inside whether the lock screen opens on every app or whether every Settings page is caught, and says “cannot be verified”.
-No mode makes bypassing impossible. Someone with enough access to the phone or to a computer may still get around or remove protection.</string>
+    <string name="help_status_body">Three things can look alike:\n• A permission you switched on: Android says you allowed it. This alone does not prove that anything works.\n• A service running now: Magen sees that its accessibility service is really started. Android can stop it, for example to save battery, even while the permission stays on.\n• Enforcement Magen can verify: only a few things, such as Device Owner (asked from Android) and Android restrictions it can read. Magen cannot test from the inside whether the lock screen opens on every app or whether every Settings page is caught, and says “cannot be verified”.\nNo mode makes bypassing impossible. Someone with enough access to the phone or to a computer may still get around or remove protection.</string>
     <string name="help_strong_title">Strong mode (Device Owner)</string>
-    <string name="help_strong_body">Device Owner is a role Android gives to one app to manage the device. When Magen has it, Magen can ask Android itself to enforce some restrictions, such as blocking installs from unknown sources, instead of relying only on the accessibility service. On Android 11 and newer it also asks Android not to let Magen be force-stopped or have its data cleared from Settings.
-Limits: it needs a one-time setup from a computer, accounts must be removed temporarily, on some phones Android cannot release the role by the normal method, and it still does not make protection absolute.
-Before you start: keep your master code and recovery code safe, and know the ways out. More > Release and recovery has the normal removal, removal via Root, and transfer to Magen Keeper.</string>
+    <string name="help_strong_body">Device Owner is a role Android gives to one app to manage the device. When Magen has it, Magen can ask Android itself to enforce some restrictions, such as blocking installs from unknown sources, instead of relying only on the accessibility service. On Android 11 and newer it also asks Android not to let Magen be force-stopped or have its data cleared from Settings.\nLimits: it needs a one-time setup from a computer, accounts must be removed temporarily, on some phones Android cannot release the role by the normal method, and it still does not make protection absolute.\nBefore you start: keep your master code and recovery code safe, and know the ways out. More > Release and recovery has the normal removal, removal via Root, and transfer to Magen Keeper.</string>
     <string name="help_release_title">Release and recovery</string>
-    <string name="help_release_body">Three separate ways to give up Device Owner (More > Release and recovery):
-• Normal removal: asks Android to release it. Works on most phones.
-• Transfer to Magen Keeper: hands it to the small Keeper app, which can give it back later. Android 9 or newer.
-• Removal via Root: only for rooted phones. It changes a system file and reboots, so use it as a last resort.
-“Approve uninstall” is different: it opens a 10-minute window, removes admin rights and starts uninstalling Magen. If Magen is still the Device Owner it also tries the normal removal first. It does not replace Keeper or Root when the normal removal fails on your phone.</string>
+    <string name="help_release_body">Three separate ways to give up Device Owner (More > Release and recovery):\n• Normal removal: asks Android to release it. Works on most phones.\n• Transfer to Magen Keeper: hands it to the small Keeper app, which can give it back later. Android 9 or newer.\n• Removal via Root: only for rooted phones. It changes a system file and reboots, so use it as a last resort.\n“Approve uninstall” is different: it opens a 10-minute window, removes admin rights and starts uninstalling Magen. If Magen is still the Device Owner it also tries the normal removal first. It does not replace Keeper or Root when the normal removal fails on your phone.</string>
     <string name="settings_open_failed">Could not open that Android screen on this device.</string>
     <string name="adm_title">Device admin (regular)</string>
     <string name="adm_on">Device admin is active (checked with Android). Uninstalling Magen needs approval inside Magen. This is not Device Owner.</string>
@@ -431,5 +410,13 @@ Before you start: keep your master code and recovery code safe, and know the way
     <string name="own_on">Device Owner is active (checked with Android). It is a separate, stronger role than device admin.</string>
     <string name="own_missing">Strong mode is selected, but Device Owner is not active. Device admin above is a different thing and does not replace it.</string>
     <string name="own_na">Device Owner is not active. It is not needed in regular mode, and device admin is a different thing.</string>
+    <string name="sev_ok">Working</string>
+    <string name="sev_warn">Warning</string>
+    <string name="sev_bad">Problem</string>
+    <string name="sev_info">Information</string>
+    <string name="sev_unknown">Cannot be verified</string>
+    <string name="remove_item">Remove</string>
+    <string name="release_on">Released from Magen</string>
+    <string name="release_off">Locked until released</string>
 </resources>
 
