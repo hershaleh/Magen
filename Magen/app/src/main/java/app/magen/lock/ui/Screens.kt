@@ -269,7 +269,7 @@ fun MainScaffold() {
         ) { inner ->
             Box(Modifier.padding(inner).statusBarsPadding()) {
                 when (tab) {
-                    0 -> HomeTab()
+                    0 -> HomeTab(onNavigate = { tab = it })
                     1 -> AppsTab()
                     2 -> TimesTab()
                     3 -> ProtectionTab(onOpenHome = { tab = 0 })
@@ -309,7 +309,7 @@ private fun NewRecovery(onClose: () -> Unit) {
 }
 
 @Composable
-private fun TabColumn(content: @Composable ColumnScope.() -> Unit) {
+internal fun TabColumn(content: @Composable ColumnScope.() -> Unit) {
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 20.dp, vertical = 16.dp),
         verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -318,35 +318,6 @@ private fun TabColumn(content: @Composable ColumnScope.() -> Unit) {
 }
 
 // ---- tab: protection -------------------------------------------------------------------------
-
-@Composable
-fun HomeTab() {
-    val p = rememberPerms()
-    val done = (if (p.acc) 1 else 0) + (if (p.admin) 1 else 0)
-
-    TabColumn {
-        HeroCard {
-            Icon(
-                if (done == 2) Icons.Filled.CheckCircle else Icons.Filled.Warning,
-                null,
-                tint = Color.White,
-                modifier = Modifier.size(40.dp),
-            )
-            Spacer(Modifier.height(12.dp))
-            Text(
-                stringResource(if (done == 2) R.string.status_active else R.string.status_incomplete),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-            )
-            Text(
-                stringResource(R.string.status_steps, done),
-                color = Color.White.copy(alpha = 0.85f),
-            )
-        }
-        PermissionCards(p, showOwner = true)
-    }
-}
 
 @Composable
 fun PermCard(

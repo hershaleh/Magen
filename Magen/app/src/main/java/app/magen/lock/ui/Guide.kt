@@ -2,6 +2,7 @@ package app.magen.lock.ui
 
 import android.app.admin.DevicePolicyManager
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.PowerManager
 import android.net.Uri
@@ -101,12 +102,15 @@ fun rememberPerms(): Perms {
     val ctx = LocalContext.current
     var tick by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { tick++ }
-    return remember(tick) {
-        val battery = runCatching {
-            ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
-        }.getOrDefault(true)
-        Perms(Policy.accessibilityOn(ctx), Policy.isAdmin(ctx), Policy.isOwner(ctx), battery)
-    }
+    return remember(tick) { readPerms(ctx) }
+}
+
+/** Reads the permission state from Android right now (no caching). */
+fun readPerms(ctx: Context): Perms {
+    val battery = runCatching {
+        ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
+    }.getOrDefault(true)
+    return Perms(Policy.accessibilityOn(ctx), Policy.isAdmin(ctx), Policy.isOwner(ctx), battery)
 }
 
 @Composable
