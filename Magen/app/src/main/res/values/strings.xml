@@ -81,9 +81,9 @@
     <string name="protect_desc">Removal stays blocked until you approve it here.</string>
     <string name="change_pin">Change master code</string>
     <string name="approve_uninstall">Approve uninstall</string>
-    <string name="approve_desc">Opens a 10-minute window, removes admin rights and starts the uninstall.</string>
+    <string name="approve_desc">Removes admin rights, opens a 10-minute window and starts the uninstall. Cancelling the uninstall does not bring the rights back.</string>
     <string name="approve_confirm_title">Approve uninstall?</string>
-    <string name="approve_confirm_msg">Protection will be lifted and Magen will start uninstalling.</string>
+    <string name="approve_confirm_msg">Magen\'s permissions (Device Owner and device admin) are removed first, and only then does the uninstall screen open. If you cancel the uninstall afterwards, the permissions stay removed and you must turn them on again from the Home tab.</string>
     <string name="confirm">Confirm</string>
     <string name="cancel">Cancel</string>
 
@@ -419,9 +419,22 @@
     <string name="release_on">Released from Magen</string>
     <string name="release_off">Locked until released</string>
     <string name="status_idle">Ready, no rules selected</string>
-    <string name="status_sub_idle">Permissions are in place, but no app or block is selected yet, so nothing is being enforced.</string>
-    <string name="transfer_not_confirmed">Android still lists Magen as the Device Owner after the transfer. Nothing was confirmed; check the state on the Home tab.</string>
+    <string name="status_sub_idle">No app, install block or Settings block is selected yet. Only Magen\'s own protection is active.</string>
+    <string name="transfer_not_confirmed">Android did not confirm that Magen Keeper is now the Device Owner, so Magen is not showing success. Check the state on the Home tab and in Magen Keeper.</string>
     <string name="keeper_take_unconfirmed">Magen Keeper reported success, but Android does not list Magen as the Device Owner. Check the state on the Home tab.</string>
     <string name="remove_owner_reboot_pending">Root removal is waiting for a reboot. Android still lists Magen as the Device Owner until the phone restarts.</string>
+    <string name="status_sub_idle_off">No rules are selected and Magen\'s own protection is off, so nothing is being enforced.</string>
+    <string name="uninstall_cancelled_title">Uninstall was not completed</string>
+    <string name="uninstall_cancelled_body">Magen is still installed. State read from Android right now:\nDevice Owner: %1$s\nDevice admin: %2$s\nAccessibility service running: %3$s\nAnything shown as no has to be turned on again from the Home tab.</string>
+    <string name="state_yes">yes</string>
+    <string name="state_no">no</string>
+    <string name="custom_generic_rejected">That title is too general: it would block every Settings screen. Enter the title of a specific page.</string>
+    <string name="perm_access_stalled">Turned on in Android settings, but the service is not running yet. If this stays, turn it off and on again.</string>
+    <string name="uninstall_failed_title">Uninstall did not start</string>
+    <string name="uninstall_failed_lead">Magen could not prepare for the uninstall, so no uninstall was started. Technical details (you can copy them):</string>
+    <string name="uninstall_open_failed">The uninstall screen could not be opened, but Magen\'s permissions were already released. Turn them on again from the Home tab if you keep the app.</string>
+    <string name="link_open_failed">Could not open the link. No browser was found.</string>
+    <string name="pin_delete">Delete last digit</string>
+    <string name="pin_confirm">Confirm code</string>
 </resources>
 

@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -49,10 +50,17 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             MagenTheme {
-                var showLaunchScreen by remember { mutableStateOf(true) }
+                // Saved across rotation and language changes, so the opening screen shows once per start only.
+                var showLaunchScreen by rememberSaveable { mutableStateOf(true) }
                 LaunchedEffect(Unit) {
-                    delay(1100)
-                    showLaunchScreen = false
+                    if (showLaunchScreen) {
+                        delay(1100)
+                        showLaunchScreen = false
+                    }
+                }
+                // Notification permission is asked once, and only after the code was entered.
+                LaunchedEffect(Session.authed) {
+                    if (Session.authed) askNotificationsOnce()
                 }
                 Box(Modifier.fillMaxSize()) {
                     Root()
@@ -93,10 +101,8 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onStart() {
-        super.onStart()
-        // Needed for the "protection is off" alert on Android 13+.
-        // Asked once only; later the Home check shows a warning with a button to the notification settings.
+    /** Needed for the "protection is off" alert on Android 13+. Later the Home check shows a warning with a button. */
+    private fun askNotificationsOnce() {
         val prefs = getSharedPreferences("magen", MODE_PRIVATE)
         if (Build.VERSION.SDK_INT >= 33 && Store.hasPin && !prefs.getBoolean("notifAsked", false) &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
@@ -104,6 +110,10 @@ class MainActivity : AppCompatActivity() {
             prefs.edit().putBoolean("notifAsked", true).apply()
             runCatching { askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
         // Coming back from a trip that Magen started itself (Settings, uninstall screen, Keeper): allowed
         // for a few minutes. Any other return demands the code again (see onStop).
         if (Session.tripPending) {
@@ -127,6 +137,8 @@ class MainActivity : AppCompatActivity() {
             Session.uninstallPending = false
             Session.uninstallLeft = false
             Store.allowUninstall(0)
+            // Tell the person what state Android is really in (shown once the code is confirmed).
+            Session.uninstallNotice = true
         }
     }
 

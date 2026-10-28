@@ -134,13 +134,31 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
         }
     }
 
+    // Android's setting can be on while the service itself is not running; the card must not say "on" then.
+    val accRunning = GuardService.instance != null
     PermCard(
         icon = Icons.Filled.Accessibility,
         title = R.string.perm_access_title,
         desc = R.string.perm_access_desc,
-        on = p.acc,
-        onEnable = { Session.trip(); ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) },
+        on = p.acc && accRunning,
+        onEnable = {
+            try {
+                Session.trip()
+                ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            } catch (error: Exception) {
+                Session.cancelTrip()
+                Toast.makeText(ctx, ctx.getString(R.string.settings_open_failed), Toast.LENGTH_LONG).show()
+            }
+        },
     ) {
+        if (p.acc && !accRunning) {
+            Spacer(Modifier.height(8.dp))
+            Text(
+                stringResource(R.string.perm_access_stalled),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+            )
+        }
         if (!p.acc) {
             Spacer(Modifier.height(6.dp))
             Row(
@@ -207,9 +225,12 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
                 Session.trip()
                 ctx.startActivity(direct)
             } catch (error: Exception) {
-                runCatching {
+                try {
                     Session.trip()
                     ctx.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                } catch (second: Exception) {
+                    Session.cancelTrip()
+                    Toast.makeText(ctx, ctx.getString(R.string.settings_open_failed), Toast.LENGTH_LONG).show()
                 }
             }
         },
@@ -422,6 +443,7 @@ fun LevelStep(onNext: () -> Unit) {
 fun GuideScreen(onClose: () -> Unit) {
     BackHandler(onBack = onClose)
     val clipboard = LocalClipboardManager.current
+    val copyCtx = LocalContext.current
     val steps = listOf(
         R.string.g1_t to R.string.g1_b,
         R.string.g2_t to R.string.g2_b,
@@ -494,7 +516,10 @@ fun GuideScreen(onClose: () -> Unit) {
                             if (i == 3 || i == 4) {
                                 val cmd = if (i == 3) "adb devices" else ADB_CMD
                                 CommandBox(cmd)
-                                TextButton(onClick = { clipboard.setText(AnnotatedString(cmd)) }) {
+                                TextButton(onClick = {
+                                    clipboard.setText(AnnotatedString(cmd))
+                                    toastCopied(copyCtx)
+                                }) {
                                     Icon(Icons.Filled.ContentCopy, null, modifier = Modifier.size(18.dp))
                                     Spacer(Modifier.size(6.dp))
                                     Text(stringResource(R.string.copy_cmd))
@@ -552,10 +577,16 @@ fun PickFromScreenCard() {
                 if (guard == null) {
                     Toast.makeText(ctx, R.string.pick_need_service, Toast.LENGTH_LONG).show()
                 } else {
-                    guard.armCapture()
-                    Toast.makeText(ctx, R.string.pick_started, Toast.LENGTH_LONG).show()
-                    Session.trip()
-                    ctx.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    // The hint is shown, and pick mode armed, only after Settings really opened.
+                    try {
+                        Session.trip()
+                        ctx.startActivity(Intent(Settings.ACTION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                        guard.armCapture()
+                        Toast.makeText(ctx, R.string.pick_started, Toast.LENGTH_LONG).show()
+                    } catch (error: Exception) {
+                        Session.cancelTrip()
+                        Toast.makeText(ctx, ctx.getString(R.string.settings_open_failed), Toast.LENGTH_LONG).show()
+                    }
                 }
             },
             shape = RoundedCornerShape(16.dp),
@@ -564,22 +595,49 @@ fun PickFromScreenCard() {
     }
 }
 
+// Page titles that appear on (almost) every Settings screen. A typed word equal to one of these would make the
+// running scan close ALL Settings screens, so the entry is refused here (the "pick from screen" list does the same).
+private val GENERIC_KEYWORDS = setOf(
+    "settings", "search settings", "navigate up", "back", "more options", "search",
+    "הגדרות", "חיפוש בהגדרות", "נווט למעלה", "חזרה", "אפשרויות נוספות", "חיפוש",
+)
+
+/** Mirrors [Store.addKeyword]: the last part of "A > B" is what would be saved. */
+private fun keywordTooGeneral(raw: String): Boolean {
+    val k = raw.split(Regex("[>›»→<‹]")).map { it.trim() }.lastOrNull { it.isNotEmpty() } ?: return false
+    return k.length < 2 || Catalog.norm(k).trim() in GENERIC_KEYWORDS
+}
+
 @Composable
 fun CustomKeywordsCard() {
     var text by remember { mutableStateOf("") }
+    var rejected by remember { mutableStateOf(false) }
     SectionCard(stringResource(R.string.custom_title), stringResource(R.string.custom_desc)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(
                 value = text,
-                onValueChange = { text = it },
+                onValueChange = {
+                    text = it
+                    rejected = false
+                },
                 singleLine = true,
+                isError = rejected,
+                supportingText = if (rejected) {
+                    { Text(stringResource(R.string.custom_generic_rejected)) }
+                } else {
+                    null
+                },
                 placeholder = { Text(stringResource(R.string.custom_hint)) },
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.weight(1f),
             )
             FilledTonalButton(onClick = {
-                Store.addKeyword(text)
-                text = ""
+                if (keywordTooGeneral(text)) {
+                    rejected = true
+                } else {
+                    Store.addKeyword(text)
+                    text = ""
+                }
             }) { Text(stringResource(R.string.custom_add)) }
         }
         Store.customKeywords.sorted().forEach { k ->

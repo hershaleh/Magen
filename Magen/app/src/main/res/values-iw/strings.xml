@@ -81,9 +81,9 @@
     <string name="protect_desc">ההסרה חסומה עד שתאשרו אותה כאן.</string>
     <string name="change_pin">שינוי הקוד הראשי</string>
     <string name="approve_uninstall">אישור הסרה</string>
-    <string name="approve_desc">פותח חלון של 10 דקות, מבטל הרשאות ניהול ומתחיל בהסרה.</string>
+    <string name="approve_desc">מסיר את הרשאות הניהול, פותח חלון של 10 דקות ומתחיל בהסרה. ביטול ההסרה לא מחזיר את ההרשאות.</string>
     <string name="approve_confirm_title">לאשר הסרה?</string>
-    <string name="approve_confirm_msg">ההגנה תבוטל והסרת מגן תתחיל.</string>
+    <string name="approve_confirm_msg">קודם יוסרו ההרשאות של מגן (Device Owner וניהול המכשיר) ורק אז ייפתח מסך ההסרה. אם תבטלו את ההסרה אחר כך, ההרשאות יישארו מוסרות ותצטרכו להפעיל אותן מחדש מלשונית הבית.</string>
     <string name="confirm">אישור</string>
     <string name="cancel">ביטול</string>
 
@@ -419,9 +419,22 @@
     <string name="release_on">שוחררה ממגן</string>
     <string name="release_off">נעולה עד שחרור</string>
     <string name="status_idle">מוכנה, לא נבחרו כללים</string>
-    <string name="status_sub_idle">ההרשאות במקומן, אך עדיין לא נבחרה אפליקציה או חסימה, ולכן שום דבר אינו נאכף.</string>
-    <string name="transfer_not_confirmed">אנדרואיד עדיין מציג את מגן כבעלת המכשיר אחרי ההעברה. שום דבר לא אומת; בדקו את המצב בלשונית בית.</string>
+    <string name="status_sub_idle">לא נבחרו עדיין אפליקציות, חסימת התקנות או חסימת הגדרות. רק ההגנה העצמית של מגן פעילה.</string>
+    <string name="transfer_not_confirmed">אנדרואיד לא אישר שהשומר הוא עכשיו בעל המכשיר, ולכן מגן לא מציג הצלחה. בדקו את המצב בלשונית הבית ובאפליקציית השומר.</string>
     <string name="keeper_take_unconfirmed">השומר דיווח על הצלחה, אך אנדרואיד אינו מציג את מגן כבעלת המכשיר. בדקו את המצב בלשונית בית.</string>
     <string name="remove_owner_reboot_pending">ההסרה דרך Root ממתינה לאתחול. אנדרואיד ימשיך להציג את מגן כבעלת המכשיר עד שהטלפון יופעל מחדש.</string>
+    <string name="status_sub_idle_off">לא נבחרו כללים וההגנה העצמית של מגן כבויה, ולכן שום דבר אינו נאכף.</string>
+    <string name="uninstall_cancelled_title">ההסרה לא הושלמה</string>
+    <string name="uninstall_cancelled_body">מגן עדיין מותקן. המצב שנקרא עכשיו מאנדרואיד:\nDevice Owner: %1$s\nמנהל מכשיר: %2$s\nשירות נגישות פועל: %3$s\nכל מה שמסומן כ״לא״ צריך להפעיל מחדש מלשונית הבית.</string>
+    <string name="state_yes">כן</string>
+    <string name="state_no">לא</string>
+    <string name="custom_generic_rejected">הכותרת כללית מדי ועלולה לחסום את כל מסכי ההגדרות. הזינו כותרת של דף מסוים.</string>
+    <string name="perm_access_stalled">מופעל בהגדרות אנדרואיד, אך השירות עדיין לא רץ. אם זה נשאר כך, כבו והפעילו שוב.</string>
+    <string name="uninstall_failed_title">ההסרה לא התחילה</string>
+    <string name="uninstall_failed_lead">מגן לא הצליח להתכונן להסרה ולכן ההסרה לא התחילה. פרטים טכניים (אפשר להעתיק):</string>
+    <string name="uninstall_open_failed">מסך ההסרה לא נפתח, אבל ההרשאות של מגן כבר שוחררו. אם אתם משאירים את האפליקציה, הפעילו אותן מחדש מלשונית הבית.</string>
+    <string name="link_open_failed">לא ניתן לפתוח את הקישור. לא נמצא דפדפן.</string>
+    <string name="pin_delete">מחיקת הספרה האחרונה</string>
+    <string name="pin_confirm">אישור הקוד</string>
 </resources>
 

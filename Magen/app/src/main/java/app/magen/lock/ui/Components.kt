@@ -166,8 +166,8 @@ fun PinPad(
                                 }
                             }) {
                                 when (k) {
-                                    "<" -> Icon(Icons.AutoMirrored.Filled.Backspace, null)
-                                    ">" -> Icon(Icons.Filled.Check, null, tint = MaterialTheme.colorScheme.primary)
+                                    "<" -> Icon(Icons.AutoMirrored.Filled.Backspace, stringResource(R.string.pin_delete))
+                                    ">" -> Icon(Icons.Filled.Check, stringResource(R.string.pin_confirm), tint = MaterialTheme.colorScheme.primary)
                                     else -> Text(k, fontSize = 26.sp, fontWeight = FontWeight.Medium)
                                 }
                             }
@@ -194,6 +194,13 @@ private fun Key(enabled: Boolean, size: androidx.compose.ui.unit.Dp, onClick: ()
         modifier = Modifier.size(size),
     ) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { content() }
+    }
+}
+
+/** Android 13+ shows its own "copied" preview; older versions need this short confirmation. */
+fun toastCopied(ctx: android.content.Context) {
+    if (android.os.Build.VERSION.SDK_INT < 33) {
+        android.widget.Toast.makeText(ctx, R.string.copied, android.widget.Toast.LENGTH_SHORT).show()
     }
 }
 
@@ -326,6 +333,7 @@ fun RecoveryFlow(onCancel: () -> Unit, onDone: () -> Unit) {
 @Composable
 fun RecoveryCodeScreen(code: String, onDone: () -> Unit) {
     val clipboard = LocalClipboardManager.current
+    val ctx = LocalContext.current
     Column(
         Modifier.fillMaxSize().systemBarsPadding().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -350,7 +358,10 @@ fun RecoveryCodeScreen(code: String, onDone: () -> Unit) {
             )
         }
         OutlinedButton(
-            onClick = { clipboard.setText(AnnotatedString(code)) },
+            onClick = {
+                clipboard.setText(AnnotatedString(code))
+                toastCopied(ctx)
+            },
             shape = RoundedCornerShape(16.dp),
             modifier = Modifier.padding(top = 16.dp),
         ) {

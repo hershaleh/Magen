@@ -90,6 +90,21 @@ fun verifyOwnership(ctx: Context, expectOwner: Boolean, done: (Boolean) -> Unit)
     }
 }
 
+/**
+ * After a transfer to Magen Keeper: success only when Android no longer lists Magen as Device Owner AND lists
+ * Magen Keeper as Device Owner. Checked at once and once more after a moment; [done] runs on the main thread.
+ */
+fun verifyTransferToKeeper(ctx: Context, done: (Boolean) -> Unit) {
+    fun ok() = !Policy.isOwner(ctx) && runCatching {
+        ctx.getSystemService(DevicePolicyManager::class.java).isDeviceOwnerApp(app.magen.lock.Keeper.PKG)
+    }.getOrDefault(false)
+    if (ok()) {
+        done(true)
+    } else {
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ done(ok()) }, 1500)
+    }
+}
+
 const val TAB_APPS = 1
 const val TAB_MORE = 4
 
@@ -300,7 +315,7 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
             Text(
                 when {
                     health.issues > 0 -> stringResource(R.string.status_sub_issues, health.issues)
-                    idle -> stringResource(R.string.status_sub_idle)
+                    idle -> stringResource(if (Store.protect) R.string.status_sub_idle else R.string.status_sub_idle_off)
                     else -> stringResource(R.string.status_sub_ok)
                 },
                 color = Color.White.copy(alpha = 0.85f),

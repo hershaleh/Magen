@@ -140,6 +140,9 @@ object Session {
     /** True from "Approve uninstall" until the person comes back to Magen without having uninstalled it. */
     var uninstallPending = false
     var uninstallLeft = false
+
+    /** Set when the person came back from the uninstall screen without uninstalling: show the real state once. */
+    var uninstallNotice by mutableStateOf(false)
     var showGuide by mutableStateOf(false)
     var skipSetup by mutableStateOf(false)
     /** A freshly created recovery code that must be shown (once) before the app continues. */
@@ -167,7 +170,8 @@ fun Root() {
                 Session.recoveryToShow = null
                 Session.authed = true
             }
-            Session.showGuide -> GuideScreen { Session.showGuide = false }
+            // Basic help stays open for someone who has no code yet; otherwise it follows the code check.
+            Session.showGuide && (Session.authed || !Store.hasPin) -> GuideScreen { Session.showGuide = false }
             !Store.hasPin -> Onboarding()
             !Session.authed -> PinGate(title = stringResource(R.string.enter_code), subtitle = null, allowAlt = true) {
                 Session.authed = true
@@ -175,7 +179,40 @@ fun Root() {
             needsSetup && !Session.skipSetup -> SetupWizard()
             else -> MainScaffold()
         }
+        if (Session.uninstallNotice && Session.authed) UninstallCancelledDialog()
     }
+}
+
+/** Shown after the uninstall screen was left without uninstalling: what Android reports right now. */
+@Composable
+private fun UninstallCancelledDialog() {
+    val ctx = LocalContext.current
+    val yes = stringResource(R.string.state_yes)
+    val no = stringResource(R.string.state_no)
+    val owner = remember { Policy.isOwner(ctx) }
+    val admin = remember { Policy.isAdmin(ctx) }
+    val running = remember { GuardService.instance != null }
+    AlertDialog(
+        onDismissRequest = { Session.uninstallNotice = false },
+        title = { Text(stringResource(R.string.uninstall_cancelled_title)) },
+        text = {
+            Text(
+                stringResource(
+                    R.string.uninstall_cancelled_body,
+                    if (owner) yes else no,
+                    if (admin) yes else no,
+                    if (running) yes else no,
+                ),
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                Session.uninstallNotice = false
+                Session.goTab = 0
+            }) { Text(stringResource(R.string.nav_home)) }
+        },
+        dismissButton = { TextButton(onClick = { Session.uninstallNotice = false }) { Text(stringResource(R.string.ok)) } },
+    )
 }
 
 // ---- onboarding ------------------------------------------------------------------------------
@@ -790,6 +827,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
     var rootError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     var ownerError by remember { mutableStateOf<String?>(null) }
+    var uninstallError by remember { mutableStateOf<String?>(null) }
     // Set when Android's own removal failed because this phone's firmware lacks the telephony provider.
     val removalPrefs = ctx.getSharedPreferences("magen", Context.MODE_PRIVATE)
     var normalBroken by remember { mutableStateOf(removalPrefs.getBoolean("normalRemovalBroken", false)) }
@@ -897,6 +935,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                     onClick = {
                         val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                         cm.setPrimaryClip(android.content.ClipData.newPlainText("adb", ADB_CMD))
+                        toastCopied(ctx)
                     },
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth(),
@@ -1006,7 +1045,14 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
 
         Row(
             modifier = Modifier.fillMaxWidth().clickable {
-                ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mitmachim.top/user/%D7%94%D7%A2%D7%A8%D7%A9%D7%9C%D7%94")))
+                // Leaving to the browser counts as a trip, and a missing browser must not crash the app.
+                try {
+                    Session.trip()
+                    ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://mitmachim.top/user/%D7%94%D7%A2%D7%A8%D7%A9%D7%9C%D7%94")))
+                } catch (e: Exception) {
+                    Session.cancelTrip()
+                    android.widget.Toast.makeText(ctx, ctx.getString(R.string.link_open_failed), android.widget.Toast.LENGTH_LONG).show()
+                }
             }.padding(vertical = 12.dp),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
@@ -1029,7 +1075,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
             confirmButton = {
                 TextButton(onClick = {
                     confirm = false
-                    approveUninstall(ctx)
+                    approveUninstall(ctx) { uninstallError = it }
                 }) { Text(stringResource(R.string.confirm), color = MaterialTheme.colorScheme.error) }
             },
             dismissButton = { TextButton(onClick = { confirm = false }) { Text(stringResource(R.string.cancel)) } },
@@ -1081,8 +1127,9 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                     } else {
                         val result = Policy.transferOwner(ctx, Keeper.receiver())
                         if (result == null) {
-                            // Success is shown only once Android no longer lists Magen as Device Owner.
-                            verifyOwnership(ctx, expectOwner = false) { gone ->
+                            // Success is shown only once Android no longer lists Magen as Device Owner AND lists
+                            // Magen Keeper as the Device Owner.
+                            verifyTransferToKeeper(ctx) { gone ->
                                 if (gone) {
                                     Store.setLevel("regular")
                                     ownerCleared = true
@@ -1170,22 +1217,38 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                 TextButton(onClick = {
                     val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
                     cm.setPrimaryClip(android.content.ClipData.newPlainText("error", err))
+                    toastCopied(ctx)
+                }) { Text(stringResource(R.string.error_copy)) }
+            },
+        )
+    }
+
+    val uninstallErr = uninstallError
+    if (uninstallErr != null) {
+        AlertDialog(
+            onDismissRequest = { uninstallError = null },
+            title = { Text(stringResource(R.string.uninstall_failed_title)) },
+            text = { Column(Modifier.verticalScroll(rememberScrollState())) { Text(uninstallErr) } },
+            confirmButton = { TextButton(onClick = { uninstallError = null }) { Text(stringResource(R.string.confirm)) } },
+            dismissButton = {
+                TextButton(onClick = {
+                    val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+                    cm.setPrimaryClip(android.content.ClipData.newPlainText("uninstall", uninstallErr))
+                    toastCopied(ctx)
                 }) { Text(stringResource(R.string.error_copy)) }
             },
         )
     }
 }
 
-private fun approveUninstall(ctx: Context) {
+private fun approveUninstall(ctx: Context, onError: (String) -> Unit) {
     // Release first. The 10-minute approval window (which pauses Magen's protection) opens only after
     // Android confirmed the release, so a failed attempt leaves the protection untouched.
     if (!Policy.release(ctx)) {
-        android.widget.Toast.makeText(
-            ctx,
-            (Policy.lastUninstallError ?: "Magen could not safely clear its uninstall protection. No uninstall was started.") +
-                "\n" + Policy.stateSummary(ctx),
-            android.widget.Toast.LENGTH_LONG,
-        ).show()
+        onError(
+            ctx.getString(R.string.uninstall_failed_lead) + "\n\n" +
+                (Policy.lastUninstallError ?: "No details from Android.") + "\n" + Policy.stateSummary(ctx),
+        )
         return
     }
     Store.allowUninstall(10)
@@ -1197,11 +1260,12 @@ private fun approveUninstall(ctx: Context) {
             Intent(Intent.ACTION_DELETE, Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
     } catch (e: Exception) {
-        // The uninstall screen could not be opened: close the window and the exception again.
+        // The uninstall screen could not be opened: close the window and the exception again. The permissions
+        // were already released, and the message says so.
         Session.cancelTrip()
         Session.uninstallPending = false
         Store.allowUninstall(0)
-        android.widget.Toast.makeText(ctx, ctx.getString(R.string.settings_open_failed), android.widget.Toast.LENGTH_LONG).show()
+        onError(ctx.getString(R.string.uninstall_open_failed) + "\n\n" + e.javaClass.name + ": " + (e.message ?: ""))
     }
 }
 
@@ -1265,6 +1329,8 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
 
 @Composable
 fun BlockContent(@StringRes reason: Int, onClose: () -> Unit) {
+    val ctx = LocalContext.current
+    val reasonText = remember(reason) { runCatching { ctx.getString(reason) }.getOrNull() }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Column(
             Modifier.fillMaxSize().systemBarsPadding().padding(28.dp),
@@ -1279,6 +1345,14 @@ fun BlockContent(@StringRes reason: Int, onClose: () -> Unit) {
                 fontWeight = FontWeight.Bold,
                 textAlign = TextAlign.Center,
             )
+            if (reasonText != null) {
+                Spacer(Modifier.height(10.dp))
+                Text(
+                    reasonText,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
             Spacer(Modifier.height(28.dp))
             Button(
                 onClick = onClose,
