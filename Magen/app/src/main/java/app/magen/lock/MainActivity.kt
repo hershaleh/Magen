@@ -96,9 +96,12 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         // Needed for the "protection is off" alert on Android 13+.
-        if (Build.VERSION.SDK_INT >= 33 && Store.hasPin &&
+        // Asked once only; later the Home check shows a warning with a button to the notification settings.
+        val prefs = getSharedPreferences("magen", MODE_PRIVATE)
+        if (Build.VERSION.SDK_INT >= 33 && Store.hasPin && !prefs.getBoolean("notifAsked", false) &&
             checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
         ) {
+            prefs.edit().putBoolean("notifAsked", true).apply()
             runCatching { askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS) }
         }
         // Coming back from a trip that Magen started itself (Settings, uninstall screen, Keeper): allowed
@@ -106,6 +109,24 @@ class MainActivity : AppCompatActivity() {
         if (Session.tripPending) {
             Session.tripPending = false
             if (SystemClock.elapsedRealtime() > Session.tripUntil) Session.authed = false
+        }
+        // The exception is used up by this return, so it cannot cover a later departure.
+        Session.tripUntil = 0L
+    }
+
+    override fun onPause() {
+        super.onPause()
+        if (Session.uninstallPending) Session.uninstallLeft = true
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // Back from the uninstall screen with Magen still installed: the person cancelled, so the approval
+        // window (which pauses protection) is closed again.
+        if (Session.uninstallPending && Session.uninstallLeft) {
+            Session.uninstallPending = false
+            Session.uninstallLeft = false
+            Store.allowUninstall(0)
         }
     }
 

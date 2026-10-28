@@ -368,13 +368,13 @@
     <string name="grp_self_desc">מונע כיבוי או הסרה של מגן בלי אישור כאן.</string>
     <string name="ln_off">כבוי.</string>
     <string name="ln_needs_service">מופעל, אך שירות הנגישות אינו פועל ולכן אינו נאכף.</string>
-    <string name="ln_play_ok">מופעל. נאכף על ידי שירות הנגישות הפועל.</string>
-    <string name="ln_apk_both">מופעל. נאכף על ידי שירות הנגישות הפועל ועל ידי הגבלה של אנדרואיד (Device Owner).</string>
-    <string name="ln_apk_service">מופעל. נאכף רק על ידי שירות הנגישות הפועל. אנדרואיד עצמו חוסם רק במצב חזק.</string>
+    <string name="ln_play_ok">מופעל. שירות הנגישות פועל ומחפש את כפתור ההתקנה ב־Play. אי אפשר לאמת שהוא תופס כל מסך.</string>
+    <string name="ln_apk_both">מופעל. שירות הנגישות פועל ועוקב אחרי מסך ההתקנה, והגבלה של אנדרואיד פעילה (Device Owner, נקרא מאנדרואיד).</string>
+    <string name="ln_apk_service">מופעל. שירות הנגישות פועל ועוקב אחרי מסכי ההתקנה. אנדרואיד עצמו חוסם רק במצב חזק.</string>
     <string name="ln_apk_android_only">מופעל. הגבלת אנדרואיד פעילה, אך שירות הנגישות אינו פועל.</string>
     <string name="ln_settings_none">עדיין לא נבחר דבר.</string>
-    <string name="ln_settings_ok">%1$d קבוצות ו־%2$d מילים מותאמות נמצאות במעקב שירות הנגישות הפועל.</string>
-    <string name="ln_self_ok">מופעל. נאכף על ידי שירות הנגישות הפועל וניהול המכשיר.</string>
+    <string name="ln_settings_ok">%1$d קבוצות ו־%2$d מילים מותאמות נמצאות במעקב שירות הנגישות הפועל. ההתאמה תלויה בכותרות הדפים ואי אפשר לאמת אותה.</string>
+    <string name="ln_self_ok">מופעל. ניהול המכשיר פעיל ושירות הנגישות פועל. חסימת דפי ההגדרות של מגן נשענת על התאמת כותרות מסך.</string>
     <string name="ln_self_paused">מופעל, אך מושהה לכמה דקות בגלל אישור ההסרה.</string>
     <string name="ln_self_no_admin">מופעל, אך ניהול המכשיר כבוי ולכן דפי ההגדרות של מגן אינם חסומים.</string>
     <string name="ln_self_no_service">מופעל, אך שירות הנגישות אינו פועל. נשאר רק אישור ניהול המכשיר.</string>
@@ -418,5 +418,10 @@
     <string name="remove_item">הסרה</string>
     <string name="release_on">שוחררה ממגן</string>
     <string name="release_off">נעולה עד שחרור</string>
+    <string name="status_idle">מוכנה, לא נבחרו כללים</string>
+    <string name="status_sub_idle">ההרשאות במקומן, אך עדיין לא נבחרה אפליקציה או חסימה, ולכן שום דבר אינו נאכף.</string>
+    <string name="transfer_not_confirmed">אנדרואיד עדיין מציג את מגן כבעלת המכשיר אחרי ההעברה. שום דבר לא אומת; בדקו את המצב בלשונית בית.</string>
+    <string name="keeper_take_unconfirmed">השומר דיווח על הצלחה, אך אנדרואיד אינו מציג את מגן כבעלת המכשיר. בדקו את המצב בלשונית בית.</string>
+    <string name="remove_owner_reboot_pending">ההסרה דרך Root ממתינה לאתחול. אנדרואיד ימשיך להציג את מגן כבעלת המכשיר עד שהטלפון יופעל מחדש.</string>
 </resources>
 

@@ -119,8 +119,15 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
     var showRestrictedHelp by remember { mutableStateOf(false) }
     val keeperLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { res ->
         if (res.resultCode == Activity.RESULT_OK) {
-            Store.setLevel("strong")
-            Toast.makeText(ctx, ctx.getString(R.string.keeper_taken), Toast.LENGTH_LONG).show()
+            // Keeper says it handed ownership over; believe it only when Android lists Magen as owner.
+            verifyOwnership(ctx, expectOwner = true) { owner ->
+                if (owner) {
+                    Store.setLevel("strong")
+                    Toast.makeText(ctx, ctx.getString(R.string.keeper_taken), Toast.LENGTH_LONG).show()
+                } else {
+                    Toast.makeText(ctx, ctx.getString(R.string.keeper_take_unconfirmed), Toast.LENGTH_LONG).show()
+                }
+            }
         } else {
             val reason = res.data?.getStringExtra("error") ?: ctx.getString(R.string.keeper_take_failed)
             Toast.makeText(ctx, reason, Toast.LENGTH_LONG).show()
@@ -177,6 +184,7 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
                 Session.trip()
                 ctx.startActivity(request)
             } catch (error: Exception) {
+                Session.cancelTrip()
                 Toast.makeText(
                     ctx,
                     ctx.getString(R.string.admin_open_failed),
@@ -236,7 +244,10 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
                     if (p.admin) {
                         FilledTonalButton(onClick = {
                             Session.trip()
-                            runCatching { keeperLauncher.launch(Keeper.handoverIntent()) }
+                            runCatching { keeperLauncher.launch(Keeper.handoverIntent()) }.onFailure {
+                                Session.cancelTrip()
+                                Toast.makeText(ctx, ctx.getString(R.string.keeper_take_failed), Toast.LENGTH_LONG).show()
+                            }
                         }) { Text(stringResource(R.string.keeper_take)) }
                     } else {
                         // Android only hands ownership to an app that is already an enabled device admin.

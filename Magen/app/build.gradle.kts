@@ -13,7 +13,10 @@ android {
         minSdk = 23
         targetSdk = 35
         // Grows with every CI run so updates always install over the previous build.
-        versionCode = maxOf(2, System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 2)
+        // -PMAGEN_VERSION_CODE=<n> (or env MAGEN_VERSION_CODE) overrides the number, e.g. to rebuild an older version.
+        versionCode = (project.findProperty("MAGEN_VERSION_CODE") as String?)?.toIntOrNull()
+            ?: System.getenv("MAGEN_VERSION_CODE")?.toIntOrNull()
+            ?: maxOf(2, System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 2)
         versionName = "1.1"
     }
 

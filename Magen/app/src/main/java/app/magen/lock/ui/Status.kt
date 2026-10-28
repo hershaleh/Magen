@@ -72,6 +72,24 @@ class Health(val overall: Sev, val checks: List<Check>) {
     val issues: Int get() = checks.count { it.sev == Sev.WARN || it.sev == Sev.BAD }
 }
 
+/** True when at least one app, block or Settings rule is selected, i.e. there is something to enforce. */
+fun hasAnyRule(): Boolean =
+    Store.locked.isNotEmpty() || Store.blockPlay || Store.blockApk ||
+        Store.blockedSettings.isNotEmpty() || Store.customKeywords.isNotEmpty()
+
+/**
+ * Waits for Android to show the expected Device Owner state. It is checked at once and once more after a
+ * moment, because Android may take a short time to update. [done] gets the real answer; it runs on the main thread.
+ */
+fun verifyOwnership(ctx: Context, expectOwner: Boolean, done: (Boolean) -> Unit) {
+    fun ok() = Policy.isOwner(ctx) == expectOwner
+    if (ok()) {
+        done(true)
+    } else {
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ done(ok()) }, 1500)
+    }
+}
+
 const val TAB_APPS = 1
 const val TAB_MORE = 4
 
@@ -217,6 +235,7 @@ internal fun openFix(ctx: Context, fix: Fix, onNavigate: (Int) -> Unit) {
                 ctx.startActivity(i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             }
         } catch (e: Exception) {
+            Session.cancelTrip()
             android.widget.Toast.makeText(ctx, ctx.getString(failed), android.widget.Toast.LENGTH_LONG).show()
         }
     }
@@ -253,10 +272,11 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
     val level = Store.level
     val health = remember(tick, p, locked, level) { computeHealth(ctx) }
 
+    val idle = health.overall == Sev.OK && !hasAnyRule()
     TabColumn {
         HeroCard {
             Icon(
-                sevIcon(health.overall),
+                if (idle) sevIcon(Sev.INFO) else sevIcon(health.overall),
                 null,
                 tint = Color.White,
                 modifier = Modifier.size(40.dp),
@@ -264,10 +284,13 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
             Spacer(Modifier.height(12.dp))
             Text(
                 stringResource(
-                    when (health.overall) {
+                    when {
+                        idle -> R.string.status_idle
+                        else -> when (health.overall) {
                         Sev.OK -> R.string.status_full
                         Sev.WARN -> R.string.status_partial
                         else -> R.string.status_none
+                        }
                     },
                 ),
                 style = MaterialTheme.typography.headlineSmall,
@@ -275,7 +298,11 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
                 color = Color.White,
             )
             Text(
-                if (health.issues == 0) stringResource(R.string.status_sub_ok) else stringResource(R.string.status_sub_issues, health.issues),
+                when {
+                    health.issues > 0 -> stringResource(R.string.status_sub_issues, health.issues)
+                    idle -> stringResource(R.string.status_sub_idle)
+                    else -> stringResource(R.string.status_sub_ok)
+                },
                 color = Color.White.copy(alpha = 0.85f),
             )
         }

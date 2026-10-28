@@ -130,6 +130,16 @@ object Session {
     fun trip() {
         tripUntil = android.os.SystemClock.elapsedRealtime() + 3 * 60_000L
     }
+
+    /** Closes the exception again when the screen could not be opened after all. */
+    fun cancelTrip() {
+        tripUntil = 0L
+        tripPending = false
+    }
+
+    /** True from "Approve uninstall" until the person comes back to Magen without having uninstalled it. */
+    var uninstallPending = false
+    var uninstallLeft = false
     var showGuide by mutableStateOf(false)
     var skipSetup by mutableStateOf(false)
     /** A freshly created recovery code that must be shown (once) before the app continues. */
@@ -775,6 +785,8 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
     var confirmRoot by remember { mutableStateOf(false) }
     var confirmKeeper by remember { mutableStateOf(false) }
     var rootRebootNeeded by remember { mutableStateOf(false) }
+    // The root removal moved the file, but Android only lets go of the role after a reboot.
+    var rootPending by remember { mutableStateOf(false) }
     var rootError by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     var ownerError by remember { mutableStateOf<String?>(null) }
@@ -901,6 +913,14 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
+                if (rootPending && perms.owner) {
+                    Text(
+                        stringResource(R.string.remove_owner_reboot_pending),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(bottom = 8.dp),
+                    )
+                }
                 if (!canRelease) {
                     Text(
                         stringResource(R.string.remove_owner_not_owner),
@@ -1061,9 +1081,16 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                     } else {
                         val result = Policy.transferOwner(ctx, Keeper.receiver())
                         if (result == null) {
-                            Store.setLevel("regular")
-                            ownerCleared = true
-                            android.widget.Toast.makeText(ctx, ctx.getString(R.string.keeper_done), android.widget.Toast.LENGTH_LONG).show()
+                            // Success is shown only once Android no longer lists Magen as Device Owner.
+                            verifyOwnership(ctx, expectOwner = false) { gone ->
+                                if (gone) {
+                                    Store.setLevel("regular")
+                                    ownerCleared = true
+                                    android.widget.Toast.makeText(ctx, ctx.getString(R.string.keeper_done), android.widget.Toast.LENGTH_LONG).show()
+                                } else {
+                                    ownerError = ctx.getString(R.string.transfer_not_confirmed)
+                                }
+                            }
                         } else {
                             ownerError = result
                         }
@@ -1107,7 +1134,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                     scope.launch { withContext(Dispatchers.IO) { Policy.rebootViaRoot() } }
                 }) { Text(stringResource(R.string.root_reboot)) }
             },
-            dismissButton = { TextButton(onClick = { rootRebootNeeded = false; ownerCleared = true }) { Text(stringResource(R.string.root_later)) } },
+            dismissButton = { TextButton(onClick = { rootRebootNeeded = false; rootPending = true }) { Text(stringResource(R.string.root_later)) } },
         )
     }
 
@@ -1150,7 +1177,8 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
 }
 
 private fun approveUninstall(ctx: Context) {
-    Store.allowUninstall(10)
+    // Release first. The 10-minute approval window (which pauses Magen's protection) opens only after
+    // Android confirmed the release, so a failed attempt leaves the protection untouched.
     if (!Policy.release(ctx)) {
         android.widget.Toast.makeText(
             ctx,
@@ -1160,10 +1188,21 @@ private fun approveUninstall(ctx: Context) {
         ).show()
         return
     }
+    Store.allowUninstall(10)
+    Session.uninstallPending = true
+    Session.uninstallLeft = false
     Session.trip()
-    ctx.startActivity(
-        Intent(Intent.ACTION_DELETE, Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
-    )
+    try {
+        ctx.startActivity(
+            Intent(Intent.ACTION_DELETE, Uri.parse("package:${ctx.packageName}")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+        )
+    } catch (e: Exception) {
+        // The uninstall screen could not be opened: close the window and the exception again.
+        Session.cancelTrip()
+        Session.uninstallPending = false
+        Store.allowUninstall(0)
+        android.widget.Toast.makeText(ctx, ctx.getString(R.string.settings_open_failed), android.widget.Toast.LENGTH_LONG).show()
+    }
 }
 
 // ---- lock screen content ---------------------------------------------------------------------

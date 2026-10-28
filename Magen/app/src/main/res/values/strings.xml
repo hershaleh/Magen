@@ -368,13 +368,13 @@
     <string name="grp_self_desc">Keeps Magen from being switched off or removed without approval here.</string>
     <string name="ln_off">Off.</string>
     <string name="ln_needs_service">On, but the accessibility service is not running, so it is not enforced.</string>
-    <string name="ln_play_ok">On. Enforced by the running accessibility service.</string>
-    <string name="ln_apk_both">On. Enforced by the running accessibility service and by an Android restriction (Device Owner).</string>
-    <string name="ln_apk_service">On. Enforced by the running accessibility service only. Android itself blocks it only in strong mode.</string>
+    <string name="ln_play_ok">On. The accessibility service is running and watches for Play\'s Install button. Whether it catches every screen cannot be verified.</string>
+    <string name="ln_apk_both">On. The accessibility service is running and watches the installer, and an Android restriction is active (Device Owner, read from Android).</string>
+    <string name="ln_apk_service">On. The accessibility service is running and watches the installer screens. Android itself blocks it only in strong mode.</string>
     <string name="ln_apk_android_only">On. Android restriction is active, but the accessibility service is not running.</string>
     <string name="ln_settings_none">Nothing selected yet.</string>
-    <string name="ln_settings_ok">%1$d groups and %2$d custom words are watched by the running accessibility service.</string>
-    <string name="ln_self_ok">On. Enforced by the running accessibility service and device admin.</string>
+    <string name="ln_settings_ok">%1$d groups and %2$d custom words are watched by the running accessibility service. Matching depends on page titles and cannot be verified.</string>
+    <string name="ln_self_ok">On. Device admin is active and the accessibility service is running. Blocking Magen\'s own Settings pages relies on matching screen titles.</string>
     <string name="ln_self_paused">On, but paused for a few minutes by the uninstall approval.</string>
     <string name="ln_self_no_admin">On, but device admin is off, so the Settings pages of Magen itself are not blocked.</string>
     <string name="ln_self_no_service">On, but the accessibility service is not running. Only the device admin approval remains.</string>
@@ -418,5 +418,10 @@
     <string name="remove_item">Remove</string>
     <string name="release_on">Released from Magen</string>
     <string name="release_off">Locked until released</string>
+    <string name="status_idle">Ready, no rules selected</string>
+    <string name="status_sub_idle">Permissions are in place, but no app or block is selected yet, so nothing is being enforced.</string>
+    <string name="transfer_not_confirmed">Android still lists Magen as the Device Owner after the transfer. Nothing was confirmed; check the state on the Home tab.</string>
+    <string name="keeper_take_unconfirmed">Magen Keeper reported success, but Android does not list Magen as the Device Owner. Check the state on the Home tab.</string>
+    <string name="remove_owner_reboot_pending">Root removal is waiting for a reboot. Android still lists Magen as the Device Owner until the phone restarts.</string>
 </resources>
 

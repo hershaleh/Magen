@@ -12,7 +12,10 @@ android {
         // transferOwnership() needs Android 9.
         minSdk = 28
         targetSdk = 34
-        versionCode = maxOf(1, System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1)
+        // -PMAGEN_VERSION_CODE=<n> (or env MAGEN_VERSION_CODE) overrides the number, e.g. to rebuild an older version.
+        versionCode = (project.findProperty("MAGEN_VERSION_CODE") as String?)?.toIntOrNull()
+            ?: System.getenv("MAGEN_VERSION_CODE")?.toIntOrNull()
+            ?: maxOf(1, System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 1)
         versionName = "1.0"
     }
 
