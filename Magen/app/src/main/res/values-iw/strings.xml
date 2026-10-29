@@ -277,8 +277,6 @@
     <string name="nav_times">זמנים</string>
     <string name="nav_protection">הגנה</string>
     <string name="times_title">זמנים</string>
-    <string name="times_soon_title">עדיין לא זמין</string>
-    <string name="times_soon_body">כאן יופיעו בעתיד לוחות זמנים, פרופילים ומגבלות שימוש. האפשרויות עדיין אינן זמינות.</string>
     <string name="protection_title">הגנה</string>
     <string name="protection_adv_title">הגנה מתקדמת</string>
     <string name="protection_adv_desc">מצב הגנה רגיל או חזק, ההשוואה והמדריך למצב חזק.</string>
@@ -344,14 +342,8 @@
     <string name="apps_none">לא נמצאו במכשיר אפליקציות שניתן לפתוח.</string>
     <string name="apps_no_results">אין אפליקציות שמתאימות לחיפוש או לסינון.</string>
     <string name="apps_clear_search">ניקוי חיפוש וסינון</string>
-    <string name="times_now_title">פועל כעת</string>
-    <string name="times_now_desc">התנהגות מבוססת זמן שיש למגן בפועל כיום.</string>
-    <string name="times_pause_active">אישור ההסרה פעיל עד %1$s. ההגנה מושהית עד אז.</string>
-    <string name="times_pause_none">אין השהיה מבוססת זמן פעילה.</string>
-    <string name="times_item_schedules">לוחות זמנים (הפעלה וכיבוי בשעות וימים שנבחרו)</string>
-    <string name="times_item_profiles">פרופילים (למשל עבודה, לילה)</string>
-    <string name="times_item_limits">מגבלות שימוש יומיות</string>
-    <string name="times_not_enforced">אלה עדיין לא קיימים. שום דבר במסך הזה אינו מתוזמן או נאכף, ושום לוח זמנים אינו נשמר.</string>
+    <string name="times_pause_active">פעיל עד %1$s. ההגנה מושהית עד אז.</string>
+    <string name="times_pause_none">לא פעיל.</string>
     <string name="grp_play">חנות Google Play</string>
     <string name="grp_play_desc">חוסם התקנות חדשות מהחנות. עדכונים ממשיכים לעבוד.</string>
     <string name="grp_apk">התקנות APK</string>
@@ -387,7 +379,7 @@
     <string name="help_intro">עזרה לפי נושאים. ההגדרה צעד אחר צעד של מצב חזק נמצאת בסוף.</string>
     <string name="guide_steps_title">הגדרת מצב חזק צעד אחר צעד</string>
     <string name="help_map_title">איפה כל דבר נמצא</string>
-    <string name="help_map_body">בית: מצב ההגנה, מה דורש טיפול ותקציר.\nאפליקציות: בחירת האפליקציות הנעולות.\nהגנה: חסימות Play, APK והגדרות, הגנה עצמית והגנה מתקדמת.\nזמנים: מציג רק מצב מבוסס זמן. לוחות זמנים ופרופילים עדיין לא זמינים.\nהגדרות: קוד ושחזור, קיצורי הרשאות, שחרור ושחזור, שפה.</string>
+    <string name="help_map_body">בית: מצב ההגנה, מה דורש טיפול ותקציר.\nאפליקציות: בחירת האפליקציות הנעולות.\nהגנה: חסימות Play, APK והגדרות, הגנה עצמית והגנה מתקדמת.\nזמנים: מתי האפליקציות ננעלות שוב, חלון אישור ההסרה והשהיה אחרי קוד שגוי.\nהגדרות: קוד ושחזור, קיצורי הרשאות, שחרור ושחזור, שפה.</string>
     <string name="help_regular_title">הגנה רגילה: מה נדרש</string>
     <string name="help_regular_body">הגנה רגילה לא דורשת מחשב. היא נשענת על הרשאות שאתם מפעילים בעצמכם:\n• שירות נגישות: מאפשר למגן לראות איזו אפליקציה או איזה דף הגדרות פתוחים, כדי להציג את הנעילה ולסגור דפים חסומים. בלעדיו נעילת האפליקציות והחסימות לא עובדות.\n• ניהול מכשיר: הסרת מגן תדרוש אישור בתוך מגן.\nמומלץ: לאפשר למגן לרוץ ברקע (הגדרות סוללה) ולהשאיר התראות פעילות, כדי שמגן תוכל להתריע אם ההגנה נעצרת.\nלבדיקה: פתחו את לשונית „בית” ולחצו על „בדיקת הגנה”. כל פריט מוצג כתקין, כדורש טיפול או כלא ניתן לאימות.</string>
     <string name="help_status_title">מופעל, פועל או מאומת?</string>
@@ -446,5 +438,17 @@
     <string name="tile_admin_off">ניהול מכשיר כבוי</string>
     <string name="expand">הרחבה</string>
     <string name="collapse">כיווץ</string>
+    <string name="search_clear">ניקוי חיפוש</string>
+    <string name="times_sub">מתי מגן נועלת שוב, ומה משהה את ההגנה.</string>
+    <string name="times_lock_title">נעילה מחדש</string>
+    <string name="times_leave_title">כשיוצאים ממגן</string>
+    <string name="times_leave_body">מגן מבקשת את הקוד שוב בכל יציאה ממנה. היוצא מן הכלל הוא מעבר קצר (עד 3 דקות) למסך אנדרואיד שמגן פתחה בשבילכם, כמו הרשאה.</string>
+    <string name="times_pause_title">השהיות ועיכובים</string>
+    <string name="times_approval_title">חלון אישור הסרה</string>
+    <string name="times_state_active">פעיל</string>
+    <string name="times_state_inactive">לא פעיל</string>
+    <string name="times_wrong_title">אחרי קודים שגויים</string>
+    <string name="times_wrong_body">אחרי 5 קודים שגויים לוח המקשים נעצר ל־30 שניות. כל קוד שגוי נוסף מכפיל את ההשהיה, עד 15 דקות.</string>
+    <string name="times_wrong_now">מושהה: %1$d שניות</string>
 </resources>
 

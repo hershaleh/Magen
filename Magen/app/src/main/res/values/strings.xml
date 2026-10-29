@@ -277,8 +277,6 @@
     <string name="nav_times">Times</string>
     <string name="nav_protection">Protection</string>
     <string name="times_title">Times</string>
-    <string name="times_soon_title">Not available yet</string>
-    <string name="times_soon_body">Schedules, profiles and usage limits will appear here. They are not available yet.</string>
     <string name="protection_title">Protection</string>
     <string name="protection_adv_title">Advanced protection</string>
     <string name="protection_adv_desc">Protection level (regular or strong), the comparison and the strong mode guide.</string>
@@ -344,14 +342,8 @@
     <string name="apps_none">No launchable apps were found on this device.</string>
     <string name="apps_no_results">No apps match your search or filter.</string>
     <string name="apps_clear_search">Clear search and filter</string>
-    <string name="times_now_title">Running now</string>
-    <string name="times_now_desc">Time-based behaviour Magen really has today.</string>
-    <string name="times_pause_active">Uninstall approval is active until %1$s. Protection is paused until then.</string>
-    <string name="times_pause_none">No time-based pause is active.</string>
-    <string name="times_item_schedules">Schedules (on and off at chosen hours and days)</string>
-    <string name="times_item_profiles">Profiles (for example work, night)</string>
-    <string name="times_item_limits">Daily usage limits</string>
-    <string name="times_not_enforced">These do not exist yet. Nothing on this screen is scheduled or enforced, and no schedule is saved.</string>
+    <string name="times_pause_active">Active until %1$s. Protection is paused until then.</string>
+    <string name="times_pause_none">Not active.</string>
     <string name="grp_play">Google Play store</string>
     <string name="grp_play_desc">Stops new installs from the store. Updates keep working.</string>
     <string name="grp_apk">APK installs</string>
@@ -387,7 +379,7 @@
     <string name="help_intro">Help by topic. The step-by-step setup for strong mode is at the end.</string>
     <string name="guide_steps_title">Set up strong mode, step by step</string>
     <string name="help_map_title">Where things are</string>
-    <string name="help_map_body">Home: protection status, what needs attention, and a summary.\nApps: choose which apps are locked.\nProtection: Play, APK and Settings blocks, self-protection and advanced protection.\nTimes: shows the time-based state only. Schedules and profiles are not available yet.\nSettings: code and recovery, permission shortcuts, release and recovery, language.</string>
+    <string name="help_map_body">Home: protection status, what needs attention, and a summary.\nApps: choose which apps are locked.\nProtection: Play, APK and Settings blocks, self-protection and advanced protection.\nTimes: when apps lock again, the uninstall approval window and the wrong-code pause.\nSettings: code and recovery, permission shortcuts, release and recovery, language.</string>
     <string name="help_regular_title">Regular protection: what is needed</string>
     <string name="help_regular_body">Regular protection needs no computer. It relies on permissions you switch on yourself:\n• Accessibility service: lets Magen see which app or Settings page is open, so it can show the lock and close blocked pages. Without it, app locks and blocks do not work.\n• Device admin: uninstalling Magen then needs approval inside Magen.\nRecommended: allow Magen to run in the background (battery settings) and keep notifications on, so Magen can warn you if protection stops.\nTo check: open the Home tab and press “Protection check”. Every item is shown as working, needing attention, or not verifiable.</string>
     <string name="help_status_title">On, running, or verified?</string>
@@ -446,5 +438,17 @@
     <string name="tile_admin_off">Device admin off</string>
     <string name="expand">Expand</string>
     <string name="collapse">Collapse</string>
+    <string name="search_clear">Clear search</string>
+    <string name="times_sub">When Magen locks again, and what pauses protection.</string>
+    <string name="times_lock_title">Locking again</string>
+    <string name="times_leave_title">When you leave Magen</string>
+    <string name="times_leave_body">Magen asks for the code again every time you leave it. The exception is a short trip (up to 3 minutes) to an Android screen that Magen opened for you, such as a permission.</string>
+    <string name="times_pause_title">Pauses and delays</string>
+    <string name="times_approval_title">Uninstall approval window</string>
+    <string name="times_state_active">Active</string>
+    <string name="times_state_inactive">Inactive</string>
+    <string name="times_wrong_title">After wrong codes</string>
+    <string name="times_wrong_body">After 5 wrong codes the keypad pauses for 30 seconds. Each further wrong code doubles the pause, up to 15 minutes.</string>
+    <string name="times_wrong_now">Paused: %1$d s</string>
 </resources>
 
