@@ -1,5 +1,11 @@
 package app.magen.lock.ui
 
+import androidx.compose.material.icons.outlined.Settings as OutlinedSettingsIcon
+import androidx.compose.material.icons.outlined.Schedule as OutlinedScheduleIcon
+import androidx.compose.material.icons.outlined.Shield as OutlinedShieldIcon
+import androidx.compose.material.icons.outlined.Apps as OutlinedAppsIcon
+import androidx.compose.material.icons.outlined.Home as OutlinedHomeIcon
+import androidx.compose.material.icons.filled.Settings as SettingsIcon
 import androidx.activity.compose.BackHandler
 import android.app.admin.DevicePolicyManager
 import android.content.Context
@@ -208,7 +214,7 @@ private fun UninstallCancelledDialog() {
         confirmButton = {
             TextButton(onClick = {
                 Session.uninstallNotice = false
-                Session.goTab = 0
+                Session.goTab = Tabs.HOME
             }) { Text(stringResource(R.string.nav_home)) }
         },
         dismissButton = { TextButton(onClick = { Session.uninstallNotice = false }) { Text(stringResource(R.string.ok)) } },
@@ -303,22 +309,23 @@ fun MainScaffold() {
     } else if (recoveryMode) {
         NewRecovery { recoveryMode = false }
     } else {
+        // Order follows [Tabs]. Selected tabs use the filled icon, the others the outlined one.
         val items = listOf(
-            R.string.nav_home to Icons.Filled.Home,
-            R.string.nav_apps to Icons.Filled.Apps,
-            R.string.nav_times to Icons.Filled.Schedule,
-            R.string.nav_protection to Icons.Filled.Security,
-            R.string.nav_more to Icons.Filled.MoreHoriz,
+            Triple(R.string.nav_home, Icons.Filled.Home, Icons.Outlined.OutlinedHomeIcon),
+            Triple(R.string.nav_apps, Icons.Filled.Apps, Icons.Outlined.OutlinedAppsIcon),
+            Triple(R.string.nav_protection, Icons.Filled.Shield, Icons.Outlined.OutlinedShieldIcon),
+            Triple(R.string.nav_times, Icons.Filled.Schedule, Icons.Outlined.OutlinedScheduleIcon),
+            Triple(R.string.nav_settings, Icons.Filled.SettingsIcon, Icons.Outlined.OutlinedSettingsIcon),
         )
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
             bottomBar = {
-                NavigationBar {
-                    items.forEachIndexed { i, (label, icon) ->
+                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                    items.forEachIndexed { i, (label, filled, outlined) ->
                         NavigationBarItem(
                             selected = tab == i,
                             onClick = { tab = i },
-                            icon = { Icon(icon, null) },
+                            icon = { Icon(if (tab == i) filled else outlined, null) },
                             label = { Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                         )
                     }
@@ -327,15 +334,15 @@ fun MainScaffold() {
         ) { inner ->
             Box(Modifier.padding(inner).statusBarsPadding()) {
                 when (tab) {
-                    0 -> HomeTab(onNavigate = { tab = it })
-                    1 -> AppsTab()
-                    2 -> TimesTab()
-                    3 -> ProtectionTab(onOpenHome = { tab = 0 })
+                    Tabs.HOME -> HomeTab(onNavigate = { tab = it })
+                    Tabs.APPS -> AppsTab()
+                    Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
+                    Tabs.TIMES -> TimesTab()
                     else -> MoreTab(
                         onChangePin = { changingPin = true },
                         onRecovery = { recoveryMode = true },
-                        onOpenHome = { tab = 0 },
-                        onOpenProtection = { tab = 3 },
+                        onOpenHome = { tab = Tabs.HOME },
+                        onOpenProtection = { tab = Tabs.PROTECTION },
                     )
                 }
             }
@@ -377,45 +384,6 @@ internal fun TabColumn(content: @Composable ColumnScope.() -> Unit) {
 }
 
 // ---- tab: protection -------------------------------------------------------------------------
-
-@Composable
-fun PermCard(
-    icon: ImageVector,
-    @StringRes title: Int,
-    @StringRes desc: Int,
-    on: Boolean,
-    onEnable: (() -> Unit)?,
-    extra: (@Composable ColumnScope.() -> Unit)? = null,
-) {
-    Card(
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(Modifier.padding(16.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                IconTile(icon)
-                Column(Modifier.weight(1f)) {
-                    Text(stringResource(title), fontWeight = FontWeight.Bold)
-                    Text(
-                        stringResource(desc),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-                if (on) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Icon(Icons.Filled.CheckCircle, null, tint = MaterialTheme.colorScheme.secondary)
-                        Text(stringResource(R.string.status_on), color = MaterialTheme.colorScheme.secondary)
-                    }
-                } else if (onEnable != null) {
-                    FilledTonalButton(onClick = onEnable) { Text(stringResource(R.string.btn_enable)) }
-                }
-            }
-            extra?.invoke(this)
-        }
-    }
-}
 
 // ---- tab: apps -------------------------------------------------------------------------------
 

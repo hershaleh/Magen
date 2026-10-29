@@ -8,7 +8,6 @@
 
     <string name="nav_home">Home</string>
     <string name="nav_apps">Apps</string>
-    <string name="nav_more">More</string>
 
     <string name="welcome_title">Welcome to Magen</string>
     <string name="welcome_sub">App locking, install blocking and removal protection, all in one place.</string>
@@ -155,7 +154,7 @@
     <string name="g5_t">Run the command</string>
     <string name="g5_b">Copy the command shown here, paste it into the computer\'s command window, and press Enter. If it succeeds, the response will include Success.</string>
     <string name="g6_t">Finish</string>
-    <string name="g6_b">Open Magen, go to the Home tab and press “Protection check”. Strong mode (Device Owner) should show as checked with Android. You can now add the accounts you removed. To remove Magen later, use More > Release and recovery: release Device Owner first, then “Approve uninstall”.</string>
+    <string name="g6_b">Open Magen, go to the Home tab and press “Protection check”. Strong mode (Device Owner) should show as checked with Android. You can now add the accounts you removed. To remove Magen later, use Settings > Release and recovery: release Device Owner first, then “Approve uninstall”.</string>
     <string name="guide_trouble_title">If something fails</string>
     <string name="guide_trouble_body">Device Owner setup fails: check that all accounts and additional users were temporarily removed, then try again.\nComputer does not detect the phone: try another USB cable, approve the prompt, and run adb devices again.\nUnauthorized: revoke USB debugging authorizations in Developer options, reconnect, and approve the prompt.\nXiaomi or Redmi: you may also need to enable “USB debugging (Security settings)”.</string>
     <string name="guide_warn">Important: keep your master code somewhere safe. Device Owner changes the device\'s management privileges. Before proceeding, make sure you understand the steps and have a way to recover access to your phone.</string>
@@ -269,7 +268,7 @@
     <string name="keeper_taken">Magen is the Device Owner again.</string>
     <string name="keeper_take_failed">Magen Keeper did not hand over Device Owner.</string>
     <string name="guide_keeper_title">Magen Keeper (companion app)</string>
-    <string name="guide_keeper_body">If removing Device Owner from Magen fails on your phone, install the small Magen Keeper app and use “Transfer to Magen Keeper” in More > Release and recovery. Magen then stops being the owner and can be uninstalled. After installing Magen again, the Strong mode card on the Home tab shows “Take Device Owner from Magen Keeper”, with no adb needed. Keeper can also hand ownership to any other app that supports it. Needs Android 9 or newer.</string>
+    <string name="guide_keeper_body">If removing Device Owner from Magen fails on your phone, install the small Magen Keeper app and use “Transfer to Magen Keeper” in Settings > Release and recovery. Magen then stops being the owner and can be uninstalled. After installing Magen again, the Device Owner row under Home > Checks and permissions shows “Take Device Owner from Magen Keeper”, with no adb needed. Keeper can also hand ownership to any other app that supports it. Needs Android 9 or newer.</string>
     <string name="keeper_inactive">Magen Keeper is installed but its device-admin is not enabled. Open Magen Keeper, tap \"Enable device admin\", then try again.</string>
     <string name="keeper_need_admin">To take Device Owner from Magen Keeper, first enable Magen as a device administrator (the card above).</string>
     <string name="owner_versions_info">Which method works on which Android:\n• Simple removal: Android 6 and newer (Magen\'s minimum). Google marked it deprecated in Android 8, no upper limit is documented, but it can fail on some phones.\n• Transfer to Magen Keeper: Android 9 (API 28) and newer only. Keeper must be installed and its device admin enabled.\n• Root removal: unofficial, depends on the phone.\nYour phone: Android %1$s (API %2$d).</string>
@@ -298,12 +297,7 @@
     <string name="status_none">Protection not active</string>
     <string name="status_sub_ok">Everything Magen can check is working</string>
     <string name="status_sub_issues">%1$d need attention</string>
-    <string name="glance_title">At a glance</string>
-    <string name="glance_issues_title">Permissions and issues</string>
-    <string name="glance_issues_none">No missing permissions or problems found.</string>
-    <string name="glance_issues_some">%1$d need attention. Tap “Protection check” for details.</string>
     <string name="check_button">Protection check</string>
-    <string name="check_title">Check results</string>
     <string name="check_time">Checked at %1$s</string>
     <string name="chk_acc">Accessibility service</string>
     <string name="chk_acc_ok">Running now.</string>
@@ -329,7 +323,7 @@
     <string name="chk_pause">Uninstall approval is active</string>
     <string name="chk_pause_detail">Protection is paused for a few minutes.</string>
     <string name="chk_stale">Leftover uninstall block</string>
-    <string name="chk_stale_detail">Android still blocks uninstalling Magen. See More, Release and recovery.</string>
+    <string name="chk_stale_detail">Android still blocks uninstalling Magen. See Settings, Release and recovery.</string>
     <string name="chk_unknown">Cannot be verified</string>
     <string name="chk_unknown_detail">Magen cannot test from the inside whether the lock screen really opens on each app, or whether the install and Settings blocks catch every screen.</string>
     <string name="fix_accessibility">Open accessibility settings</string>
@@ -337,7 +331,7 @@
     <string name="fix_battery">Open battery settings</string>
     <string name="fix_notifications">Open notification settings</string>
     <string name="fix_strong_guide">Open strong mode guide</string>
-    <string name="fix_more">Go to More</string>
+    <string name="fix_more">Go to Settings</string>
     <string name="apps_summary">%1$d of %2$d apps selected</string>
     <string name="filter_all">All</string>
     <string name="filter_selected">Selected</string>
@@ -393,7 +387,7 @@
     <string name="help_intro">Help by topic. The step-by-step setup for strong mode is at the end.</string>
     <string name="guide_steps_title">Set up strong mode, step by step</string>
     <string name="help_map_title">Where things are</string>
-    <string name="help_map_body">Home: protection status and the “Protection check”.\nApps: choose which apps are locked.\nTimes: shows the time-based state only. Schedules and profiles are not available yet.\nProtection: Play, APK and Settings blocks, self-protection and advanced protection.\nMore: code and recovery, permission shortcuts, release and recovery, language.</string>
+    <string name="help_map_body">Home: protection status, what needs attention, and a summary.\nApps: choose which apps are locked.\nProtection: Play, APK and Settings blocks, self-protection and advanced protection.\nTimes: shows the time-based state only. Schedules and profiles are not available yet.\nSettings: code and recovery, permission shortcuts, release and recovery, language.</string>
     <string name="help_regular_title">Regular protection: what is needed</string>
     <string name="help_regular_body">Regular protection needs no computer. It relies on permissions you switch on yourself:\n• Accessibility service: lets Magen see which app or Settings page is open, so it can show the lock and close blocked pages. Without it, app locks and blocks do not work.\n• Device admin: uninstalling Magen then needs approval inside Magen.\nRecommended: allow Magen to run in the background (battery settings) and keep notifications on, so Magen can warn you if protection stops.\nTo check: open the Home tab and press “Protection check”. Every item is shown as working, needing attention, or not verifiable.</string>
     <string name="help_status_title">On, running, or verified?</string>
@@ -401,7 +395,7 @@
     <string name="help_strong_title">Strong mode (Device Owner)</string>
     <string name="help_strong_body">Device Owner is a role Android gives to one app to manage the device. When Magen has it, Magen can ask Android itself to enforce some restrictions, such as blocking installs from unknown sources, instead of relying only on the accessibility service. On Android 11 and newer it also asks Android not to let Magen be force-stopped or have its data cleared from Settings.\nLimits: it needs a one-time setup from a computer, accounts must be removed temporarily, on some phones Android cannot release the role by the normal method, and it still does not make protection absolute.\nBefore you start: keep your master code and recovery code safe, and know the ways out. More > Release and recovery has the normal removal, removal via Root, and transfer to Magen Keeper.</string>
     <string name="help_release_title">Release and recovery</string>
-    <string name="help_release_body">Three separate ways to give up Device Owner (More > Release and recovery):\n• Normal removal: asks Android to release it. Works on most phones.\n• Transfer to Magen Keeper: hands it to the small Keeper app, which can give it back later. Android 9 or newer.\n• Removal via Root: only for rooted phones. It changes a system file and reboots, so use it as a last resort.\n“Approve uninstall” is different: it opens a 10-minute window, removes admin rights and starts uninstalling Magen. If Magen is still the Device Owner it also tries the normal removal first. It does not replace Keeper or Root when the normal removal fails on your phone.</string>
+    <string name="help_release_body">Three separate ways to give up Device Owner (Settings > Release and recovery):\n• Normal removal: asks Android to release it. Works on most phones.\n• Transfer to Magen Keeper: hands it to the small Keeper app, which can give it back later. Android 9 or newer.\n• Removal via Root: only for rooted phones. It changes a system file and reboots, so use it as a last resort.\n“Approve uninstall” is different: it opens a 10-minute window, removes admin rights and starts uninstalling Magen. If Magen is still the Device Owner it also tries the normal removal first. It does not replace Keeper or Root when the normal removal fails on your phone.</string>
     <string name="settings_open_failed">Could not open that Android screen on this device.</string>
     <string name="adm_title">Device admin (regular)</string>
     <string name="adm_on">Device admin is active (checked with Android). Uninstalling Magen needs approval inside Magen. This is not Device Owner.</string>
@@ -436,5 +430,21 @@
     <string name="link_open_failed">Could not open the link. No browser was found.</string>
     <string name="pin_delete">Delete last digit</string>
     <string name="pin_confirm">Confirm code</string>
+    <string name="nav_settings">Settings</string>
+    <string name="home_attention">Needs attention</string>
+    <string name="home_summary">Summary</string>
+    <string name="home_details">Checks and permissions</string>
+    <string name="home_details_sub">The details behind the status above</string>
+    <string name="home_permissions">Permissions and setup</string>
+    <string name="tile_apps">Apps selected to lock</string>
+    <string name="tile_installs">Install blocks selected</string>
+    <string name="tile_settings">Settings blocks selected</string>
+    <string name="tile_level">Protection level selected</string>
+    <string name="tile_owner_on">Device Owner active</string>
+    <string name="tile_owner_off">Device Owner not active</string>
+    <string name="tile_admin_on">Device admin on</string>
+    <string name="tile_admin_off">Device admin off</string>
+    <string name="expand">Expand</string>
+    <string name="collapse">Collapse</string>
 </resources>
 

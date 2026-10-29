@@ -1,5 +1,9 @@
 package app.magen.lock.ui
 
+import androidx.compose.material.icons.filled.HelpOutline
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.runtime.saveable.rememberSaveable
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -105,9 +109,6 @@ fun verifyTransferToKeeper(ctx: Context, done: (Boolean) -> Unit) {
     }
 }
 
-const val TAB_APPS = 1
-const val TAB_MORE = 4
-
 fun computeHealth(ctx: Context): Health {
     val p = readPerms(ctx)
     // The service object exists only while Android has really started the accessibility service.
@@ -203,25 +204,25 @@ internal fun sevIcon(sev: Sev): ImageVector = when (sev) {
     Sev.OK -> Icons.Filled.CheckCircle
     Sev.WARN -> Icons.Filled.Warning
     Sev.BAD -> Icons.Filled.Error
+    Sev.UNKNOWN -> Icons.Filled.HelpOutline
     else -> Icons.Filled.Info
 }
 
 @Composable
-private fun CheckRow(c: Check, showFix: Boolean, onFix: (Fix) -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Top) {
-        Icon(sevIcon(c.sev), stringResource(sevLabel(c.sev)), tint = sevColor(c.sev), modifier = Modifier.size(22.dp))
-        Column(Modifier.weight(1f).padding(start = 10.dp)) {
-            Text(stringResource(c.title), fontWeight = FontWeight.SemiBold)
-            Text(
-                stringResource(c.detail, *c.args.toTypedArray()),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            if (showFix && c.fix != null && (c.sev == Sev.WARN || c.sev == Sev.BAD)) {
-                TextButton(onClick = { onFix(c.fix) }) { Text(stringResource(fixLabel(c.fix))) }
-            }
-        }
-    }
+private fun CheckRow(c: Check, onFix: (Fix) -> Unit) {
+    val fix = c.fix
+    ListRow(
+        title = stringResource(c.title),
+        supporting = stringResource(c.detail, *c.args.toTypedArray()),
+        icon = sevIcon(c.sev),
+        iconDescription = stringResource(sevLabel(c.sev)),
+        iconTint = sevColor(c.sev),
+        below = if (fix != null && (c.sev == Sev.WARN || c.sev == Sev.BAD)) {
+            { TextAction(stringResource(fixLabel(fix)), { onFix(fix) }) }
+        } else {
+            null
+        },
+    )
 }
 
 @StringRes
@@ -271,7 +272,7 @@ internal fun openFix(ctx: Context, fix: Fix, onNavigate: (Int) -> Unit) {
                 go(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, android.net.Uri.parse("package:${ctx.packageName}")))
             }
         Fix.STRONG_GUIDE -> Session.showGuide = true
-        Fix.MORE_TAB -> onNavigate(TAB_MORE)
+        Fix.MORE_TAB -> onNavigate(Tabs.SETTINGS)
     }
 }
 
@@ -283,88 +284,117 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
     var tick by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { tick++ }
     var checkedAt by remember { mutableStateOf<Long?>(null) }
+    var detailsOpen by rememberSaveable { mutableStateOf(false) }
     val locked = Store.locked
     val level = Store.level
     val health = remember(tick, p, locked, level) { computeHealth(ctx) }
 
+    // "Ready, no rules" is shown instead of "active" while nothing is selected to enforce.
     val idle = health.overall == Sev.OK && !hasAnyRule()
-    TabColumn {
-        HeroCard {
-            Icon(
-                if (idle) sevIcon(Sev.INFO) else sevIcon(health.overall),
-                null,
-                tint = Color.White,
-                modifier = Modifier.size(40.dp),
-            )
-            Spacer(Modifier.height(12.dp))
-            Text(
-                stringResource(
-                    when {
-                        idle -> R.string.status_idle
-                        else -> when (health.overall) {
-                        Sev.OK -> R.string.status_full
-                        Sev.WARN -> R.string.status_partial
-                        else -> R.string.status_none
-                        }
-                    },
-                ),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                color = Color.White,
-            )
-            Text(
-                when {
-                    health.issues > 0 -> stringResource(R.string.status_sub_issues, health.issues)
-                    idle -> stringResource(if (Store.protect) R.string.status_sub_idle else R.string.status_sub_idle_off)
-                    else -> stringResource(R.string.status_sub_ok)
-                },
-                color = Color.White.copy(alpha = 0.85f),
-            )
+    val bannerSev = if (idle) Sev.INFO else health.overall
+    val problems = health.checks.filter { it.sev == Sev.WARN || it.sev == Sev.BAD }
+    val fix: (Fix) -> Unit = { openFix(ctx, it, onNavigate) }
+
+    MagenScreen {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
+            ShieldBadge(36.dp)
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
         }
 
-        SectionCard(stringResource(R.string.glance_title)) {
-            health.checks.filter { it.key == "acc" || it.key == "owner" || it.key == "apps" }
-                .forEach { CheckRow(it, showFix = false, onFix = {}) }
-            Row(Modifier.fillMaxWidth().padding(vertical = 6.dp), verticalAlignment = Alignment.Top) {
-                val sev = if (health.issues == 0) Sev.OK else Sev.WARN
-                Icon(sevIcon(sev), stringResource(sevLabel(sev)), tint = sevColor(sev), modifier = Modifier.size(22.dp))
-                Column(Modifier.weight(1f).padding(start = 10.dp)) {
-                    Text(stringResource(R.string.glance_issues_title), fontWeight = FontWeight.SemiBold)
-                    Text(
-                        if (health.issues == 0) {
-                            stringResource(R.string.glance_issues_none)
-                        } else {
-                            stringResource(R.string.glance_issues_some, health.issues)
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                }
-            }
-            Button(
+        StatusBanner(
+            sev = bannerSev,
+            title = stringResource(
+                when {
+                    idle -> R.string.status_idle
+                    health.overall == Sev.OK -> R.string.status_full
+                    health.overall == Sev.WARN -> R.string.status_partial
+                    else -> R.string.status_none
+                },
+            ),
+            subtitle = when {
+                health.issues > 0 -> stringResource(R.string.status_sub_issues, health.issues)
+                idle -> stringResource(if (Store.protect) R.string.status_sub_idle else R.string.status_sub_idle_off)
+                else -> stringResource(R.string.status_sub_ok)
+            },
+        ) {
+            TonalButton(
+                stringResource(R.string.check_button),
                 onClick = {
                     tick++
                     checkedAt = System.currentTimeMillis()
+                    detailsOpen = true
                 },
-                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
-            ) {
-                Icon(Icons.Filled.FactCheck, null, modifier = Modifier.size(20.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(stringResource(R.string.check_button))
+                icon = Icons.Filled.FactCheck,
+            )
+        }
+
+        if (problems.isNotEmpty()) {
+            SectionHeader(stringResource(R.string.home_attention))
+            GroupCard {
+                problems.forEachIndexed { i, c ->
+                    if (i > 0) RowDivider()
+                    CheckRow(c, fix)
+                }
             }
         }
 
-        val at = checkedAt
-        if (at != null) {
-            SectionCard(
-                stringResource(R.string.check_title),
-                stringResource(R.string.check_time, java.text.DateFormat.getTimeInstance(java.text.DateFormat.MEDIUM).format(java.util.Date(at))),
-            ) {
-                health.checks.forEach { CheckRow(it, showFix = true) { fix -> openFix(ctx, fix, onNavigate) } }
-            }
+        // Counts show what is selected (saved settings), not what is proven to work; the status above does that.
+        SectionHeader(stringResource(R.string.home_summary))
+        val installBlocks = (if (Store.blockPlay) 1 else 0) + (if (Store.blockApk) 1 else 0)
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
+            SummaryTile(
+                "${Store.locked.size}",
+                stringResource(R.string.tile_apps),
+                { onNavigate(Tabs.APPS) },
+                Modifier.weight(1f).fillMaxHeight(),
+            )
+            SummaryTile(
+                "$installBlocks/2",
+                stringResource(R.string.tile_installs),
+                { onNavigate(Tabs.PROTECTION) },
+                Modifier.weight(1f).fillMaxHeight(),
+            )
+        }
+        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
+            SummaryTile(
+                "${Store.blockedSettings.size + Store.customKeywords.size}",
+                stringResource(R.string.tile_settings),
+                { onNavigate(Tabs.PROTECTION) },
+                Modifier.weight(1f).fillMaxHeight(),
+            )
+            SummaryTile(
+                stringResource(if (level == "strong") R.string.level_strong else R.string.level_regular),
+                stringResource(R.string.tile_level),
+                { onNavigate(Tabs.PROTECTION) },
+                Modifier.weight(1f).fillMaxHeight(),
+                caption = if (level == "strong") {
+                    stringResource(if (p.owner) R.string.tile_owner_on else R.string.tile_owner_off)
+                } else {
+                    stringResource(if (p.admin) R.string.tile_admin_on else R.string.tile_admin_off)
+                },
+            )
         }
 
-        PermissionCards(p, showOwner = true)
+        GroupCard {
+            ExpandRow(
+                title = stringResource(R.string.home_details),
+                supporting = checkedAt?.let {
+                    stringResource(R.string.check_time, java.text.DateFormat.getTimeInstance(java.text.DateFormat.MEDIUM).format(java.util.Date(it)))
+                } ?: stringResource(R.string.home_details_sub),
+                expanded = detailsOpen,
+                onToggle = { detailsOpen = !detailsOpen },
+            )
+            if (detailsOpen) {
+                health.checks.forEach { c ->
+                    RowDivider()
+                    CheckRow(c, fix)
+                }
+            }
+        }
+        if (detailsOpen) {
+            SectionHeader(stringResource(R.string.home_permissions))
+            PermissionCards(p, showOwner = true)
+        }
     }
 }
 

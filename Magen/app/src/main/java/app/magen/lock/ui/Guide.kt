@@ -1,5 +1,6 @@
 package app.magen.lock.ui
 
+import androidx.compose.foundation.layout.ColumnScope
 import android.app.admin.DevicePolicyManager
 import android.app.Activity
 import android.content.Context
@@ -114,6 +115,31 @@ fun readPerms(ctx: Context): Perms {
 }
 
 @Composable
+private fun PermissionRow(
+    icon: ImageVector,
+    @StringRes title: Int,
+    @StringRes desc: Int,
+    on: Boolean,
+    onEnable: (() -> Unit)?,
+    extra: (@Composable ColumnScope.() -> Unit)? = null,
+) {
+    ListRow(
+        title = stringResource(title),
+        supporting = stringResource(desc),
+        icon = icon,
+        iconTint = if (on) sevColor(Sev.OK) else MaterialTheme.colorScheme.onSurfaceVariant,
+        trailing = {
+            if (on) {
+                StatusChip(Sev.OK, stringResource(R.string.status_on))
+            } else if (onEnable != null) {
+                TonalButton(stringResource(R.string.btn_enable), onEnable)
+            }
+        },
+        below = extra,
+    )
+}
+
+@Composable
 fun PermissionCards(p: Perms, showOwner: Boolean) {
     val ctx = LocalContext.current
     var showRestrictedHelp by remember { mutableStateOf(false) }
@@ -133,153 +159,142 @@ fun PermissionCards(p: Perms, showOwner: Boolean) {
             Toast.makeText(ctx, reason, Toast.LENGTH_LONG).show()
         }
     }
-
-    // Android's setting can be on while the service itself is not running; the card must not say "on" then.
+    // Android's setting can be on while the service itself is not running; the row must not say "on" then.
     val accRunning = GuardService.instance != null
-    PermCard(
-        icon = Icons.Filled.Accessibility,
-        title = R.string.perm_access_title,
-        desc = R.string.perm_access_desc,
-        on = p.acc && accRunning,
-        onEnable = {
-            try {
-                Session.trip()
-                ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            } catch (error: Exception) {
-                Session.cancelTrip()
-                Toast.makeText(ctx, ctx.getString(R.string.settings_open_failed), Toast.LENGTH_LONG).show()
+
+    GroupCard {
+        PermissionRow(
+            icon = Icons.Filled.Accessibility,
+            title = R.string.perm_access_title,
+            desc = R.string.perm_access_desc,
+            on = p.acc && accRunning,
+            onEnable = {
+                try {
+                    Session.trip()
+                    ctx.startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                } catch (error: Exception) {
+                    Session.cancelTrip()
+                    Toast.makeText(ctx, ctx.getString(R.string.settings_open_failed), Toast.LENGTH_LONG).show()
+                }
+            },
+        ) {
+            if (p.acc && !accRunning) {
+                Spacer(Modifier.height(Sp.xs))
+                Text(
+                    stringResource(R.string.perm_access_stalled),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                )
             }
-        },
-    ) {
-        if (p.acc && !accRunning) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                stringResource(R.string.perm_access_stalled),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.error,
-            )
+            if (!p.acc) {
+                TextAction(stringResource(R.string.restricted_help_title), { showRestrictedHelp = true })
+            }
         }
-        if (!p.acc) {
-            Spacer(Modifier.height(6.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.End,
+        RowDivider()
+
+        PermissionRow(
+            icon = Icons.Filled.AdminPanelSettings,
+            title = R.string.perm_admin_title,
+            desc = R.string.perm_admin_desc,
+            on = p.admin,
+            onEnable = {
+                val adminComponent = Policy.admin(ctx)
+                val request = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
+                    putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
+                    putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ctx.getString(R.string.admin_desc))
+                }
+                // Launch the system's dedicated device-admin approval screen, not general Settings.
+                try {
+                    Session.trip()
+                    ctx.startActivity(request)
+                } catch (error: Exception) {
+                    Session.cancelTrip()
+                    Toast.makeText(ctx, ctx.getString(R.string.admin_open_failed), Toast.LENGTH_LONG).show()
+                }
+            },
+        )
+        RowDivider()
+
+        // Recommended, not required: keeps the guard from being stopped by battery savers.
+        PermissionRow(
+            icon = Icons.Filled.BatteryChargingFull,
+            title = R.string.perm_battery_title,
+            desc = R.string.perm_battery_desc,
+            on = p.battery,
+            onEnable = {
+                val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${ctx.packageName}"))
+                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                try {
+                    Session.trip()
+                    ctx.startActivity(direct)
+                } catch (error: Exception) {
+                    try {
+                        Session.trip()
+                        ctx.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                    } catch (second: Exception) {
+                        Session.cancelTrip()
+                        Toast.makeText(ctx, ctx.getString(R.string.settings_open_failed), Toast.LENGTH_LONG).show()
+                    }
+                }
+            },
+        ) {
+            if (!p.battery) {
+                Text(
+                    stringResource(R.string.perm_battery_note),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+        }
+
+        if (showOwner) {
+            RowDivider()
+            PermissionRow(
+                icon = Icons.Filled.Lock,
+                title = R.string.perm_owner_title,
+                desc = R.string.perm_owner_desc,
+                on = p.owner,
+                onEnable = null,
             ) {
-                IconButton(onClick = { showRestrictedHelp = true }) {
-                    Icon(Icons.Filled.HelpOutline, contentDescription = stringResource(R.string.restricted_help_title))
+                if (!p.owner) {
+                    Spacer(Modifier.height(Sp.xs))
+                    Text(
+                        stringResource(R.string.perm_owner_note),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    TextAction(stringResource(R.string.guide_open), { Session.showGuide = true })
+                    if (android.os.Build.VERSION.SDK_INT >= 28 && Keeper.installed(ctx)) {
+                        if (p.admin) {
+                            TonalButton(stringResource(R.string.keeper_take), {
+                                Session.trip()
+                                runCatching { keeperLauncher.launch(Keeper.handoverIntent()) }.onFailure {
+                                    Session.cancelTrip()
+                                    Toast.makeText(ctx, ctx.getString(R.string.keeper_take_failed), Toast.LENGTH_LONG).show()
+                                }
+                            })
+                        } else {
+                            // Android only hands ownership to an app that is already an enabled device admin.
+                            Text(
+                                stringResource(R.string.keeper_need_admin),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                    }
                 }
             }
         }
     }
 
     if (showRestrictedHelp) {
-        AlertDialog(
-            onDismissRequest = { showRestrictedHelp = false },
-            title = { Text(stringResource(R.string.restricted_help_title)) },
-            text = { Text(stringResource(R.string.restricted_help)) },
-            confirmButton = {
-                TextButton(onClick = { showRestrictedHelp = false }) {
-                    Text(stringResource(R.string.confirm))
-                }
-            },
-        )
-    }
-
-    PermCard(
-        icon = Icons.Filled.AdminPanelSettings,
-        title = R.string.perm_admin_title,
-        desc = R.string.perm_admin_desc,
-        on = p.admin,
-        onEnable = {
-            val adminComponent = Policy.admin(ctx)
-            val request = Intent(DevicePolicyManager.ACTION_ADD_DEVICE_ADMIN).apply {
-                putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, adminComponent)
-                putExtra(DevicePolicyManager.EXTRA_ADD_EXPLANATION, ctx.getString(R.string.admin_desc))
-            }
-            // Launch the system's dedicated device-admin approval screen, not general Settings.
-            try {
-                Session.trip()
-                ctx.startActivity(request)
-            } catch (error: Exception) {
-                Session.cancelTrip()
-                Toast.makeText(
-                    ctx,
-                    ctx.getString(R.string.admin_open_failed),
-                    Toast.LENGTH_LONG,
-                ).show()
-            }
-        },
-    )
-
-    // Recommended, not required: keeps the guard from being stopped by battery savers.
-    PermCard(
-        icon = Icons.Filled.BatteryChargingFull,
-        title = R.string.perm_battery_title,
-        desc = R.string.perm_battery_desc,
-        on = p.battery,
-        onEnable = {
-            val direct = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${ctx.packageName}"))
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            try {
-                Session.trip()
-                ctx.startActivity(direct)
-            } catch (error: Exception) {
-                try {
-                    Session.trip()
-                    ctx.startActivity(Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-                } catch (second: Exception) {
-                    Session.cancelTrip()
-                    Toast.makeText(ctx, ctx.getString(R.string.settings_open_failed), Toast.LENGTH_LONG).show()
-                }
-            }
-        },
-    ) {
-        if (!p.battery) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                stringResource(R.string.perm_battery_note),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-    }
-
-    if (showOwner) {
-        PermCard(
-            icon = Icons.Filled.Lock,
-            title = R.string.perm_owner_title,
-            desc = R.string.perm_owner_desc,
-            on = p.owner,
-            onEnable = null,
+        MagenDialog(
+            title = stringResource(R.string.restricted_help_title),
+            onDismiss = { showRestrictedHelp = false },
+            confirmText = stringResource(R.string.confirm),
+            onConfirm = { showRestrictedHelp = false },
         ) {
-            if (!p.owner) {
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    stringResource(R.string.perm_owner_note),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                TextButton(onClick = { Session.showGuide = true }) { Text(stringResource(R.string.guide_open)) }
-                if (android.os.Build.VERSION.SDK_INT >= 28 && Keeper.installed(ctx)) {
-                    if (p.admin) {
-                        FilledTonalButton(onClick = {
-                            Session.trip()
-                            runCatching { keeperLauncher.launch(Keeper.handoverIntent()) }.onFailure {
-                                Session.cancelTrip()
-                                Toast.makeText(ctx, ctx.getString(R.string.keeper_take_failed), Toast.LENGTH_LONG).show()
-                            }
-                        }) { Text(stringResource(R.string.keeper_take)) }
-                    } else {
-                        // Android only hands ownership to an app that is already an enabled device admin.
-                        Text(
-                            stringResource(R.string.keeper_need_admin),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
+            DialogText(stringResource(R.string.restricted_help))
         }
     }
 }
@@ -468,8 +483,8 @@ fun GuideScreen(onClose: () -> Unit) {
                 // Each link closes this screen and opens the tab that exists in the main menu.
                 androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     listOf(
-                        0 to R.string.nav_home, 1 to R.string.nav_apps, 2 to R.string.nav_times,
-                        3 to R.string.nav_protection, 4 to R.string.nav_more,
+                        Tabs.HOME to R.string.nav_home, Tabs.APPS to R.string.nav_apps, Tabs.PROTECTION to R.string.nav_protection,
+                        Tabs.TIMES to R.string.nav_times, Tabs.SETTINGS to R.string.nav_settings,
                     ).forEach { (tab, label) ->
                         TextButton(onClick = {
                             Session.goTab = tab

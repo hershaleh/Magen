@@ -410,14 +410,6 @@ fun CreatePinFlow(onCancel: (() -> Unit)? = null, onDone: (String) -> Unit) {
 }
 
 @Composable
-fun HeroCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
-    Column(
-        modifier.fillMaxWidth().clip(RoundedCornerShape(28.dp)).background(HeroBrush).padding(22.dp),
-        content = content,
-    )
-}
-
-@Composable
 fun SectionCard(title: String, subtitle: String? = null, content: @Composable ColumnScope.() -> Unit) {
     Card(
         shape = RoundedCornerShape(24.dp),
