@@ -32,6 +32,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import app.magen.lock.core.InstallerScreen
 
 /**
  * The enforcement engine. It watches which window is on screen and
@@ -490,7 +491,7 @@ class GuardService : AccessibilityService() {
             block(R.string.blocked_self)
             return
         }
-        val isUninstall = texts.any { it.contains("uninstall") || it.contains("הסר") }
+        val isUninstall = InstallerScreen.isUninstall(collectInstallerNodes(root))
         if (Store.blockApk && !isUninstall) block(R.string.blocked_apk)
     }
 
@@ -505,6 +506,31 @@ class GuardService : AccessibilityService() {
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
                 .putExtra(BlockActivity.EXTRA_REASON, reason),
         )
+    }
+
+    /**
+     * The installer window as [InstallerScreen] nodes: normalised text, whether the node (or an ancestor) is
+     * clickable, and its view id. A node with a view id but no text is kept, because the id is a signal too.
+     */
+    private fun collectInstallerNodes(root: AccessibilityNodeInfo): List<InstallerScreen.Node> {
+        val out = ArrayList<InstallerScreen.Node>()
+        var count = 0
+
+        fun walk(n: AccessibilityNodeInfo, depth: Int, clickableAncestor: Boolean) {
+            if (count++ > 700 || depth > 25) return
+            val clickable = clickableAncestor || n.isClickable
+            val id = n.viewIdResourceName
+            val labels = listOfNotNull(n.text?.toString(), n.contentDescription?.toString()).filter { it.isNotBlank() }
+            if (labels.isEmpty()) {
+                if (id != null) out.add(InstallerScreen.Node("", clickable, id))
+            } else {
+                labels.forEach { out.add(InstallerScreen.Node(Catalog.norm(it), clickable, id)) }
+            }
+            for (i in 0 until n.childCount) n.getChild(i)?.let { walk(it, depth + 1, clickable) }
+        }
+
+        walk(root, 0, false)
+        return out
     }
 
     /** Gathers visible text. With [topOnly], only nodes in the top 30% of the screen (page titles). */

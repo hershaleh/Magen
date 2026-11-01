@@ -48,6 +48,8 @@ android {
     }
     testOptions {
         unitTests {
+            // Robolectric (StoreTest) needs the merged resources and manifest.
+            isIncludeAndroidResources = true
             // Pure-JVM tests: android.jar stubs return defaults instead of throwing if code touches them.
             isReturnDefaultValues = true
         }
@@ -68,4 +70,5 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
 
     testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
 }

@@ -2,13 +2,17 @@ package app.magen.lock
 
 import android.content.Context
 import android.content.SharedPreferences
+import android.os.Build
+import android.os.SystemClock
+import android.provider.Settings
 import android.util.Base64
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import app.magen.lock.core.Credential
 import app.magen.lock.core.CustomKeyword
-import java.security.MessageDigest
+import app.magen.lock.core.Deadline
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
 import javax.crypto.spec.PBEKeySpec
@@ -37,8 +41,11 @@ object Store {
         private set
     var relockOnScreenOff by mutableStateOf(true)
         private set
+    /** Wall-clock end of the uninstall approval window, for display only. Decisions use [uninstallDeadline]. */
     var allowedUntil by mutableLongStateOf(0L)
         private set
+    @Volatile
+    private var uninstallDeadline: Deadline = Deadline.NONE
 
     /** "regular" or "strong". Only records what the user chose; real status comes from [Policy]. */
     var level by mutableStateOf("regular")
@@ -64,6 +71,7 @@ object Store {
         protect = sp.getBoolean("protect", true)
         relockOnScreenOff = sp.getBoolean("relock", true)
         allowedUntil = sp.getLong("allowedUntil", 0L)
+        uninstallDeadline = loadDeadline("allowedUntil", "allowed", UNINSTALL_LEGACY_CAP_MS)
         level = sp.getString("level", "regular") ?: "regular"
         customKeywords = sp.getStringSet("customKeywords", emptySet()) ?: emptySet()
         biometric = sp.getBoolean("bio", false)
@@ -103,26 +111,34 @@ object Store {
             .putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP))
             .putString("hash", hash(pin, salt))
             .putInt("fails", 0)
-            .putLong("lockUntil", 0L)
             .apply()
+        saveDeadline("lockUntil", "lock", Deadline.NONE)
         hasPin = true
     }
 
     /** Seconds the keypad stays disabled after too many wrong attempts. */
+    @Synchronized
     fun lockRemaining(): Int {
-        val ms = sp.getLong("lockUntil", 0L) - System.currentTimeMillis()
+        val now = System.currentTimeMillis()
+        val elapsed = SystemClock.elapsedRealtime()
+        val d = loadDeadline("lockUntil", "lock", LOCK_LEGACY_CAP_MS)
+        val ms = d.remainingMs(now, elapsed, bootCount)
+        // Record progress (and close an ended lockout for good), so a reboot or a changed clock cannot restore it.
+        val seen = d.observe(now, elapsed, bootCount)
+        if (seen !== d) saveDeadline("lockUntil", "lock", seen)
         return if (ms > 0) ((ms + 999) / 1000).toInt() else 0
     }
 
     fun checkPin(pin: String): Boolean {
         if (lockRemaining() > 0) return false
-        val salt = Base64.decode(sp.getString("salt", "") ?: "", Base64.NO_WRAP)
-        val want = sp.getString("hash", "") ?: ""
-        return registerAttempt(MessageDigest.isEqual(hash(pin, salt).toByteArray(), want.toByteArray()))
+        // Missing or damaged stored data is a failed attempt, never a crash and never a success.
+        val ok = Credential.matches(pin, decode("salt"), sp.getString("hash", null)) { p, s -> hash(p, s) }
+        return registerAttempt(ok)
     }
 
     /** Counts a wrong attempt (PIN or recovery code) and starts the lockout delay after five misses. */
     private fun registerAttempt(ok: Boolean): Boolean {
+        var lockDeadline: Deadline? = null
         val e = sp.edit()
         if (ok) {
             e.putInt("fails", 0)
@@ -131,10 +147,11 @@ object Store {
             e.putInt("fails", f)
             if (f >= 5) {
                 val delay = minOf(30L * (1L shl minOf(f - 5, 5)), 900L)
-                e.putLong("lockUntil", System.currentTimeMillis() + delay * 1000)
+                lockDeadline = Deadline.start(delay * 1000, System.currentTimeMillis(), SystemClock.elapsedRealtime(), bootCount)
             }
         }
         e.apply()
+        lockDeadline?.let { saveDeadline("lockUntil", "lock", it) }
         return ok
     }
 
@@ -157,9 +174,8 @@ object Store {
     fun checkRecovery(input: String): Boolean {
         if (lockRemaining() > 0 || !hasRecovery) return false
         val raw = input.uppercase().filter { it.isLetterOrDigit() }
-        val salt = Base64.decode(sp.getString("rsalt", "") ?: "", Base64.NO_WRAP)
-        val want = sp.getString("rhash", "") ?: ""
-        return registerAttempt(MessageDigest.isEqual(hash(raw, salt).toByteArray(), want.toByteArray()))
+        val ok = Credential.matches(raw, decode("rsalt"), sp.getString("rhash", null)) { p, s -> hash(p, s) }
+        return registerAttempt(ok)
     }
 
     @JvmName("applyBiometric")
@@ -219,11 +235,72 @@ object Store {
 
     // ---- uninstall approval ------------------------------------------------------------------
 
-    fun uninstallAllowed() = System.currentTimeMillis() < allowedUntil
+    @Synchronized
+    fun uninstallAllowed(): Boolean {
+        val d = uninstallDeadline
+        val seen = d.observe(System.currentTimeMillis(), SystemClock.elapsedRealtime(), bootCount)
+        if (seen !== d) {
+            // Progress recorded, or the window ended and is closed for good (see lockRemaining).
+            uninstallDeadline = seen
+            allowedUntil = seen.wallUntil
+            saveDeadline("allowedUntil", "allowed", seen)
+        }
+        return seen.isSet
+    }
 
+    @Synchronized
     fun allowUninstall(minutes: Int) {
-        allowedUntil = System.currentTimeMillis() + minutes * 60_000L
-        sp.edit().putLong("allowedUntil", allowedUntil).apply()
+        val d = Deadline.start(minutes * 60_000L, System.currentTimeMillis(), SystemClock.elapsedRealtime(), bootCount)
+        uninstallDeadline = d
+        allowedUntil = d.wallUntil
+        saveDeadline("allowedUntil", "allowed", d)
         Policy.apply()
+    }
+
+    // ---- protective time windows ---------------------------------------------------------------
+
+    private const val LOCK_LEGACY_CAP_MS = 15 * 60_000L
+    private const val UNINSTALL_LEGACY_CAP_MS = 10 * 60_000L
+
+    /**
+     * Identifies the current boot, so a monotonic end time is only trusted within the boot that wrote it.
+     * Read once: it cannot change while this process lives (a reboot ends the process). -1 when unknown.
+     */
+    private val bootCount: Int by lazy {
+        if (Build.VERSION.SDK_INT >= 24) {
+            runCatching { Settings.Global.getInt(app.contentResolver, Settings.Global.BOOT_COUNT) }.getOrDefault(-1)
+        } else {
+            -1
+        }
+    }
+
+    /**
+     * The wall-clock key ([wallKey]) keeps the value older versions wrote and read; the extra keys
+     * (<prefix>Elapsed, <prefix>Boot, <prefix>Dur, <prefix>Chk) are optional. Without them the window is read as legacy data.
+     */
+    private fun loadDeadline(wallKey: String, prefix: String, legacyCapMs: Long): Deadline {
+        val wall = sp.getLong(wallKey, 0L)
+        if (!sp.contains(prefix + "Dur")) return Deadline.legacy(wall, legacyCapMs)
+        return Deadline(wall, sp.getLong(prefix + "Elapsed", -1L), sp.getInt(prefix + "Boot", -1), sp.getLong(prefix + "Dur", legacyCapMs), sp.getLong(prefix + "Chk", -1L))
+    }
+
+    private fun saveDeadline(wallKey: String, prefix: String, d: Deadline) {
+        sp.edit()
+            .putLong(wallKey, d.wallUntil)
+            .putLong(prefix + "Elapsed", d.elapsedUntil)
+            .putInt(prefix + "Boot", d.bootId)
+            .putLong(prefix + "Dur", d.durationMs)
+            .putLong(prefix + "Chk", d.checkpointElapsed)
+            .apply()
+    }
+
+    /** Decodes a stored Base64 value; null when it is missing or not valid Base64. */
+    private fun decode(key: String): ByteArray? {
+        val s = sp.getString(key, null) ?: return null
+        return try {
+            Base64.decode(s, Base64.NO_WRAP)
+        } catch (e: IllegalArgumentException) {
+            null
+        }
     }
 }
