@@ -487,12 +487,16 @@ class GuardService : AccessibilityService() {
         if (root.packageName?.toString() !in Catalog.INSTALLERS) return
         val texts = collect(root, false).map { Catalog.norm(it) }
         val mentionsUs = texts.any { t -> Catalog.ownNames.any { t.contains(it) } }
-        if (Store.protect && !Store.uninstallAllowed() && mentionsUs) {
+        val approval = Store.uninstallAllowed()
+        if (Store.protect && !approval && mentionsUs) {
             block(R.string.blocked_self)
             return
         }
-        val isUninstall = InstallerScreen.isUninstall(collectInstallerNodes(root))
-        if (Store.blockApk && !isUninstall) block(R.string.blocked_apk)
+        val nodes = collectInstallerNodes(root)
+        val isUninstall = InstallerScreen.isUninstall(nodes)
+        // Magen's own uninstall, confirmed with the code, must not be blocked by an unfamiliar dialog wording.
+        val ownApprovedUninstall = InstallerScreen.isApprovedMagenUninstall(nodes, mentionsUs, approval)
+        if (Store.blockApk && !isUninstall && !ownApprovedUninstall) block(R.string.blocked_apk)
     }
 
     // ---- helpers -----------------------------------------------------------------------------

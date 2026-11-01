@@ -48,19 +48,30 @@ class Deadline(
         return nowElapsed >= checkpoint()
     }
 
-    /** Milliseconds left, never negative and never more than the original length. */
-    fun remainingMs(nowWall: Long, nowElapsed: Long, nowBootId: Int): Long {
+    /**
+     * Milliseconds left, never negative and never more than the original length.
+     *
+     * [wallMayShorten]: after a reboot, also take the wall clock into account, but only to make the window
+     * SHORTER, never longer (the result is the smaller of the recorded remaining and the wall-clock remaining).
+     * That is only right for a window whose end is the safe direction, such as the uninstall approval that pauses
+     * protection: a rolled-back clock cannot extend it, and a clock set forward merely ends the pause sooner.
+     * It must NOT be used for the PIN lockout, where a shorter window would help an attacker.
+     */
+    fun remainingMs(nowWall: Long, nowElapsed: Long, nowBootId: Int, wallMayShorten: Boolean = false): Long {
         if (!isSet) return 0L
         val raw = when {
             !isMonotonic -> wallUntil - nowWall
             sameBoot(nowElapsed, nowBootId) -> elapsedUntil - nowElapsed
-            else -> elapsedUntil - checkpoint()
+            else -> {
+                val recorded = elapsedUntil - checkpoint()
+                if (wallMayShorten && wallUntil > 0L) minOf(recorded, wallUntil - nowWall) else recorded
+            }
         }
         return maxOf(minOf(raw, cap), 0L)
     }
 
-    fun isActive(nowWall: Long, nowElapsed: Long, nowBootId: Int): Boolean =
-        remainingMs(nowWall, nowElapsed, nowBootId) > 0L
+    fun isActive(nowWall: Long, nowElapsed: Long, nowBootId: Int, wallMayShorten: Boolean = false): Boolean =
+        remainingMs(nowWall, nowElapsed, nowBootId, wallMayShorten) > 0L
 
     /**
      * The window as it should be persisted after looking at it now:
@@ -68,9 +79,9 @@ class Deadline(
      * after a reboot or for old data, a version with a fresh checkpoint when enough time has passed, or this
      * same instance when nothing needs saving.
      */
-    fun observe(nowWall: Long, nowElapsed: Long, nowBootId: Int): Deadline {
+    fun observe(nowWall: Long, nowElapsed: Long, nowBootId: Int, wallMayShorten: Boolean = false): Deadline {
         if (!isSet) return this
-        val left = remainingMs(nowWall, nowElapsed, nowBootId)
+        val left = remainingMs(nowWall, nowElapsed, nowBootId, wallMayShorten)
         if (left <= 0L) return NONE
         if (isMonotonic && sameBoot(nowElapsed, nowBootId)) {
             return if (nowElapsed - checkpoint() >= CHECKPOINT_INTERVAL_MS) {

@@ -256,4 +256,73 @@ class InstallerScreenTest {
         val nodes = listOf(text("האם ברצונך להתקין את האפליקציה הזו?"), text("האם ברצונך להסיר"), button("הסר"))
         assertFalse(InstallerScreen.isUninstall(nodes))
     }
+
+    // ---- Magen's own approved uninstall --------------------------------------------------------
+
+    private fun ownApproved(nodes: List<Node>, mentions: Boolean = true, approval: Boolean = true) =
+        InstallerScreen.isApprovedMagenUninstall(nodes, mentions, approval)
+
+    @Test
+    fun ownUninstallDialogIsApprovedInEnglishWhenTheWindowIsOpen() {
+        assertTrue(ownApproved(uninstallDialogModern("magen")))
+        assertTrue(ownApproved(uninstallDialogClassic("magen")))
+    }
+
+    @Test
+    fun ownUninstallDialogIsApprovedInHebrewWhenTheWindowIsOpen() {
+        val nodes = listOf(text("מגן"), text("האם ברצונך להסיר את ההתקנה של האפליקציה הזו?"), button("ביטול"), button("אישור"))
+        assertTrue(ownApproved(nodes))
+    }
+
+    @Test
+    fun ownUninstallWithAnUnfamiliarButtonWordingIsApprovedButIsNotACommonUninstall() {
+        val nodes = listOf(text("magen"), text("שאלה בניסוח לא מוכר"), button("בטל"), button("הסר התקנה"))
+        assertTrue(InstallerScreen.signals(nodes).isEmpty())
+        assertFalse("not a generic uninstall screen", InstallerScreen.isUninstall(nodes))
+        assertTrue("but Magen's own, approved", ownApproved(nodes))
+    }
+
+    @Test
+    fun noExceptionWhenTheApprovalWindowIsNotOpen() {
+        assertFalse(ownApproved(uninstallDialogModern("magen"), approval = false))
+    }
+
+    @Test
+    fun noExceptionForOtherAppsEvenWhileTheWindowIsOpen() {
+        assertFalse(ownApproved(uninstallDialogModern("calculator"), mentions = false))
+        assertFalse(ownApproved(listOf(text("calculator"), text("הסר"), button("הסר")), mentions = false))
+    }
+
+    @Test
+    fun noExceptionForInstallScreensEvenOfAnAppNamedMagen() {
+        assertFalse(ownApproved(installScreen("magen")))
+        assertFalse(ownApproved(listOf(text("מגן"), text("האם ברצונך להתקין את האפליקציה הזו?"), button("ביטול"), button("התקן"))))
+    }
+
+    @Test
+    fun noExceptionForUpdateScreens() {
+        val nodes = listOf(text("magen"), text("do you want to update this app?"), button("cancel"), button("update"))
+        assertFalse(ownApproved(nodes))
+    }
+
+    @Test
+    fun anInstallActionAloneIsAVetoEvenWithoutAnInstallQuestion() {
+        val nodes = listOf(text("magen"), text("uninstall"), button("install"))
+        assertTrue(InstallerScreen.hasInstallAction(nodes))
+        assertFalse(ownApproved(nodes))
+        assertFalse(ownApproved(listOf(text("מגן"), text("הסר"), button("התקנה"))))
+    }
+
+    @Test
+    fun aScreenThatNamesMagenWithoutAnyUninstallWordingGetsNoException() {
+        assertFalse(ownApproved(listOf(text("magen"), button("cancel"), button("continue"))))
+        assertFalse(ownApproved(listOf(text("magen"))))
+        assertFalse(ownApproved(emptyList()))
+    }
+
+    @Test
+    fun anInstallActionLabelThatIsNotClickableIsNotAnInstallAction() {
+        assertFalse(InstallerScreen.hasInstallAction(listOf(text("install"))))
+        assertTrue(InstallerScreen.hasInstallAction(listOf(button("install"))))
+    }
 }

@@ -73,6 +73,24 @@ object InstallerScreen {
     /** Signals that come from wording. At least one is required, so structure plus a generic OK/Cancel pair is never enough. */
     private val WORDING = setOf(Signal.MESSAGE, Signal.TITLE, Signal.BUTTON)
 
+    /** Clickable labels that start an install or an update. Their presence means this is not an uninstall dialog. */
+    private val INSTALL_ACTIONS = setOf("install", "update", "התקן", "התקנה", "עדכן", "עדכון")
+
+    fun hasInstallAction(nodes: List<Node>): Boolean = nodes.any { it.clickable && clean(it.text) in INSTALL_ACTIONS }
+
+    /**
+     * Exception for Magen's OWN approved uninstall, so a wording this detector does not know cannot lock the
+     * person out of removing Magen right after they confirmed it with the code. All of these must hold:
+     * the approval window is open, the screen names Magen, there is no install or update question or action, and
+     * there is some uninstall wording (a recognised signal or the word itself). It never applies to other apps
+     * and never to install or update screens.
+     */
+    fun isApprovedMagenUninstall(nodes: List<Node>, mentionsMagen: Boolean, approvalActive: Boolean): Boolean {
+        if (!approvalActive || !mentionsMagen) return false
+        if (isInstallPrompt(nodes) || hasInstallAction(nodes)) return false
+        return signals(nodes).isNotEmpty() || nodes.any { n -> n.text.contains("uninstall") || n.text.contains("הסר") }
+    }
+
     fun isUninstall(nodes: List<Node>): Boolean {
         if (isInstallPrompt(nodes)) return false
         val found = signals(nodes)

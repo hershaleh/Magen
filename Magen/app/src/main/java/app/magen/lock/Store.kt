@@ -238,7 +238,8 @@ object Store {
     @Synchronized
     fun uninstallAllowed(): Boolean {
         val d = uninstallDeadline
-        val seen = d.observe(System.currentTimeMillis(), SystemClock.elapsedRealtime(), bootCount)
+        // The approval window pauses protection, so after a reboot the wall clock may only shorten it.
+        val seen = d.observe(System.currentTimeMillis(), SystemClock.elapsedRealtime(), bootCount, wallMayShorten = true)
         if (seen !== d) {
             // Progress recorded, or the window ended and is closed for good (see lockRemaining).
             uninstallDeadline = seen

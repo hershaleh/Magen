@@ -217,4 +217,80 @@ class DeadlineTest {
         val now = 5_000_000L
         assertTrue(Deadline.legacy(now - minute, 10 * minute).observe(now, 1L, 3) === Deadline.NONE)
     }
+
+    // ---- wall clock may only shorten (uninstall approval window) ----------------------------------
+
+    @Test
+    fun withoutTheFlagTheWallClockNeverShortensAfterReboot() {
+        // This is how the PIN lockout uses it: an honest clock 9 minutes later still leaves the recorded 10.
+        assertEquals(10 * minute, start.remainingMs(w0 + 9 * minute, 123L, 8))
+        assertEquals(10 * minute, start.remainingMs(w0 + 9 * minute, 123L, 8, wallMayShorten = false))
+    }
+
+    @Test
+    fun staleCheckpointIsCorrectedByAnHonestWallClockAfterReboot() {
+        // Nobody looked at the window for 9 minutes, then the device rebooted: only 1 minute is really left.
+        assertEquals(minute, start.remainingMs(w0 + 9 * minute, 123L, 8, wallMayShorten = true))
+    }
+
+    @Test
+    fun oldCheckpointAndAnHonestWallClockGiveTheSmallerRemaining() {
+        val seen = start.observe(w0 + 3 * minute, e0 + 3 * minute, 7)
+        assertEquals(7 * minute, seen.remainingMs(w0 + 3 * minute, 10_000L, 8, wallMayShorten = false))
+        assertEquals(minute, seen.remainingMs(w0 + 9 * minute, 10_000L, 8, wallMayShorten = true))
+        assertEquals(7 * minute, seen.remainingMs(w0 + 3 * minute, 10_000L, 8, wallMayShorten = true))
+    }
+
+    @Test
+    fun rolledBackWallClockNeverExtendsEvenWhenItMayShorten() {
+        val seen = start.observe(w0 + 3 * minute, e0 + 3 * minute, 7)
+        assertEquals(7 * minute, seen.remainingMs(w0 - 24 * hour, 10_000L, 8, wallMayShorten = true))
+        assertEquals(10 * minute, start.remainingMs(w0 - 365 * 24 * hour, 10_000L, 8, wallMayShorten = true))
+    }
+
+    @Test
+    fun wallClockMovedForwardEndsTheWindowEarlyAndTheEndIsPersisted() {
+        assertEquals(0L, start.remainingMs(w0 + 5 * hour, 123L, 8, wallMayShorten = true))
+        assertTrue(start.observe(w0 + 5 * hour, 123L, 8, wallMayShorten = true) === Deadline.NONE)
+    }
+
+    @Test
+    fun observeAfterRebootWithTheFlagRebasesToTheShorterRemaining() {
+        val seen = start.observe(w0 + 3 * minute, e0 + 3 * minute, 7)
+        val rebased = seen.observe(w0 + 9 * minute, 123L, 8, wallMayShorten = true)
+        assertEquals(8, rebased.bootId)
+        assertEquals(123L + minute, rebased.elapsedUntil)
+        assertEquals(minute, rebased.remainingMs(w0 + 9 * minute, 123L, 8))
+    }
+
+    @Test
+    fun sameBootIsNotAffectedByTheFlag() {
+        assertEquals(9 * minute, start.remainingMs(w0 - hour, e0 + minute, 7, wallMayShorten = true))
+        assertEquals(9 * minute, start.remainingMs(w0 + 24 * hour, e0 + minute, 7, wallMayShorten = true))
+    }
+
+    @Test
+    fun repeatedRebootsWithARolledBackClockNeverRenewTheApprovalWindow() {
+        val remainders = ArrayList<Long>()
+        var d = start.observe(w0 + 3 * minute, e0 + 3 * minute, 7, wallMayShorten = true)
+        remainders += d.remainingMs(w0 + 3 * minute, e0 + 3 * minute, 7, true)
+
+        var wall = w0 - 24 * hour
+        d = d.observe(wall, 10_000L, 8, wallMayShorten = true)
+        remainders += d.remainingMs(wall, 10_000L, 8, true)
+
+        wall += 2 * minute
+        d = d.observe(wall, 10_000L + 2 * minute, 8, wallMayShorten = true)
+        remainders += d.remainingMs(wall, 10_000L + 2 * minute, 8, true)
+
+        wall = w0 - 48 * hour
+        d = d.observe(wall, 20_000L, 9, wallMayShorten = true)
+        remainders += d.remainingMs(wall, 20_000L, 9, true)
+
+        wall = w0 - 72 * hour
+        remainders += d.remainingMs(wall, 5_000L, 10, true)
+
+        assertEquals(listOf(7 * minute, 7 * minute, 5 * minute, 5 * minute, 5 * minute), remainders)
+        for (i in 1 until remainders.size) assertTrue("grew at $i: $remainders", remainders[i] <= remainders[i - 1])
+    }
 }

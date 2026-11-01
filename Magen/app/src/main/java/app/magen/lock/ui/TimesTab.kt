@@ -27,8 +27,14 @@ fun TimesTab() {
             delay(5_000)
         }
     }
+    // What is enforced right now (Store.uninstallAllowed), not a comparison of the wall clock with a stored time.
+    val approvalActive by produceState(Store.uninstallAllowed()) {
+        while (true) {
+            value = Store.uninstallAllowed()
+            delay(5_000)
+        }
+    }
     val until = Store.allowedUntil
-    val approvalActive = now < until
     val pauseSeconds = remember(now) { Store.lockRemaining() }
 
     MagenScreen(title = stringResource(R.string.times_title), subtitle = stringResource(R.string.times_sub)) {
