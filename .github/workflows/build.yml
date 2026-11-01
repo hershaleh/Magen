@@ -33,6 +33,35 @@ jobs:
         with:
           gradle-version: 8.10.2
 
+      # Pure-JVM unit tests (no emulator). A failing test fails this step, and therefore the whole workflow:
+      # the later steps (build and APK upload) are skipped, and only the failure-reporting steps run.
+      - name: Unit tests
+        id: unit
+        working-directory: ${{ steps.loc.outputs.dir }}
+        run: |
+          set -o pipefail
+          gradle testDebugUnitTest --no-daemon --console=plain 2>&1 | tee "$GITHUB_WORKSPACE/test.log"
+
+      - name: Summarize test failures
+        if: failure() && steps.unit.outcome == 'failure'
+        shell: bash {0}
+        run: |
+          {
+            echo '## Unit test failures'
+            echo '```'
+            grep -E 'FAILED|AssertionError|Exception|^e: |What went wrong|Could not' -A3 test.log | head -80 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/upload-artifact@v4
+        if: failure() && steps.unit.outcome == 'failure'
+        with:
+          name: unit-test-reports
+          path: |
+            test.log
+            ${{ steps.loc.outputs.dir }}/app/build/reports/tests/
+            ${{ steps.loc.outputs.dir }}/app/build/test-results/
+
       - name: Build debug APK
         working-directory: ${{ steps.loc.outputs.dir }}
         run: |
