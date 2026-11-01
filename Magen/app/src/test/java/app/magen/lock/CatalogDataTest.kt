@@ -38,10 +38,13 @@ class CatalogDataTest {
     }
 
     @Test
-    fun systemRestrictionsLookLikeUserManagerKeys() {
+    fun systemRestrictionsAreNonBlankKeysWithoutWhitespace() {
+        // The exact key text is defined by Android (not every UserManager constant starts with "no_"),
+        // so only structural sanity is checked here.
         for (cat in Catalog.settings) {
             val r = cat.restriction ?: continue
-            assertTrue("bad restriction '$r' for ${cat.id}", r.startsWith("no_"))
+            assertTrue("blank restriction for ${cat.id}", r.isNotBlank())
+            assertTrue("restriction '$r' for ${cat.id} contains whitespace", r.none { it.isWhitespace() })
         }
     }
 

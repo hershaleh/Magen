@@ -63,6 +63,7 @@ jobs:
             ${{ steps.loc.outputs.dir }}/app/build/test-results/
 
       - name: Build debug APK
+        id: build
         working-directory: ${{ steps.loc.outputs.dir }}
         run: |
           set -o pipefail
@@ -70,7 +71,7 @@ jobs:
 
       # Short, phone-friendly error summary: open the run page and read "Build errors" at the top.
       - name: Summarize errors
-        if: failure()
+        if: failure() && steps.build.outcome == 'failure'
         shell: bash {0}
         run: |
           if [ -f build.log ]; then
@@ -85,7 +86,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
-        if: failure()
+        if: failure() && steps.build.outcome == 'failure'
         with:
           name: build-log
           path: build.log
