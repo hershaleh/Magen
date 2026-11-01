@@ -7,6 +7,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import app.magen.lock.core.CustomKeyword
 import java.security.MessageDigest
 import java.security.SecureRandom
 import javax.crypto.SecretKeyFactory
@@ -78,7 +79,7 @@ object Store {
 
     fun addKeyword(raw: String) {
         // Accepts a path such as "Network & internet > Internet" and keeps the last part, the page itself.
-        val k = raw.split(Regex("[>›»→<‹]")).map { it.trim() }.lastOrNull { it.isNotEmpty() }?.take(60) ?: return
+        val k = CustomKeyword.parse(raw) ?: return
         customKeywords = customKeywords + k
         sp.edit().putStringSet("customKeywords", customKeywords).apply()
     }
