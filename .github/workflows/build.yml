@@ -145,7 +145,8 @@ jobs:
           name: magen-keeper-debug-apk
           path: ${{ steps.loc.outputs.dir }}/keeper/build/outputs/apk/debug/keeper-debug.apk
 
-  # UI tests on a temporary Android emulator, against the APK built by the job above.
+  # UI tests on a temporary AOSP emulator, against the APK built by the job above.
+  # AOSP avoids the Google Quick Search / Pixel Launcher crashes seen in the CI image.
   # Nothing here touches Device Owner or device admin, and nothing is installed on a real device.
   emulator-tests:
     needs: build
@@ -176,7 +177,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 34
-          target: google_apis
+          target: default
           arch: x86_64
           profile: pixel_6
           disable-animations: true
