@@ -13,8 +13,8 @@ adb logcat -c || true
 
 # Capture the emulator display while the UI tests run. Keep the remote PID so the
 # recorder receives SIGINT (screenrecord finalizes the MP4 only when interrupted).
-VIDEO_REMOTE=/sdcard/magen-ui-test.mp4
-VIDEO_LOG=/sdcard/magen-screenrecord.log
+VIDEO_REMOTE=/data/local/tmp/magen-ui-test.mp4
+VIDEO_LOG=/data/local/tmp/magen-screenrecord.log
 adb shell rm -f "$VIDEO_REMOTE" "$VIDEO_LOG"
 VIDEO_PID="$(adb shell "screenrecord --time-limit 180 --bit-rate 4000000 $VIDEO_REMOTE >$VIDEO_LOG 2>&1 & echo \$!")"
 VIDEO_PID="$(echo "$VIDEO_PID" | tr -d '\\r')"
