@@ -178,3 +178,11 @@ jobs:
           name: emulator-test-output
           if-no-files-found: warn
           path: emulator-output/
+
+      # Convenient standalone MP4, in addition to the complete diagnostics bundle.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: emulator-ui-video
+          if-no-files-found: warn
+          path: emulator-output/ui-test-video.mp4
