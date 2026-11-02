@@ -238,7 +238,7 @@ object Policy {
         return try {
             keys.forEach { key ->
                 d.clearUserRestriction(a, key)
-                if (d.getUserRestrictions(a).getBoolean(key)) {
+                if (restrictions(d, a, ctx).getBoolean(key)) {
                     throw IllegalStateException("Android still reports restriction after clearing: " + key)
                 }
             }
