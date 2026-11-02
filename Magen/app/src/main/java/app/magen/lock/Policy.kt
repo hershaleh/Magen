@@ -87,12 +87,15 @@ object Policy {
                     // Stop apply() first, then clear while Magen is still the owner (only the owner can clear
                     // the system's uninstall block). If that cannot be verified, do NOT move the file: ownership
                     // would end with the block still stored by Android.
-                    ownerRemovalPending = true
-                    val cleared = !isOwner(ctx) || clearOwnerRestrictions(dpm(ctx), admin(ctx), ctx)
-                    if (!cleared) {
-                        ownerRemovalPending = false
-                        lastUninstallError ?: "Could not clear Magen's uninstall block first. Nothing was changed."
+                    if (!isOwner(ctx)) {
+                        "Magen is not the active Device Owner. Refusing to move the system owner file because its policy state cannot be safely verified."
                     } else {
+                        ownerRemovalPending = true
+                        val cleared = clearOwnerRestrictions(dpm(ctx), admin(ctx), ctx)
+                        if (!cleared) {
+                            ownerRemovalPending = false
+                            lastUninstallError ?: "Could not clear Magen's uninstall block first. Nothing was changed."
+                        } else {
                         // A unique name each time, so an older backup is never overwritten.
                         val backup = "$file.magen-backup-${System.currentTimeMillis() / 1000}"
                         val (code, out) = su("test -e $backup || mv $file $backup")
@@ -102,11 +105,13 @@ object Policy {
                             ownerRemovalPending = false
                             "Moving the file failed (exit $code): $out"
                         }
+                        }
                     }
                 }
             }
         }
     } catch (e: Throwable) {
+        ownerRemovalPending = false
         "${e.javaClass.name}: ${e.message ?: "no details"}"
     }
 
