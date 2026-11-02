@@ -44,11 +44,14 @@ for attempt in 1 2 3 4 5; do
   if adb shell "test -s $VIDEO_REMOTE"; then break; fi
 done
 adb pull "$VIDEO_LOG" "$OUT/screenrecord.log" >/dev/null 2>&1 || true
-if adb pull "$VIDEO_REMOTE" "$OUT/ui-test-video.mp4" >/dev/null 2>&1; then
-  echo "screen recording saved: $OUT/ui-test-video.mp4"
+if adb pull "$VIDEO_REMOTE" "$OUT/ui-test-video.mp4" >/dev/null 2>&1 \
+   && test -s "$OUT/ui-test-video.mp4" \
+   && dd if="$OUT/ui-test-video.mp4" bs=1 skip=4 count=4 2>/dev/null | grep -q 'ftyp'; then
+  echo "screen recording saved and MP4 header verified: $OUT/ui-test-video.mp4"
 else
-  echo "screen recording unavailable; recorder log follows:"
+  echo "ERROR: screen recording is missing, empty, or not a valid MP4; recorder log follows:" >&2
   adb shell cat "$VIDEO_LOG" 2>/dev/null || true
+  status=1
 fi
 
 kill "$LOGCAT_PID" 2>/dev/null || true
