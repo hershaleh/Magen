@@ -62,6 +62,10 @@ jobs:
             ${{ steps.loc.outputs.dir }}/app/build/reports/tests/
             ${{ steps.loc.outputs.dir }}/app/build/test-results/
 
+      - name: Run JVM unit tests
+        working-directory: ${{ steps.loc.outputs.dir }}
+        run: gradle testDebugUnitTest --no-daemon --console=plain
+
       - name: Build debug APK
         id: build
         working-directory: ${{ steps.loc.outputs.dir }}
