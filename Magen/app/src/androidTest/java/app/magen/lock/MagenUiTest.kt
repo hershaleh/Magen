@@ -2,6 +2,7 @@ package app.magen.lock
 
 import android.Manifest
 import android.content.Context
+import android.graphics.Bitmap
 import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.ui.test.SemanticsNodeInteraction
