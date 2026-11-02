@@ -187,7 +187,16 @@ object Policy {
             }
             fun applyAndVerify(key: String, enabled: Boolean) {
                 restrict(d, a, key, enabled)
-                if (restrictions(d, a, ctx).getBoolean(key) != enabled) {
+                val effective = restrictions(d, a, ctx).getBoolean(key)
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    // API 24+ can report the restrictions owned by this specific admin.
+                    if (effective != enabled) {
+                        throw IllegalStateException("Android did not apply restriction: " + key)
+                    }
+                } else if (enabled && !effective) {
+                    // API 23 exposes only the aggregate restrictions for the whole user.
+                    // When disabling, another admin may legitimately keep the restriction enabled;
+                    // do not report that as Magen failing to clear its own policy.
                     throw IllegalStateException("Android did not apply restriction: " + key)
                 }
             }
