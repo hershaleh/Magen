@@ -27,6 +27,11 @@ class StoreTest {
     fun setUp() {
         ctx = RuntimeEnvironment.getApplication()
         prefs().edit().clear().commit()
+        Session.authed = false
+        Session.tripUntil = 0L
+        Session.tripPending = false
+        Session.uninstallPending = false
+        Session.uninstallLeft = false
         Store.init(ctx)
     }
 
@@ -215,6 +220,61 @@ class StoreTest {
         Store.init(ctx)
         assertFalse(Store.uninstallAllowed())
         assertEquals(0L, prefs().getLong("allowedUntil", -1L))
+        Store.init(ctx)
+        assertFalse(Store.uninstallAllowed())
+    }
+
+
+    // ---- active-rule status and app-initiated trips ---------------------------------------------
+
+    @Test
+    fun noConfiguredRulesMeansThereIsNothingToEnforce() {
+        assertFalse(hasAnyRule())
+    }
+
+    @Test
+    fun eachConfiguredRuleMakesProtectionNonEmpty() {
+        Store.setMode("example.app", LockMode.PIN)
+        assertTrue(hasAnyRule())
+        Store.setMode("example.app", null)
+        assertFalse(hasAnyRule())
+
+        Store.setBlockPlay(true)
+        assertTrue(hasAnyRule())
+        Store.setBlockPlay(false)
+        assertFalse(hasAnyRule())
+
+        Store.setBlockApk(true)
+        assertTrue(hasAnyRule())
+        Store.setBlockApk(false)
+        assertFalse(hasAnyRule())
+
+        Store.setBlockedSetting("install", true)
+        assertTrue(hasAnyRule())
+        Store.setBlockedSetting("install", false)
+        assertFalse(hasAnyRule())
+
+        Store.addKeyword("Settings > Internet")
+        assertTrue(hasAnyRule())
+        Store.removeKeyword("Internet")
+        assertFalse(hasAnyRule())
+    }
+
+    @Test
+    fun tripExceptionIsCreatedAndCanBeCancelledAfterLaunchFailure() {
+        Session.trip()
+        assertTrue(Session.tripUntil > android.os.SystemClock.elapsedRealtime())
+        Session.cancelTrip()
+        assertEquals(0L, Session.tripUntil)
+        assertFalse(Session.tripPending)
+    }
+
+    @Test
+    fun uninstallApprovalIsNotActiveAfterExplicitClosure() {
+        Store.allowUninstall(5)
+        assertTrue(Store.uninstallAllowed())
+        Store.allowUninstall(0)
+        assertFalse(Store.uninstallAllowed())
         Store.init(ctx)
         assertFalse(Store.uninstallAllowed())
     }
