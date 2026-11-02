@@ -219,20 +219,27 @@ object Policy {
             UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES,
             UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY,
         )
-        keys.forEach { runCatching { d.clearUserRestriction(a, it) } }
-        if (Build.VERSION.SDK_INT >= 30) {
-            runCatching { d.setUserControlDisabledPackages(a, emptyList()) }
-        }
         return try {
+            keys.forEach { key ->
+                d.clearUserRestriction(a, key)
+                if (d.getUserRestrictions(a).getBoolean(key)) {
+                    throw IllegalStateException("Android still reports restriction after clearing: " + key)
+                }
+            }
+            if (Build.VERSION.SDK_INT >= 30) {
+                d.setUserControlDisabledPackages(a, emptyList())
+                if (d.getUserControlDisabledPackages(a).isNotEmpty()) {
+                    throw IllegalStateException("Android still reports user-control-disabled packages")
+                }
+            }
             d.setUninstallBlocked(a, ctx.packageName, false)
             if (d.isUninstallBlocked(a, ctx.packageName)) {
-                lastUninstallError = "Android still reports Magen as uninstall-blocked. Device Owner was kept active; try again or copy this diagnostic."
-                false
-            } else {
-                true
+                throw IllegalStateException("Android still reports Magen as uninstall-blocked")
             }
+            lastUninstallError = null
+            true
         } catch (e: Throwable) {
-            lastUninstallError = "${e.javaClass.name}: ${e.message ?: "Android refused to clear the uninstall block"}"
+            lastUninstallError = e.javaClass.simpleName + ": " + (e.message ?: "Android refused to clear a policy restriction")
             false
         }
     }
