@@ -18,6 +18,7 @@ android {
             ?: System.getenv("MAGEN_VERSION_CODE")?.toIntOrNull()
             ?: maxOf(2, System.getenv("GITHUB_RUN_NUMBER")?.toIntOrNull() ?: 2)
         versionName = "1.1"
+        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
     // One fixed key for every build, so a new APK always installs over the old one and Magen Keeper
@@ -71,4 +72,10 @@ dependencies {
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14.1")
+
+    // Instrumented UI tests (run on an emulator in CI). They are not part of the app APK.
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.09.03"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+    androidTestImplementation("androidx.test.ext:junit:1.2.1")
+    androidTestImplementation("androidx.test:runner:1.6.2")
 }
