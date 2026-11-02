@@ -54,6 +54,7 @@ kill "$LOGCAT_PID" 2>/dev/null || true
 adb logcat -d -b crash > "$OUT/logcat-crash.txt" 2>&1 || true
 adb exec-out screencap -p > "$OUT/final-screen.png" 2>/dev/null || true
 adb pull "/sdcard/Android/data/$PKG/files/failure-screenshots" "$OUT/failure-screenshots" > /dev/null 2>&1 || true
+adb pull "/sdcard/Android/data/$PKG/files/walkthrough-screenshots" "$OUT/walkthrough-screenshots" > /dev/null 2>&1 || true
 echo "---- full instrumentation ----"
 grep -E '^(OK|FAILURES|Tests run)|INSTRUMENTATION_(CODE|FAILED)|test=' "$OUT/instrumentation.txt" | tail -40 || true
 echo "---- walkthrough instrumentation ----"

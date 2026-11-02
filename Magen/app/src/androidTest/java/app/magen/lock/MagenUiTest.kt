@@ -18,6 +18,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import java.io.File
+import java.io.FileOutputStream
 import app.magen.lock.ui.Session
 import org.junit.After
 import org.junit.Assert.assertFalse
@@ -117,6 +119,14 @@ class MagenUiTest {
         instrumentation.runOnMainSync {
             Store.setPin(pin)
             Session.skipSetup = true
+        }
+    }
+
+    private fun captureWalkthroughScreen(name: String) {
+        val dir = File(ctx.getExternalFilesDir(null), "walkthrough-screenshots").apply { mkdirs() }
+        val bitmap = instrumentation.uiAutomation.takeScreenshot()
+        FileOutputStream(File(dir, "$name.png")).use { output ->
+            bitmap.compress(Bitmap.CompressFormat.PNG, 100, output)
         }
     }
 
@@ -301,14 +311,18 @@ class MagenUiTest {
     @Test
     fun recordedWalkthroughShowsEveryMainArea() {
         openMainScreenDirectly()
-        Thread.sleep(1800)
         for ((label, landmark) in areas) {
             goToTab(label)
             compose.await(str(landmark)).assertIsDisplayed()
-            Thread.sleep(1800)
+            instrumentation.waitForIdleSync()
+            val fileName = navLabel(label).replace(Regex("[^A-Za-z0-9_-]"), "_")
+            captureWalkthroughScreen(fileName)
+            Thread.sleep(900)
         }
         goToTab(R.string.nav_home)
         compose.await(str(R.string.app_name)).assertIsDisplayed()
-        Thread.sleep(2500)
+        instrumentation.waitForIdleSync()
+        captureWalkthroughScreen("final-home")
+        Thread.sleep(1200)
     }
 }
