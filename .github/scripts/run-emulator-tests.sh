@@ -10,6 +10,10 @@ PKG=app.magen.lock
 mkdir -p "$OUT"
 
 adb logcat -c || true
+
+# Capture the actual emulator display while the UI tests run (maximum 180 seconds).
+# The recording is stopped and pulled below, even when instrumentation fails.
+adb shell 'screenrecord --time-limit 180 /sdcard/magen-ui-test.mp4 >/dev/null 2>&1 &' || true
 adb logcat -v threadtime > "$OUT/logcat-full.txt" 2>&1 &
 LOGCAT_PID=$!
 
@@ -25,6 +29,11 @@ if grep -qE '^OK \([1-9][0-9]* tests?\)' "$OUT/instrumentation.txt" \
    && ! grep -qE 'FAILURES!!!|Process crashed|INSTRUMENTATION_FAILED|INSTRUMENTATION_RESULT: shortMsg' "$OUT/instrumentation.txt"; then
   status=0
 fi
+
+# Stop the emulator-side recording and retrieve it as an MP4 artifact.
+adb shell pkill -INT screenrecord 2>/dev/null || true
+sleep 2
+adb pull /sdcard/magen-ui-test.mp4 "$OUT/ui-test-video.mp4" >/dev/null 2>&1 || true
 
 kill "$LOGCAT_PID" 2>/dev/null || true
 adb logcat -d -b crash > "$OUT/logcat-crash.txt" 2>&1 || true
