@@ -262,11 +262,12 @@ object Policy {
      */
     fun releaseOwner(ctx: Context): Boolean {
         ownerRemovalPending = true
-        val released = releaseOwnerNow(ctx)
-        // Pause apply() only while a release is in flight. Afterwards it must run again: either Magen is still
-        // the owner (protection must continue) or it is not, and a later re-provisioning must not be ignored.
-        ownerRemovalPending = false
-        return released
+        return try {
+            releaseOwnerNow(ctx)
+        } finally {
+            // Never leave policy enforcement paused, even if an unexpected failure escapes releaseOwnerNow().
+            ownerRemovalPending = false
+        }
     }
 
     @Suppress("DEPRECATION")
@@ -317,10 +318,13 @@ object Policy {
      */
     fun release(ctx: Context): Boolean {
         ownerRemovalPending = true
-        expectAdminLoss()
-        val ready = releaseNow(ctx)
-        ownerRemovalPending = false
-        return ready
+        return try {
+            expectAdminLoss()
+            releaseNow(ctx)
+        } finally {
+            // Restore normal enforcement on every exit path; the release operation itself verifies success.
+            ownerRemovalPending = false
+        }
     }
 
     @Suppress("DEPRECATION")
