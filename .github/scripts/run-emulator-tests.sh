@@ -16,7 +16,7 @@ adb logcat -c || true
 VIDEO_REMOTE=/sdcard/magen-ui-test.mp4
 VIDEO_LOG=/sdcard/magen-screenrecord.log
 adb shell rm -f "$VIDEO_REMOTE" "$VIDEO_LOG"
-VIDEO_PID="$(adb shell "screenrecord --time-limit 180 --bit-rate 4000000 $VIDEO_REMOTE >$VIDEO_LOG 2>&1 & echo \\$!")"
+VIDEO_PID="$(adb shell "screenrecord --time-limit 180 --bit-rate 4000000 $VIDEO_REMOTE >$VIDEO_LOG 2>&1 & echo \$!")"
 VIDEO_PID="$(echo "$VIDEO_PID" | tr -d '\\r')"
 echo "screenrecord pid: $VIDEO_PID"
 adb logcat -v threadtime > "$OUT/logcat-full.txt" 2>&1 &
