@@ -206,8 +206,11 @@ object Policy {
      * True when Android still blocks uninstalling Magen although Magen is not the Device Owner. Only a Device
      * Owner can clear that block, so recovery means becoming Device Owner once (Magen then clears it itself).
      */
-    fun staleUninstallBlock(ctx: Context): Boolean =
-        !isOwner(ctx) && runCatching { dpm(ctx).isUninstallBlocked(null, ctx.packageName) }.getOrDefault(false)
+    fun staleUninstallBlock(ctx: Context): Boolean {
+        if (isOwner(ctx)) return false
+        // A failed system query is not proof that the stale block is absent. Let the caller fail closed.
+        return dpm(ctx).isUninstallBlocked(null, ctx.packageName)
+    }
 
     /**
      * Clears restrictions before surrendering Device Owner. Crucially, verify Android actually
