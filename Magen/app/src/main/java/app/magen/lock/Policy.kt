@@ -149,6 +149,12 @@ object Policy {
         runCatching { su("reboot") }
     }
 
+    /** DevicePolicyManager.getUserRestrictions(ComponentName) was added in API 24.
+     * On API 23, read the current user's effective restrictions through UserManager instead. */
+    private fun restrictions(d: DevicePolicyManager, a: ComponentName, ctx: Context): android.os.Bundle =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) d.getUserRestrictions(a)
+        else ctx.getSystemService(UserManager::class.java).userRestrictions
+
     private fun restrict(d: DevicePolicyManager, a: ComponentName, key: String, on: Boolean) {
         if (on) d.addUserRestriction(a, key) else d.clearUserRestriction(a, key)
     }
@@ -181,7 +187,7 @@ object Policy {
             }
             fun applyAndVerify(key: String, enabled: Boolean) {
                 restrict(d, a, key, enabled)
-                if (d.getUserRestrictions(a).getBoolean(key) != enabled) {
+                if (restrictions(d, a, ctx).getBoolean(key) != enabled) {
                     throw IllegalStateException("Android did not apply restriction: " + key)
                 }
             }
