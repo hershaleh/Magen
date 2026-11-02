@@ -288,6 +288,7 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
     val locked = Store.locked
     val level = Store.level
     val health = remember(tick, p, locked, level) { computeHealth(ctx) }
+    val policyError = Policy.lastApplyError
 
     // "Ready, no rules" is shown instead of "active" while nothing is selected to enforce.
     val idle = health.overall == Sev.OK && !hasAnyRule()
@@ -325,6 +326,14 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
                     detailsOpen = true
                 },
                 icon = Icons.Filled.FactCheck,
+            )
+        }
+
+        if (policyError != null && Policy.isOwner(ctx)) {
+            Text(
+                "תקלה בהחלת הגנת המערכת: " + policyError,
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
 
