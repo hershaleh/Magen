@@ -82,13 +82,16 @@ object InstallerScreen {
      * Exception for Magen's OWN approved uninstall, so a wording this detector does not know cannot lock the
      * person out of removing Magen right after they confirmed it with the code. All of these must hold:
      * the approval window is open, the screen names Magen, there is no install or update question or action, and
-     * there is some uninstall wording (a recognised signal or the word itself). It never applies to other apps
+     * there is explicit uninstall evidence (a MESSAGE, TITLE or BUTTON signal, or the word "uninstall" or "הסר"
+     * in a text). A generic OK + Cancel pair or a view id alone is not evidence. It never applies to other apps
      * and never to install or update screens.
      */
     fun isApprovedMagenUninstall(nodes: List<Node>, mentionsMagen: Boolean, approvalActive: Boolean): Boolean {
         if (!approvalActive || !mentionsMagen) return false
         if (isInstallPrompt(nodes) || hasInstallAction(nodes)) return false
-        return signals(nodes).isNotEmpty() || nodes.any { n -> n.text.contains("uninstall") || n.text.contains("הסר") }
+        // Explicit evidence of an uninstall is required: a wording signal, or the word itself. CONFIRM (a generic
+        // OK + Cancel pair) and STRUCTURE (a view id) alone are never enough.
+        return signals(nodes).any { it in WORDING } || nodes.any { n -> n.text.contains("uninstall") || n.text.contains("הסר") }
     }
 
     fun isUninstall(nodes: List<Node>): Boolean {

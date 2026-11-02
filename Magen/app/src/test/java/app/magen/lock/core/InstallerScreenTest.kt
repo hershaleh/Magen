@@ -325,4 +325,62 @@ class InstallerScreenTest {
         assertFalse(InstallerScreen.hasInstallAction(listOf(text("install"))))
         assertTrue(InstallerScreen.hasInstallAction(listOf(button("install"))))
     }
+
+    // ---- explicit evidence is required for Magen's own approved uninstall --------------------------
+
+    @Test
+    fun magenWithOnlyAGenericOkCancelPairGetsNoException() {
+        val nodes = listOf(text("magen"), button("ok"), button("cancel"))
+        assertEquals(setOf(Signal.CONFIRM), InstallerScreen.signals(nodes))
+        assertFalse(ownApproved(nodes))
+        assertFalse(ownApproved(listOf(text("מגן"), button("אישור"), button("ביטול"))))
+    }
+
+    @Test
+    fun magenWithOnlyStructureOrStructureAndOkCancelGetsNoException() {
+        val id = Node("", false, "pkg:id/uninstall_icon")
+        assertFalse(ownApproved(listOf(text("magen"), id)))
+        val withConfirm = listOf(text("magen"), id, button("ok"), button("cancel"))
+        assertEquals(setOf(Signal.STRUCTURE, Signal.CONFIRM), InstallerScreen.signals(withConfirm))
+        assertFalse(ownApproved(withConfirm))
+    }
+
+    @Test
+    fun magenWithAnUnfamiliarWordingAndNoUninstallWordGetsNoException() {
+        assertFalse(ownApproved(listOf(text("magen"), text("remove this app?"), button("cancel"), button("remove"))))
+        assertFalse(ownApproved(listOf(text("מגן"), text("שאלה בניסוח לא מוכר"), button("בטל"), button("המשך"))))
+    }
+
+    @Test
+    fun magenWithAnUnfamiliarWordingAndAnExplicitUninstallWordGetsTheException() {
+        assertTrue(ownApproved(listOf(text("magen"), text("really uninstall this thing?"), button("no"), button("yes"))))
+        assertTrue(ownApproved(listOf(text("מגן"), text("שאלה בניסוח לא מוכר"), button("בטל"), button("הסר"))))
+    }
+
+    @Test
+    fun magenWithAWordingSignalButNoOkCancelStillGetsTheException() {
+        assertTrue(ownApproved(listOf(text("magen"), text("do you want to uninstall this app?"))))
+        assertTrue(ownApproved(listOf(text("magen"), button("uninstall"))))
+    }
+
+    @Test
+    fun otherAppsGetNoExceptionEvenWithAnExplicitUninstallWord() {
+        assertFalse(ownApproved(listOf(text("calculator"), text("uninstall"), button("ok"), button("cancel")), mentions = false))
+        assertFalse(ownApproved(listOf(text("calculator"), button("ok"), button("cancel")), mentions = false))
+    }
+
+    @Test
+    fun aClosedApprovalWindowGivesNoExceptionWhateverTheScreenSays() {
+        assertFalse(ownApproved(uninstallDialogModern("magen"), approval = false))
+        assertFalse(ownApproved(listOf(text("magen"), text("really uninstall this thing?"), button("הסר")), approval = false))
+        assertFalse(ownApproved(listOf(text("magen"), button("ok"), button("cancel")), approval = false))
+    }
+
+    @Test
+    fun installAndUpdateScreensOfMagenWithAnUninstallWordAreStillVetoed() {
+        val install = listOf(text("magen"), text("uninstall"), text("do you want to install this app?"), button("cancel"), button("install"))
+        assertFalse(ownApproved(install))
+        val update = listOf(text("magen uninstall tool"), text("do you want to update this app?"), button("cancel"), button("update"))
+        assertFalse(ownApproved(update))
+    }
 }
