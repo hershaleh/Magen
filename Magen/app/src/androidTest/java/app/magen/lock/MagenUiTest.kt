@@ -289,4 +289,22 @@ class MagenUiTest {
         goToTab(R.string.nav_apps)
         compose.await(str(R.string.apps_title)).assertIsDisplayed()
     }
+
+    /**
+     * Deliberately slow walkthrough so the CI recording is useful for a human review,
+     * rather than a blur of short-lived activities from the individual tests.
+     */
+    @Test
+    fun recordedWalkthroughShowsEveryMainArea() {
+        openMainScreenDirectly()
+        Thread.sleep(1800)
+        for ((label, landmark) in areas) {
+            goToTab(label)
+            compose.await(str(landmark)).assertIsDisplayed()
+            Thread.sleep(1800)
+        }
+        goToTab(R.string.nav_home)
+        compose.await(str(R.string.app_name)).assertIsDisplayed()
+        Thread.sleep(2500)
+    }
 }
