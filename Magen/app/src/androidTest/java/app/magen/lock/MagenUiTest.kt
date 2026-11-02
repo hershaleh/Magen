@@ -136,7 +136,7 @@ class MagenUiTest {
     private val areas: List<Pair<Int, Int>> = listOf(
         R.string.nav_home to R.string.app_name,
         R.string.nav_apps to R.string.apps_title,
-        R.string.nav_protection to R.string.protection_adv_title,
+        R.string.nav_protection to R.string.protection_title,
         R.string.nav_times to R.string.times_lock_title,
         R.string.nav_settings to R.string.more_title,
     )
@@ -244,7 +244,16 @@ class MagenUiTest {
         openMainScreenDirectly()
         for ((label, landmark) in areas) {
             goToTab(label)
-            compose.await(str(landmark)).assertIsDisplayed()
+            val tabName = str(label)
+            val expectedHeading = str(landmark)
+            try {
+                compose.await(expectedHeading).assertIsDisplayed()
+            } catch (error: AssertionError) {
+                throw AssertionError(
+                    "Tab '$tabName' did not show its expected heading '$expectedHeading'.",
+                    error,
+                )
+            }
         }
     }
 
