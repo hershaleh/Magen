@@ -12,6 +12,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
@@ -123,7 +124,10 @@ class MagenUiTest {
         setCodeAndSkipSetup()
         instrumentation.runOnMainSync { Session.authed = true }
         launch()
-        compose.await(str(R.string.nav_home))
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("magen_launch_overlay").fetchSemanticsNodes().isEmpty()
+        }
+        compose.await(str(R.string.nav_home)).assertIsDisplayed()
     }
 
     private fun navLabel(@StringRes id: Int) = str(id)
