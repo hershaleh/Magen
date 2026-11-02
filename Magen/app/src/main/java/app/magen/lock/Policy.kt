@@ -7,6 +7,9 @@ import android.os.Build
 import android.os.PersistableBundle
 import android.os.UserManager
 import android.provider.Settings
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 
 /**
  * System-level enforcement. Everything here is a no-op unless Magen is the Device Owner
@@ -145,9 +148,8 @@ object Policy {
         if (on) d.addUserRestriction(a, key) else d.clearUserRestriction(a, key)
     }
 
-    /** Most recent policy application error; null means the last attempt succeeded. */
-    @Volatile
-    var lastApplyError: String? = null
+    /** Observable policy error; Compose updates the Home status as soon as enforcement fails. */
+    var lastApplyError by mutableStateOf<String?>(null)
         private set
 
     /** Re-applies every restriction from the current Store values without hiding failures. */
