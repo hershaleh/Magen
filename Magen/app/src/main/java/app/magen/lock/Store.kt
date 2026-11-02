@@ -202,6 +202,14 @@ object Store {
 
     // ---- rules -------------------------------------------------------------------------------
 
+    /** True when at least one user-configured protection rule exists. */
+    fun hasAnyRule(): Boolean =
+        locked.isNotEmpty() ||
+            blockPlay ||
+            blockApk ||
+            blockedSettings.isNotEmpty() ||
+            customKeywords.isNotEmpty()
+
     @JvmName("applyBlockPlay")
     fun setBlockPlay(on: Boolean) {
         blockPlay = on
