@@ -145,30 +145,52 @@ object Policy {
         if (on) d.addUserRestriction(a, key) else d.clearUserRestriction(a, key)
     }
 
-    /** Re-applies every restriction from the current [Store] values. Safe to call often. */
+    /** Most recent policy application error; null means the last attempt succeeded. */
+    @Volatile
+    var lastApplyError: String? = null
+        private set
+
+    /** Re-applies every restriction from the current Store values without hiding failures. */
     fun apply() {
         val ctx = Store.app
-        if (!isOwner(ctx) || ownerRemovalPending) return
-        val d = dpm(ctx)
-        val a = admin(ctx)
-        val protectNow = Store.protect && !Store.uninstallAllowed()
-        runCatching { clearLegacyUninstallBlock(d, a, ctx) }
-        runCatching {
+        if (ownerRemovalPending || !isOwner(ctx)) {
+            lastApplyError = null
+            return
+        }
+        try {
+            val d = dpm(ctx)
+            val a = admin(ctx)
+            val protectNow = Store.protect && !Store.uninstallAllowed()
+            clearLegacyUninstallBlock(d, a, ctx)
+            if (d.isUninstallBlocked(a, ctx.packageName)) {
+                throw IllegalStateException("Android still reports Magen as uninstall-blocked")
+            }
             if (Build.VERSION.SDK_INT >= 30) {
-                d.setUserControlDisabledPackages(a, if (protectNow) listOf(ctx.packageName) else emptyList())
+                val expected = if (protectNow) listOf(ctx.packageName) else emptyList()
+                d.setUserControlDisabledPackages(a, expected)
+                if (d.getUserControlDisabledPackages(a).toSet() != expected.toSet()) {
+                    throw IllegalStateException("Android did not apply the expected user-control package list")
+                }
             }
-            restrict(d, a, UserManager.DISALLOW_SAFE_BOOT, protectNow)
-            restrict(d, a, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES, Store.blockApk)
+            fun applyAndVerify(key: String, enabled: Boolean) {
+                restrict(d, a, key, enabled)
+                if (d.getUserRestrictions(a).getBoolean(key) != enabled) {
+                    throw IllegalStateException("Android did not apply restriction: " + key)
+                }
+            }
+            applyAndVerify(UserManager.DISALLOW_SAFE_BOOT, protectNow)
+            applyAndVerify(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES, Store.blockApk)
             if (Build.VERSION.SDK_INT >= 29) {
-                restrict(d, a, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, Store.blockApk)
+                applyAndVerify(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, Store.blockApk)
             }
-            // Several pages can share one system restriction, so it is on if ANY of them is selected.
             Catalog.settings.filter { it.restriction != null }.groupBy { it.restriction!! }.forEach { (key, cats) ->
-                restrict(d, a, key, cats.any { it.id in Store.blockedSettings })
+                applyAndVerify(key, cats.any { it.id in Store.blockedSettings })
             }
+            lastApplyError = null
+        } catch (e: Throwable) {
+            lastApplyError = e.javaClass.simpleName + ": " + (e.message ?: "Android rejected a policy change")
         }
     }
-
     /**
      * Older Magen versions called setUninstallBlocked(true). Android stores that flag persistently (in
      * package-restrictions.xml) and it does NOT disappear when Device Owner ends, which left Magen impossible
