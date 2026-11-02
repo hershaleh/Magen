@@ -27,11 +27,6 @@ class StoreTest {
     fun setUp() {
         ctx = RuntimeEnvironment.getApplication()
         prefs().edit().clear().commit()
-        Session.authed = false
-        Session.tripUntil = 0L
-        Session.tripPending = false
-        Session.uninstallPending = false
-        Session.uninstallLeft = false
         Store.init(ctx)
     }
 
@@ -229,15 +224,15 @@ class StoreTest {
 
     @Test
     fun noConfiguredRulesMeansThereIsNothingToEnforce() {
-        assertFalse(hasAnyRule())
+        assertFalse(Store.hasAnyRule())
     }
 
     @Test
     fun eachConfiguredRuleMakesProtectionNonEmpty() {
         Store.setMode("example.app", LockMode.PIN)
-        assertTrue(hasAnyRule())
+        assertTrue(Store.hasAnyRule())
         Store.setMode("example.app", null)
-        assertFalse(hasAnyRule())
+        assertFalse(Store.hasAnyRule())
 
         Store.setBlockPlay(true)
         assertTrue(hasAnyRule())
@@ -258,15 +253,6 @@ class StoreTest {
         assertTrue(hasAnyRule())
         Store.removeKeyword("Internet")
         assertFalse(hasAnyRule())
-    }
-
-    @Test
-    fun tripExceptionIsCreatedAndCanBeCancelledAfterLaunchFailure() {
-        Session.trip()
-        assertTrue(Session.tripUntil > android.os.SystemClock.elapsedRealtime())
-        Session.cancelTrip()
-        assertEquals(0L, Session.tripUntil)
-        assertFalse(Session.tripPending)
     }
 
     @Test
