@@ -12,7 +12,7 @@ import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
-import androidx.compose.ui.test.onNode
+import androidx.compose.ui.test.onAllNodes
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
@@ -100,17 +100,17 @@ class MagenUiTest {
         compose.waitUntil(20_000) {
             compose.onAllNodesWithText(text).fetchSemanticsNodes().isNotEmpty()
         }
-        compose.onNode(hasClickAction() and hasText(text)).performClick()
+        compose.onAllNodes(hasClickAction() and hasText(text))[0].performClick()
     }
 
     private fun pressKey(key: String) {
-        compose.onNode(hasClickAction() and hasText(key)).performClick()
+        compose.onAllNodes(hasClickAction() and hasText(key))[0].performClick()
     }
 
     /** Types [pin] on the keypad and presses the confirm key. */
     private fun enterPin(pin: String) {
         pin.forEach { pressKey(it.toString()) }
-        compose.onNode(hasClickAction() and hasContentDescription(str(R.string.pin_confirm))).performClick()
+        compose.onAllNodes(hasClickAction() and hasContentDescription(str(R.string.pin_confirm)))[0].performClick()
     }
 
     private fun setCodeAndSkipSetup(pin: String = "2468") {
@@ -130,7 +130,7 @@ class MagenUiTest {
     private fun navLabel(@StringRes id: Int) = str(id)
 
     private fun goToTab(@StringRes navLabel: Int) {
-        compose.onNode(hasClickAction() and hasText(navLabel(navLabel))).performClick()
+        compose.onAllNodes(hasClickAction() and hasText(navLabel(navLabel)))[0].performClick()
     }
 
     /** The five areas of the bottom navigation, each with a string that only that screen shows. */
@@ -236,7 +236,7 @@ class MagenUiTest {
         openMainScreenDirectly()
         compose.await(str(R.string.app_name)).assertIsDisplayed()
         for ((label, _) in areas) {
-            compose.onNode(hasClickAction() and hasText(navLabel(label))).assertIsDisplayed()
+            compose.onAllNodes(hasClickAction() and hasText(navLabel(label)))[0].assertIsDisplayed()
         }
     }
 
