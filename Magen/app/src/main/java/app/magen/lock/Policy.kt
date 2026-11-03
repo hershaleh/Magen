@@ -146,29 +146,84 @@ object Policy {
     }
 
     /** Re-applies every restriction from the current [Store] values. Safe to call often. */
+    /** Last Device Owner policy application result. Null means all attempted operations passed read-back. */
+    @Volatile
+    var lastApplyError: String? = null
+        private set
+
+    @Volatile
+    var lastApplyAt: Long = 0L
+        private set
+
+    /** Re-applies policy and records each failure instead of silently swallowing it. */
     fun apply() {
         val ctx = Store.app
         if (!isOwner(ctx) || ownerRemovalPending) return
         val d = dpm(ctx)
         val a = admin(ctx)
         val protectNow = Store.protect && !Store.uninstallAllowed()
-        runCatching { clearLegacyUninstallBlock(d, a, ctx) }
-        runCatching {
-            if (Build.VERSION.SDK_INT >= 30) {
-                d.setUserControlDisabledPackages(a, if (protectNow) listOf(ctx.packageName) else emptyList())
-            }
-            restrict(d, a, UserManager.DISALLOW_SAFE_BOOT, protectNow)
-            restrict(d, a, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES, Store.blockApk)
-            if (Build.VERSION.SDK_INT >= 29) {
-                restrict(d, a, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, Store.blockApk)
-            }
-            // Several pages can share one system restriction, so it is on if ANY of them is selected.
-            Catalog.settings.filter { it.restriction != null }.groupBy { it.restriction!! }.forEach { (key, cats) ->
-                restrict(d, a, key, cats.any { it.id in Store.blockedSettings })
+        val failures = mutableListOf<String>()
+
+        fun attempt(label: String, action: () -> Unit) {
+            try {
+                action()
+            } catch (e: Throwable) {
+                failures += "$label: ${e.javaClass.simpleName}: ${e.message ?: "failed"}"
             }
         }
-    }
 
+        attempt("Clear legacy uninstall block") { clearLegacyUninstallBlock(d, a, ctx) }
+        if (Build.VERSION.SDK_INT >= 30) {
+            attempt("Protect Magen from user control") {
+                d.setUserControlDisabledPackages(a, if (protectNow) listOf(ctx.packageName) else emptyList())
+            }
+        }
+        attempt("Safe boot restriction") { restrict(d, a, UserManager.DISALLOW_SAFE_BOOT, protectNow) }
+        attempt("Unknown-source install restriction") {
+            restrict(d, a, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES, Store.blockApk)
+        }
+        if (Build.VERSION.SDK_INT >= 29) {
+            attempt("Global unknown-source install restriction") {
+                restrict(d, a, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, Store.blockApk)
+            }
+        }
+        // Several pages can share one system restriction, so it is on if ANY of them is selected.
+        Catalog.settings.filter { it.restriction != null }.groupBy { it.restriction!! }.forEach { (key, cats) ->
+            val enabled = cats.any { it.id in Store.blockedSettings }
+            attempt("Settings restriction $key") { restrict(d, a, key, enabled) }
+        }
+
+        // Read back Android's recorded policy. A successful API call alone is not proof of enforcement.
+        if (Build.VERSION.SDK_INT >= 26) {
+            attempt("Verify Android restrictions") {
+                val actual = d.getUserRestrictions(a)
+                val expected = mutableMapOf(
+                    UserManager.DISALLOW_SAFE_BOOT to protectNow,
+                    UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES to Store.blockApk,
+                )
+                if (Build.VERSION.SDK_INT >= 29) {
+                    expected[UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY] = Store.blockApk
+                }
+                Catalog.settings.filter { it.restriction != null }.groupBy { it.restriction!! }.forEach { (key, cats) ->
+                    expected[key] = cats.any { it.id in Store.blockedSettings }
+                }
+                expected.forEach { (key, wanted) ->
+                    val found = actual.getBoolean(key, false)
+                    if (found != wanted) failures += "Verification $key: expected $wanted, Android reports $found"
+                }
+            }
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            attempt("Verify Magen user-control protection") {
+                val found = d.getUserControlDisabledPackages(a).orEmpty().contains(ctx.packageName)
+                if (found != protectNow) {
+                    failures += "Verification user-control protection: expected $protectNow, Android reports $found"
+                }
+            }
+        }
+        lastApplyAt = System.currentTimeMillis()
+        lastApplyError = failures.takeIf { it.isNotEmpty() }?.joinToString("\n")
+    }
     /**
      * Older Magen versions called setUninstallBlocked(true). Android stores that flag persistently (in
      * package-restrictions.xml) and it does NOT disappear when Device Owner ends, which left Magen impossible
