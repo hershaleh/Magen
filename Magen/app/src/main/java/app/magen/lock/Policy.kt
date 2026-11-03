@@ -123,6 +123,7 @@ object Policy {
                 expectAdminLoss()
                 if (!clearOwnerRestrictions(d, admin(ctx), ctx)) {
                     ownerRemovalPending = false
+                    apply()
                     return lastUninstallError ?: "Could not clear Magen's uninstall block first. Nothing was changed."
                 }
                 val extras = PersistableBundle().apply { putString("from_package", ctx.packageName) }
@@ -132,6 +133,7 @@ object Policy {
             }
         } catch (e: Throwable) {
             ownerRemovalPending = false
+            if (isOwner(ctx)) runCatching { apply() }
             "${e.javaClass.name}: ${e.message ?: "no details"}\n${deviceInfo()}"
         }
     }
@@ -282,6 +284,8 @@ object Policy {
         // Pause apply() only while a release is in flight. Afterwards it must run again: either Magen is still
         // the owner (protection must continue) or it is not, and a later re-provisioning must not be ignored.
         ownerRemovalPending = false
+        // If Android refuses release after restrictions were cleared, restore protection immediately.
+        if (!released && isOwner(ctx)) apply()
         return released
     }
 
@@ -336,6 +340,8 @@ object Policy {
         expectAdminLoss()
         val ready = releaseNow(ctx)
         ownerRemovalPending = false
+        // Do not leave an owned device unprotected after a failed uninstall preparation.
+        if (!ready && isOwner(ctx)) apply()
         return ready
     }
 
