@@ -395,11 +395,12 @@ object Policy {
             }
             if (d.isAdminActive(a)) {
                 d.removeActiveAdmin(a)
-                // Android may take a moment to drop the admin record; never open the uninstall screen before it is gone.
-                var tries = 0
-                while (d.isAdminActive(a) && tries++ < 10) Thread.sleep(200)
+                // Do not poll with Thread.sleep here: this method is called from the UI flow.
+                // Android may finish removing the admin asynchronously; the user can retry after it completes.
                 if (d.isAdminActive(a)) {
-                    lastUninstallError = "Android still lists Magen as an active device administrator, so it cannot be uninstalled yet."
+                    lastUninstallError =
+                        "Android has received the request to remove Magen as device administrator, but still reports it as active. " +
+                        "The uninstall screen was not opened. Wait a moment, then retry; no uninstall approval window was opened."
                     return false
                 }
             }
