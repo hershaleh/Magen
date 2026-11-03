@@ -88,6 +88,7 @@ object Policy {
                     val cleared = !isOwner(ctx) || clearOwnerRestrictions(dpm(ctx), admin(ctx), ctx)
                     if (!cleared) {
                         ownerRemovalPending = false
+                        if (isOwner(ctx)) apply()
                         lastUninstallError ?: "Could not clear Magen's uninstall block first. Nothing was changed."
                     } else {
                         // A unique name each time, so an older backup is never overwritten.
@@ -97,6 +98,7 @@ object Policy {
                             null
                         } else {
                             ownerRemovalPending = false
+                            if (isOwner(ctx)) apply()
                             "Moving the file failed (exit $code): $out"
                         }
                     }
@@ -104,6 +106,8 @@ object Policy {
             }
         }
     } catch (e: Throwable) {
+        ownerRemovalPending = false
+        if (isOwner(ctx)) runCatching { apply() }
         "${e.javaClass.name}: ${e.message ?: "no details"}"
     }
 
