@@ -398,6 +398,7 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
     // Read again every time the person returns from Android settings.
     val p = rememberPerms()
     val running = GuardService.instance != null
+    var policyDiagnostic by remember { mutableStateOf(Policy.lastApplyError) }
     val fix: (Fix) -> Unit = { openFix(ctx, it) {} }
 
     TabColumn {
@@ -448,6 +449,28 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
         SectionCard(stringResource(R.string.protection_adv_title), stringResource(R.string.protection_adv_desc)) {
             StatusLine(ownerLine(p), fix)
             StatusLine(adminLine(p), fix)
+            if (Policy.isOwner(ctx)) {
+                Text(
+                    "בדיקת מדיניות ההגנה",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Text(
+                    policyDiagnostic?.let { "נמצאו בעיות באכיפת מדיניות:\\n$it" }
+                        ?: "לא דווחו כשלים בבדיקה האחרונה. זו בדיקת מצב המדיניות ש-Android מדווח, ולא הבטחה שכל יצרן אוכף אותה בפועל.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (policyDiagnostic == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
+                )
+                OutlinedButton(
+                    onClick = {
+                        Policy.apply()
+                        policyDiagnostic = Policy.lastApplyError
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                ) { Text("בדוק מדיניות עכשיו") }
+            }
             OutlinedButton(
                 onClick = { advanced = true },
                 shape = RoundedCornerShape(16.dp),
