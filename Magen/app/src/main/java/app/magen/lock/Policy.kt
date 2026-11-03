@@ -393,6 +393,16 @@ object Policy {
                     return false
                 }
             }
+            // Check for a legacy uninstall block before dropping regular device-admin status.
+            // Without Device Owner, Magen cannot clear this flag; preserve the remaining admin state
+            // and direct the user to the dedicated recovery flow instead.
+            if (staleUninstallBlock(ctx)) {
+                lastUninstallError =
+                    "Android still blocks uninstalling Magen (a leftover from an older Strong mode). " +
+                    "Magen's Device Owner status may already have been released, but its regular admin was kept. " +
+                    "See More, \"Leftover uninstall block\"."
+                return false
+            }
             if (d.isAdminActive(a)) {
                 d.removeActiveAdmin(a)
                 // Do not poll with Thread.sleep here: this method is called from the UI flow.
@@ -400,13 +410,10 @@ object Policy {
                 if (d.isAdminActive(a)) {
                     lastUninstallError =
                         "Android has received the request to remove Magen as device administrator, but still reports it as active. " +
+                        "Device Owner has already been released if Magen was in Strong mode. " +
                         "The uninstall screen was not opened. Wait a moment, then retry; no uninstall approval window was opened."
                     return false
                 }
-            }
-            if (staleUninstallBlock(ctx)) {
-                lastUninstallError = "Android still blocks uninstalling Magen (a leftover from an older Strong mode). See More, \"Leftover uninstall block\"."
-                return false
             }
             true
         } catch (e: Throwable) {
