@@ -258,22 +258,52 @@ object Policy {
             UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES,
             UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY,
         )
-        keys.forEach { runCatching { d.clearUserRestriction(a, it) } }
-        if (Build.VERSION.SDK_INT >= 30) {
-            runCatching { d.setUserControlDisabledPackages(a, emptyList()) }
+        val failures = mutableListOf<String>()
+        keys.forEach { key ->
+            try {
+                d.clearUserRestriction(a, key)
+            } catch (e: Exception) {
+                failures += "$key: ${e.javaClass.simpleName}: ${e.message ?: "clear failed"}"
+            }
         }
-        return try {
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                d.setUserControlDisabledPackages(a, emptyList())
+            } catch (e: Exception) {
+                failures += "user-control packages: ${e.javaClass.simpleName}: ${e.message ?: "clear failed"}"
+            }
+        }
+        try {
             d.setUninstallBlocked(a, ctx.packageName, false)
             if (d.isUninstallBlocked(a, ctx.packageName)) {
-                lastUninstallError = "Android still reports Magen as uninstall-blocked. Device Owner was kept active; try again or copy this diagnostic."
-                false
-            } else {
-                true
+                failures += "Android still reports Magen as uninstall-blocked"
             }
-        } catch (e: Throwable) {
-            lastUninstallError = "${e.javaClass.name}: ${e.message ?: "Android refused to clear the uninstall block"}"
-            false
+        } catch (e: Exception) {
+            failures += "uninstall block: ${e.javaClass.simpleName}: ${e.message ?: "clear failed"}"
         }
+
+        // Never surrender Device Owner while Android still reports any of our restrictions.
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                val remaining = d.getUserRestrictions(a)
+                keys.filter { remaining.getBoolean(it, false) }.forEach {
+                    failures += "Restriction remains enabled: $it"
+                }
+            } catch (e: Exception) {
+                failures += "Restriction read-back: ${e.javaClass.simpleName}: ${e.message ?: "verification failed"}"
+            }
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                if (ctx.packageName in d.getUserControlDisabledPackages(a).orEmpty()) {
+                    failures += "Magen remains in user-control disabled packages"
+                }
+            } catch (e: Exception) {
+                failures += "User-control read-back: ${e.javaClass.simpleName}: ${e.message ?: "verification failed"}"
+            }
+        }
+        lastUninstallError = failures.takeIf { it.isNotEmpty() }?.joinToString("\\n")
+        return failures.isEmpty()
     }
 
     /**
