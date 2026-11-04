@@ -462,16 +462,6 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             StatusLine(apkLine(ctx, p, running), fix)
         }
 
-        SectionCard(stringResource(R.string.grp_settings), stringResource(R.string.grp_settings_desc)) {
-            StatusLine(settingsLine(running), fix)
-        }
-
-        SettingsGroups()
-
-        PickFromScreenCard()
-
-        CustomKeywordsCard()
-
         HowToCard()
 
         SectionCard(stringResource(R.string.grp_self), stringResource(R.string.grp_self_desc)) {
