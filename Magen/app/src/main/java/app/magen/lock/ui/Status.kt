@@ -298,7 +298,7 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
     MagenScreen {
         // This switch controls user-configured blocking rules. Magen's self-protection remains independent.
         Surface(
-            onClick = { Store.setBlockingEnabled(!Store.blockingEnabled) },
+            onClick = { Store.updateBlockingEnabled(!Store.blockingEnabled) },
             modifier = Modifier.fillMaxWidth(),
             shape = CircleShape,
             color = if (Store.blockingEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
