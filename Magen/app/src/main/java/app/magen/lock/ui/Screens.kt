@@ -417,10 +417,8 @@ fun MainScaffold() {
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                if (navigationMode == 0) {
-                                    IconButton(onClick = openDrawer) {
-                                        Icon(Icons.Filled.Menu, contentDescription = if (Lang.current().startsWith("en")) "Open menu" else "פתיחת תפריט")
-                                    }
+                                IconButton(onClick = openDrawer) {
+                                    Icon(Icons.Filled.Menu, contentDescription = if (Lang.current().startsWith("en")) "Open menu" else "פתיחת תפריט")
                                 }
                                 ShieldBadge(32.dp)
                                 Text(
