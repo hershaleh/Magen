@@ -188,18 +188,20 @@ private fun SystemComponentsScreen() {
         OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("חיפוש בהגדרות") }, singleLine = true, modifier = Modifier.fillMaxWidth())
         groups.forEach { (group, categories) ->
             SpecCard(stringResource(group.title)) {
-                categories.filter { cat ->
-                    query.isBlank() || stringResource(cat.title).contains(query, ignoreCase = true) ||
+                categories.forEach { cat ->
+                    val label = stringResource(cat.title)
+                    if (query.isBlank() || label.contains(query, ignoreCase = true) ||
                         cat.id.contains(query, ignoreCase = true) || cat.keywords.any { it.contains(query, ignoreCase = true) }
-                }.forEach { cat ->
-                    SwitchListRow(
-                        title = stringResource(cat.title),
-                        checked = cat.id in Store.blockedSettings,
-                        onChange = { Store.setBlockedSetting(cat.id, it) },
-                        supporting = if (cat.restriction != null) "קיימת גם מגבלת Android מערכתית במצב המתאים" else "מבוסס התאמת כותרת דרך שירות הנגישות",
-                        icon = cat.icon,
-                    )
-                    RowDivider()
+                    ) {
+                        SwitchListRow(
+                            title = label,
+                            checked = cat.id in Store.blockedSettings,
+                            onChange = { Store.setBlockedSetting(cat.id, it) },
+                            supporting = if (cat.restriction != null) "קיימת גם מגבלת Android מערכתית במצב המתאים" else "מבוסס התאמת כותרת דרך שירות הנגישות",
+                            icon = cat.icon,
+                        )
+                        RowDivider()
+                    }
                 }
             }
         }
