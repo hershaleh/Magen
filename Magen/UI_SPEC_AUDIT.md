@@ -1,0 +1,121 @@
+# Magen UI specification audit — source of truth
+
+This audit is based on the archived conversation `hershaleh/Magen-Chat-Archive/gpt` (questions 1–283) and the continuation transcript through the later decisions (questions 284 onward). It is a requirements checklist, not a claim that the current UI implements these features.
+
+## Product-wide requirements
+
+- [ ] Preserve the existing Android project, package IDs, signing/update compatibility, storage keys, Magen/Keeper separation, and API 23 minimum where possible.
+- [ ] Hebrew and English; switching language applies immediately across the app; complete RTL/LTR layout.
+- [ ] Light, dark, and follow-system themes; apply immediately.
+- [ ] Global animation preference; respect Android reduced-motion/animation settings.
+- [ ] Small-screen, landscape, large-font, high-contrast, and TalkBack support.
+- [ ] Settings save immediately and show success/failure; never display an unsaved change as successful.
+- [ ] Distinguish saved preference from capability verified from Android; show unsupported/unverifiable states honestly.
+
+## Main navigation
+
+- [ ] Bottom navigation, in this order: Home, Apps, Times, Protection, More.
+- [ ] Navigation selection persists across activity recreation.
+- [ ] Advanced settings remain a separate screen, not mixed into ordinary settings.
+- [ ] Times/profiles are a distinct area.
+- [ ] Notification-screen settings shortcut routes to the main Settings > Notifications screen.
+
+## Home
+
+- [ ] Prominent circular protection on/off control.
+- [ ] Protection state is independent of app/rule-list loading; a loading failure must not change the protection control state.
+- [ ] Fixed-height notifications/attention card with unread count; content refreshes automatically.
+- [ ] Summary of managed/blocked apps and key protection state without duplicating a separate fault summary.
+- [ ] Explicit, on-demand protection check with detailed results; only verified state is called active.
+- [ ] Quick route to app management and protection diagnostics.
+
+## Apps and per-app configuration
+
+- [ ] Installed-app list, including non-launcher apps where Android permits; distinguish user/system apps.
+- [ ] Search, useful filters, counts, multi-select, refresh, and new-app indication.
+- [ ] App detail screen split into tabs: Blocking method and Additional settings.
+- [ ] Per-app methods and their mutual compatibility are explained; full block and code-required modes are mutually exclusive, while time limits and allowed-time windows can compose.
+- [ ] App icon/name; app-level blocking state must distinguish configured, currently not applicable, and enforcement failure.
+- [ ] Reinstall recognition by package/signature and restoration of prior settings where safe.
+- [ ] Blocked app screen: “This app is blocked”, original app icon and unmodified app name centered beneath it; large but proportionate icon; fallback to package name if app label is unavailable; do not invent a fallback icon.
+- [ ] Block screen follows selected theme, language and RTL/LTR; “Protected by Magen” is translated.
+- [ ] Block screen cannot be dismissed with Back or outside tap. One small Home icon+label button at the top logical corner returns to launcher without confirmation and without recording that action.
+- [ ] Short entrance/exit animation, respecting reduced-motion; support rotation, font scaling, high contrast and TalkBack. Avoid duplicate blocking activities/loops.
+- [ ] A blocked app already in foreground is blocked immediately. Detect relaunch via notifications, links, background actions and Recent Apps as far as Android permits. The persistent Magen notification can open Magen directly without lifting the previous app's block.
+- [ ] Re-enforce after reboot and attempt permitted service recovery; never claim active enforcement without verification.
+
+## Times, quotas and schedules
+
+- [ ] Daily usage counts foreground time only.
+- [ ] Personal quota per app and shared quota groups; each app belongs to at most one group, while personal and group quotas may coexist.
+- [ ] Group-only, personal-only, or both are supported. Whichever active quota is exhausted blocks the app.
+- [ ] Quota 0 means full-day block. A quota change applies immediately without erasing usage; lowering below consumed time blocks immediately.
+- [ ] Daily reset at local midnight; other rules (e.g. allowed-time windows) continue to apply.
+- [ ] Immediate blocking at exhaustion, including while the app is open; one configurable warning, default 5 minutes before exhaustion.
+- [ ] Personal/group quotas can be paused independently; paused usage is not counted. A pause on one quota does not suspend another.
+- [ ] Moving an app between groups applies immediately: already-consumed time remains in the old group; new usage counts in the new group.
+- [ ] Weekly schedules, multiple time windows, overnight windows, breaks and date-specific exceptions; conflicts resolve conservatively (blocking wins).
+- [ ] Times UI must reflect the latest approved scope. Do not silently substitute fake profile/schedule controls for previously deferred features.
+
+## Shabbat and Jewish holidays
+
+- [ ] Separate “Block on Shabbat and Jewish holidays” feature, not generic holiday quota rules.
+- [ ] Applies to managed apps only, not the whole device; Magen remains viewable in read-only mode and settings cannot be changed during the block.
+- [ ] Applies on Shabbat and Jewish holidays when work is prohibited; not Chol HaMoed.
+- [ ] Hebrew calendar, Israel custom, configurable second-day-in-Israel behavior, location-based times, manual minute offsets.
+- [ ] Precomputed local calendar so enforcement works offline; warn before stored calendar coverage expires.
+- [ ] Shabbat/holiday block overrides ordinary quotas, pauses and schedules. Restart during the block re-applies it; changing location does not cancel a block already in progress.
+- [ ] If enforcement cannot start, detect promptly, retry, notify and log; do not show a false active state.
+
+## Protection and advanced protection
+
+- [ ] Play Store and APK installation blocking with honest per-method capability/status.
+- [ ] Android Settings catalog (existing 58 entries), custom title/keyword rules, search and selection; disclose that title/accessibility matching is best-effort and device/language dependent.
+- [ ] VideoStop controls and exclusions; disclose detection and battery limitations.
+- [ ] Regular/strong modes with clear comparison; show Device Admin and Device Owner separately and verify actual Android state.
+- [ ] Advanced protection is a separate screen with permission/owner status, explanations, device limitations, integrity checks, and recovery route.
+- [ ] Detect permission/service/owner changes on launch, resume, reboot and reasonable periodic intervals; attempt safe recovery, then notify/log failures.
+- [ ] Do not modify ownership transfer, Keeper, release, uninstall or recovery logic as part of UI-only work.
+
+## Notifications, diagnostics and event log
+
+- [ ] Local persistent event log, surviving reboot; default retention forever, optional retention period, manual clear-all (not individual deletion).
+- [ ] Event severity: Critical, High, Medium, Low; event state: Active, In progress, Resolved, Unresolved.
+- [ ] Repeated identical faults are grouped with occurrence count, timestamps and repair history.
+- [ ] Mark read/unread, mark all read and mark all unread; “needs attention” is system-derived, never manually set.
+- [ ] “Mark all read” applies to all events, including filtered-out events.
+- [ ] Per-severity read behavior configurable; critical unread items remain prominent by default.
+- [ ] Filter by type/severity/state, sort by time, search keyword/app/error.
+- [ ] Event detail shows exact time, severity/type, plain-language explanation, technical details, repair guidance and history.
+- [ ] Safe one-tap repair only when reliable; warn/confirm consequential actions, verify after repair, and show failure details.
+- [ ] Detect external fixes and mark resolved only after verification.
+- [ ] Export a reviewable diagnostic/event report; no secrets or PIN/recovery material.
+- [ ] Do not add a separate fault-summary widget to Home; show faults in notifications and diagnostics.
+
+## More, settings, backup and recovery
+
+- [ ] PIN change after current PIN verification; recovery-code create/renew flow; biometric option when supported; failed-attempt delay.
+- [ ] Permission center with explanation, direct Android Settings link, and re-check on return.
+- [ ] Guides for ordinary/strong mode, permission setup, troubleshooting, Keeper, and safe release.
+- [ ] Settings grouped and navigable: Notifications, Appearance/language, privacy, animation, diagnostics, backup/restore, app info/credit.
+- [ ] Backup supports manual/automatic, selectable contents, selective restore, schema/checksum validation, safety backup before restore, retention management and reminders.
+- [ ] Never include PIN, hashes, salts, recovery code, live unlock/trip windows, or claim Android Device Owner/system restrictions can be restored from a backup.
+- [ ] Release flow keeps “Disable strong mode (required for uninstall)” distinct from “Approve uninstall”; show verified Android result and safe recovery. Do not change this flow in the UI-only pass.
+- [ ] Credit “הערשלה” and the agreed Mitmachim link.
+
+## Explicitly deferred / optional unless the archived decisions say otherwise
+
+Intruder photo, alternate launcher identity/icon, remote approval, Wi-Fi/location rules, home-screen widget, website/DNS filtering, and other ideas initially listed as future/P2/P3 must not be presented as implemented merely because they appeared in brainstorming.
+
+## Current PR #5 — initial audit
+
+The current branch is a partial UI scaffold, not a full implementation:
+- Home is still a status/summary layout; it does not match the agreed circular protection control plus fixed-height notifications card.
+- Several new screens use local-only demo state. `SpecToggle`, `SpecField`, and multiple buttons are not connected to a real model or persistent preview state.
+- Security log and backup screens explicitly contain “not connected” placeholders and no event list/detail flows.
+- Quota, schedule and Shabbat screens are skeletal examples, not complete management workflows.
+- The app detail flow and several required per-app controls still need comparison against the original archived decisions.
+- Global theme/animation behavior and complete English/RTL parity remain incomplete.
+- Unit-test failure around `hasAnyRule` remains separate from APK compilation and must be fixed before calling validation complete.
+
+This document must be updated as each item is implemented and tested. A screen title or inert switch does not count as implementation.
