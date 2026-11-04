@@ -71,7 +71,7 @@ object ScheduleEngine {
         val epochDay = localEpochDay(now)
 
         val dateRule = schedule.dateOverrides.asSequence()
-            .filter { it.packageName == packageName && it.epochDay == epochDay && containsMinute(it.startMinute, it.endMinute, minute) }
+            .filter { it.packageName == packageName && isDateOverrideActive(it, epochDay, minute) }
             .sortedWith(compareByDescending<DateAppOverride> { it.priority }.thenBy { it.id })
             .firstOrNull()
         if (dateRule != null) {
@@ -97,8 +97,19 @@ object ScheduleEngine {
                 (rule.dayOfWeek == yesterday && minute < rule.endMinute)
         }
 
-    private fun containsMinute(start: Int, end: Int, minute: Int): Boolean =
-        if (end > start) minute >= start && minute < end else minute >= start || minute < end
+    /**
+     * A date override's epochDay identifies the day on which its window starts.
+     * For an overnight window, the after-midnight portion belongs to the previous
+     * date's override; it must not accidentally activate on the same date before
+     * the configured start time.
+     */
+    private fun isDateOverrideActive(rule: DateAppOverride, todayEpochDay: Long, minute: Int): Boolean =
+        if (rule.endMinute > rule.startMinute) {
+            rule.epochDay == todayEpochDay && minute >= rule.startMinute && minute < rule.endMinute
+        } else {
+            (rule.epochDay == todayEpochDay && minute >= rule.startMinute) ||
+                (rule.epochDay == todayEpochDay - 1 && minute < rule.endMinute)
+        }
 
     private fun isoDay(calendarDay: Int): Int =
         if (calendarDay == Calendar.SUNDAY) 7 else calendarDay - 1

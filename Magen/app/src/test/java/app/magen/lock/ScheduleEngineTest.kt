@@ -54,4 +54,33 @@ class ScheduleEngineTest {
         assertEquals(true, ScheduleEngine.evaluate(schedule, "com.example.app", true, at(3, 12), utc).locked)
         assertEquals(false, ScheduleEngine.evaluate(schedule, "com.example.app", false, at(3, 12), utc).locked)
     }
+    @Test fun overnightDateOverrideContinuesIntoFollowingDate() {
+        val startDay = at(3, 22)
+        val epochDay = Math.floorDiv(startDay, 86400000L)
+        val schedule = AppSchedule(dateOverrides = listOf(
+            DateAppOverride("night-holiday", "com.example.app", epochDay, 22 * 60, 6 * 60, ScheduleAction.LOCK),
+        ))
+        assertEquals(true, ScheduleEngine.evaluate(schedule, "com.example.app", false, at(4, 2), utc).locked)
+        assertEquals(ScheduleDecision.Reason.DATE_OVERRIDE,
+            ScheduleEngine.evaluate(schedule, "com.example.app", false, at(4, 2), utc).reason)
+    }
+
+    @Test fun overnightDateOverrideDoesNotStartEarlyOnItsOwnDate() {
+        val startDay = at(3, 22)
+        val epochDay = Math.floorDiv(startDay, 86400000L)
+        val schedule = AppSchedule(dateOverrides = listOf(
+            DateAppOverride("night-holiday", "com.example.app", epochDay, 22 * 60, 6 * 60, ScheduleAction.LOCK),
+        ))
+        assertEquals(false, ScheduleEngine.evaluate(schedule, "com.example.app", false, at(3, 2), utc).locked)
+    }
+
+    @Test fun overnightDateOverrideEndsExclusivelyAtConfiguredMinute() {
+        val startDay = at(3, 22)
+        val epochDay = Math.floorDiv(startDay, 86400000L)
+        val schedule = AppSchedule(dateOverrides = listOf(
+            DateAppOverride("night-holiday", "com.example.app", epochDay, 22 * 60, 6 * 60, ScheduleAction.LOCK),
+        ))
+        assertEquals(false, ScheduleEngine.evaluate(schedule, "com.example.app", false, at(4, 6), utc).locked)
+    }
+
 }
