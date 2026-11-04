@@ -319,6 +319,7 @@ fun MainScaffold() {
     } else if (legacyMore) {
         BackHandler(onBack = { legacyMore = false })
         MoreTab(
+            releaseOnly = true,
             onChangePin = { changingPin = true },
             onRecovery = { recoveryMode = true },
             onOpenHome = { legacyMore = false; tab = Tabs.HOME },
@@ -545,7 +546,7 @@ private fun AdvancedProtection(onBack: () -> Unit, onOpenHome: () -> Unit) {
 // ---- tab: more -------------------------------------------------------------------------------
 
 @Composable
-fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit, onOpenProtection: () -> Unit, onNavigate: (String) -> Unit) {
+fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit, onOpenProtection: () -> Unit, onNavigate: (String) -> Unit, releaseOnly: Boolean = false) {
     val ctx = LocalContext.current
     var confirm by remember { mutableStateOf(false) }
     var confirmOwner by remember { mutableStateOf(false) }
@@ -565,6 +566,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
     val perms = rememberPerms()
 
     TabColumn {
+        if (!releaseOnly) {
         Text(stringResource(R.string.more_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
         SectionCard(stringResource(R.string.more_code_title)) {
@@ -643,6 +645,8 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
             OutlinedButton(onClick = { onNavigate("log") }, modifier = Modifier.fillMaxWidth()) { Text("יומן אבטחה") }
             OutlinedButton(onClick = { onNavigate("backup") }, modifier = Modifier.fillMaxWidth()) { Text("גיבוי ושחזור") }
             OutlinedButton(onClick = { onNavigate("settings") }, modifier = Modifier.fillMaxWidth()) { Text("הגדרות תצוגה ופרטיות") }
+        }
+
         }
 
         Text(
