@@ -74,7 +74,9 @@ object Policy {
      * success, or a short English reason. Call off the main thread. Does not work on every device or version.
      */
     fun releaseOwnerViaRoot(ctx: Context): String? = try {
-        if (!rootAvailable()) {
+        if (!isOwner(ctx)) {
+            "Magen is not the Device Owner. Root removal was refused so another app's Device Owner file cannot be touched."
+        } else if (!rootAvailable()) {
             "Root access is not available or was denied."
         } else {
             val file = listOf(OWNER_FILE_NEW, OWNER_FILE_OLD).firstOrNull { su("test -f $it").first == 0 }
