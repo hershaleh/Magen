@@ -14,7 +14,7 @@ This audit is based on the archived conversation `hershaleh/Magen-Chat-Archive/g
 
 ## Main navigation
 
-- [ ] Bottom navigation, in this order: Home, Apps, Times, Protection, More.
+- [x] Main navigation retains Home, Blocking, Times, Protection and More, with Notifications as a separate first-class destination; the wide hamburger drawer mirrors the navigation list.
 - [ ] Navigation selection persists across activity recreation.
 - [ ] Advanced settings remain a separate screen, not mixed into ordinary settings.
 - [ ] Times/profiles are a distinct area.
@@ -22,10 +22,10 @@ This audit is based on the archived conversation `hershaleh/Magen-Chat-Archive/g
 
 ## Home
 
-- [ ] Prominent circular protection on/off control.
-- [ ] Protection state is independent of app/rule-list loading; a loading failure must not change the protection control state.
-- [ ] Fixed-height notifications/attention card with unread count; content refreshes automatically.
-- [ ] Summary of managed/blocked apps and key protection state without duplicating a separate fault summary.
+- [x] Prominent circular master switch for user-configured blocking rules; self-protection against Magen removal remains a separate setting.
+- [x] Master switch is stored independently of app/rule loading. Turning it off gates app, Play, APK and Settings-rule enforcement; Device Owner restrictions are cleared through the existing verified policy path. Magen self-protection/release logic remains separate.
+- [x] Attention notice appears only when there are configured rules, blocking is enabled, and a health check has an actionable warning/error. Persistent unread-notification card/count remains incomplete.
+- [x] Home shows exactly three simple counts: blocked apps, other blocking rules, and blocked Settings components.
 - [ ] Explicit, on-demand protection check with detailed results; only verified state is called active.
 - [ ] Quick route to app management and protection diagnostics.
 
@@ -209,7 +209,7 @@ This document must be updated as each item is implemented and tested. A screen t
 
 The following visual work has now been added to `feature/ui-spec-v1`:
 
-- [x] Home layout updated with a prominent circular protection-status control, a fixed-height attention/notification card, and the existing summary/check details retained. The circular control navigates to Protection; it does not toggle enforcement.
+- [x] Home now has a real circular master switch, a conditional actionable-attention notice, and exactly three summary counts. It no longer uses the old service-status circle as a fake toggle.
 - [x] “More” now opens a categorized Settings hub rather than the old unstructured long page.
 - [x] Settings categories added: Notifications, Appearance & language, Security & sign-in, Permissions & system protection, Privacy, Diagnostics & event log, Backup & restore, About Magen, and a separate Release & uninstall entry.
 - [x] Category landing rows use compact Android-style navigation, summaries, separate category pages and category-level search.
@@ -235,24 +235,24 @@ These additions are a first implementation pass, not a claim that all 283+ archi
 
 Implemented in the current branch:
 - [x] Replaced Home's multiple tiles/details with exactly three text counts: blocked apps, other blocking rules, and blocked Settings components.
-- [x] Home's attention notice is hidden when the current health check has no warning/error items.
+- [x] Home's attention notice is hidden when no blocking rules are configured or when the master switch is intentionally off; otherwise it appears only for actionable health warnings/errors.
 - [x] Added a first-class Notifications destination in the main navigation.
-- [x] Replaced the persistent side rail with a wide modal navigation drawer; the header includes the hamburger and shield, drawer rows include icons and labels, and selection closes the drawer.
+- [x] Replaced the persistent side rail with a wide modal navigation drawer; the hamburger is beside the shield at the logical upper corner (right in Hebrew, left in English), drawer rows include icons and labels, and selection closes the drawer.
 - [x] The top navigation uses the same Material navigation-bar treatment as the bottom navigation.
 - [x] Blocking hub now has three full-width destinations: apps, Settings components, and additional blocks.
 - [x] Moved the Settings-component discovery guidance into the Settings-components screen.
 - [x] Times hub no longer exposes per-app quotas or per-app schedules; it now separates whole-device scheduling, groups, and Shabbat/holidays.
 - [x] Added a first-pass group-management UI and whole-device schedule UI. These are still preview/local state, not persistent enforcement configuration.
-- [x] Added a persisted app-wide animation preference and made the navigation drawer honor both that preference and Android animation scales.
+- [x] Added a persisted app-wide animation preference and made the navigation drawer, main-screen transitions, splash and blocked-screen transitions honor that preference and Android animation scales.
 
 Still not complete:
-- [ ] A true global protection on/off control. The current code has no global master switch: `Store.protect` only protects Magen itself, while app rules are enforced separately. The Home UI intentionally does not misuse that setting or claim that it toggles all protection.
+- [x] Added a persisted master switch for user-configured app, Play, APK and Settings blocking. It gates AccessibilityService enforcement and Device Owner restrictions. The separate `Store.protect` self-protection and release/uninstall paths remain independent and unchanged. Emulator verification is still pending.
 - [ ] Complete animation coverage across the app. Gentle blocked-app screen enter/exit transitions, drawer transitions, splash rotation, persisted global preference, and Android animation-scale checks are now implemented; other screen/control transitions still need review and reduced-motion QA.
-- [x] PIN auto-submit for installations with a stored PIN length. New PINs save their length; existing installations migrate it after the first successful legacy confirmation. That one-time migration still uses the old confirm key.
+- [x] PIN auto-submit for stored PIN lengths. During new PIN creation, the confirmation step auto-submits at the length chosen on first entry. Existing installations with a stored PIN length auto-submit; older installations without a saved length still require one confirmation for the one-time length migration.
 - [ ] Persisted group data and real group schedules; move app-specific quotas and schedules into the corresponding app/rule configuration screens.
 - [ ] Persistent notification/event center and real event actions.
 - [ ] Compact Protection sub-navigation and full visual/functional review.
 - [ ] Full English/RTL parity, accessibility, and device-size QA.
-- [ ] CI build, unit tests, and APK artifact verification for this revision.
+- [x] Static analysis, JVM unit tests and APK builds passed on commit `d1c45ab`; emulator UI tests are running. A subsequent visual refinement makes the Home master switch a true circle and is being validated in the next run.
 
 This revision is a partial implementation. Do not install it on the BF88 or treat it as complete until the build and remaining UI/logic gates are addressed.
