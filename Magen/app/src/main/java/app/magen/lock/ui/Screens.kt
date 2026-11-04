@@ -313,9 +313,9 @@ fun MainScaffold() {
         val items = listOf(
             Triple(R.string.nav_home, Icons.Filled.Home, Icons.Outlined.OutlinedHomeIcon),
             Triple(R.string.nav_apps, Icons.Filled.Apps, Icons.Outlined.OutlinedAppsIcon),
-            Triple(R.string.nav_protection, Icons.Filled.Shield, Icons.Outlined.OutlinedShieldIcon),
             Triple(R.string.nav_times, Icons.Filled.Schedule, Icons.Outlined.OutlinedScheduleIcon),
-            Triple(R.string.nav_settings, Icons.Filled.SettingsIcon, Icons.Outlined.OutlinedSettingsIcon),
+            Triple(R.string.nav_protection, Icons.Filled.Shield, Icons.Outlined.OutlinedShieldIcon),
+            Triple(R.string.nav_more, Icons.Filled.SettingsIcon, Icons.Outlined.OutlinedSettingsIcon),
         )
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
