@@ -2,6 +2,14 @@ package app.magen.lock.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.Security
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -457,12 +465,10 @@ private fun SystemComponentsScreen() {
             singleLine = true, modifier = Modifier.fillMaxWidth())
         groups.forEach { (group, categories) ->
             SpecCard(stringResource(group.title)) {
-                categories.filter { cat ->
+                categories.forEach { cat ->
                     val label = stringResource(cat.title)
-                    query.isBlank() || label.contains(query, true) || cat.id.contains(query, true) ||
-                        cat.keywords.any { it.contains(query, true) }
-                }.forEach { cat ->
-                    val label = stringResource(cat.title)
+                    if (query.isBlank() || label.contains(query, true) || cat.id.contains(query, true) ||
+                        cat.keywords.any { it.contains(query, true) }) {
                     Row(
                         Modifier.fillMaxWidth().clickable { selectedId = cat.id }.padding(vertical = 9.dp),
                         verticalAlignment = Alignment.CenterVertically,
@@ -478,6 +484,7 @@ private fun SystemComponentsScreen() {
                             color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     RowDivider()
+                    }
                 }
             }
         }
