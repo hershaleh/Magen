@@ -255,11 +255,14 @@ object Policy {
      * removed the uninstall block; never drop Device Owner silently while that block may remain.
      */
     private fun clearOwnerRestrictions(d: DevicePolicyManager, a: ComponentName, ctx: Context): Boolean {
-        val keys = Catalog.settings.mapNotNull { it.restriction }.distinct() + listOf(
+        val keys = (Catalog.settings.mapNotNull { it.restriction } + listOf(
             UserManager.DISALLOW_SAFE_BOOT,
             UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES,
-            UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY,
-        )
+        ) + if (Build.VERSION.SDK_INT >= 29) {
+            listOf(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY)
+        } else {
+            emptyList()
+        }).distinct()
         val failures = mutableListOf<String>()
         keys.forEach { key ->
             try {
@@ -304,7 +307,7 @@ object Policy {
                 failures += "User-control read-back: ${e.javaClass.simpleName}: ${e.message ?: "verification failed"}"
             }
         }
-        lastUninstallError = failures.takeIf { it.isNotEmpty() }?.joinToString("\\n")
+        lastUninstallError = failures.takeIf { it.isNotEmpty() }?.joinToString("\n")
         return failures.isEmpty()
     }
 
