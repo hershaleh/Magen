@@ -2,6 +2,7 @@ package app.magen.lock.ui
 
 import android.content.Context
 import android.content.Intent
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -33,6 +35,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -95,6 +98,7 @@ fun AppsTab() {
     var q by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableIntStateOf(FILTER_ALL) }
     var bulk by remember { mutableStateOf<Int?>(null) } // 1 = select shown, 2 = deselect shown
+    var selectedPkg by rememberSaveable { mutableStateOf<String?>(null) }
 
     // Search and filter only decide what is displayed; they never touch the saved lock list.
     val locked = Store.locked
@@ -113,6 +117,12 @@ fun AppsTab() {
     val selectedCount = apps?.count { it.pkg in locked } ?: 0
     val toSelect = shown.filter { it.pkg !in locked }
     val toDeselect = shown.filter { it.pkg in locked }
+
+    val selectedApp = apps?.firstOrNull { it.pkg == selectedPkg }
+    if (selectedApp != null) {
+        AppDetailsScreen(selectedApp, onBack = { selectedPkg = null })
+        return
+    }
 
     Column(Modifier.fillMaxSize().padding(horizontal = Sp.l)) {
         Spacer(Modifier.height(Sp.l))
@@ -193,7 +203,7 @@ fun AppsTab() {
                 LazyColumn {
                     itemsIndexed(shown, key = { _, item -> item.pkg }) { i, item ->
                         Column {
-                            AppRow(item, showPkg = query.isNotEmpty())
+                            AppRow(item, showPkg = query.isNotEmpty(), onOpenDetails = { selectedPkg = item.pkg })
                             if (i < shown.lastIndex) RowDivider()
                         }
                     }
@@ -222,23 +232,14 @@ fun AppsTab() {
 }
 
 @Composable
-private fun AppRow(a: AppItem, showPkg: Boolean) {
+private fun AppRow(a: AppItem, showPkg: Boolean, onOpenDetails: () -> Unit) {
     val mode = Store.locked[a.pkg]
     val released = a.pkg in Store.mainUnlocked
     // A selected app is tinted, so the list can be scanned at a glance.
     val tint = if (mode != null) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else Color.Transparent
     Row(
         Modifier.fillMaxWidth().background(tint)
-            .clickable {
-                Store.setMode(
-                    a.pkg,
-                    when (mode) {
-                        null -> LockMode.PIN
-                        LockMode.PIN -> LockMode.MAIN
-                        LockMode.MAIN -> null
-                    },
-                )
-            }
+            .clickable(onClick = onOpenDetails)
             .heightIn(min = 56.dp)
             .padding(horizontal = Sp.m, vertical = Sp.s),
         verticalAlignment = Alignment.CenterVertically,
@@ -259,6 +260,13 @@ private fun AppRow(a: AppItem, showPkg: Boolean) {
             }
         }
         ModePill(mode)
+        IconButton(onClick = {
+            Store.setMode(a.pkg, when (mode) {
+                null -> LockMode.PIN
+                LockMode.PIN -> LockMode.MAIN
+                LockMode.MAIN -> null
+            })
+        }) { Icon(Icons.Filled.Tune, "הגדרות אפליקציה") }
         if (mode == LockMode.MAIN) {
             IconButton(onClick = { Store.toggleMainUnlocked(a.pkg) }) {
                 Icon(
@@ -266,6 +274,64 @@ private fun AppRow(a: AppItem, showPkg: Boolean) {
                     stringResource(if (released) R.string.release_on else R.string.release_off),
                     tint = if (released) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
                 )
+            }
+        }
+    }
+}
+
+@Composable
+private fun AppDetailsScreen(a: AppItem, onBack: () -> Unit) {
+    BackHandler(onBack = onBack)
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
+    val mode = Store.locked[a.pkg]
+    Column(Modifier.fillMaxSize().padding(Sp.l), verticalArrangement = Arrangement.spacedBy(Sp.m)) {
+        TextButton(onClick = onBack) { Text("חזרה לרשימת האפליקציות") }
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
+            Image(a.icon, null, Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)))
+            Column(Modifier.weight(1f)) {
+                Text(a.label, style = MaterialTheme.typography.titleLarge)
+                Text(a.pkg, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            ModePill(mode)
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            FilterChip(selected = selectedTab == 0, onClick = { selectedTab = 0 }, label = { Text("שיטת חסימה") })
+            FilterChip(selected = selectedTab == 1, onClick = { selectedTab = 1 }, label = { Text("הגדרות נוספות") })
+        }
+        if (selectedTab == 0) {
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text("כיצד לחסום את האפליקציה?", style = MaterialTheme.typography.titleMedium)
+                    listOf(null, LockMode.PIN, LockMode.MAIN).forEach { option ->
+                        val label = when (option) {
+                            null -> "ללא חסימה"
+                            LockMode.PIN -> "דרישת קוד"
+                            LockMode.MAIN -> "פתיחה דרך מגן"
+                        }
+                        androidx.compose.material3.RadioButton(
+                            selected = mode == option,
+                            onClick = { Store.setMode(a.pkg, option) },
+                        )
+                        Text(label)
+                    }
+                    Text("בחירת שיטת החסימה נשמרת במגן ומשפיעה על נעילת האפליקציה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+        } else {
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
+                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Text("הגדרות נוספות", style = MaterialTheme.typography.titleMedium)
+                    Text("האפשרויות הבאות מוצגות לתכנון הממשק; החיבור למנועי המכסות והלוחות יבוצע בשלב הבא.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+                    var quota by rememberSaveable(a.pkg) { mutableStateOf(false) }
+                    var schedule by rememberSaveable(a.pkg) { mutableStateOf(false) }
+                    var group by rememberSaveable(a.pkg) { mutableStateOf(false) }
+                    androidx.compose.material3.Switch(checked = quota, onCheckedChange = { quota = it })
+                    Text("מכסה אישית")
+                    androidx.compose.material3.Switch(checked = schedule, onCheckedChange = { schedule = it })
+                    Text("לוח זמנים אישי")
+                    androidx.compose.material3.Switch(checked = group, onCheckedChange = { group = it })
+                    Text("שיוך לקבוצת מכסה")
+                }
             }
         }
     }
