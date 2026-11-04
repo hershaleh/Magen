@@ -124,9 +124,11 @@ private fun QuotasScreen() {
     var groupMinutes by rememberSaveable { mutableIntStateOf(120) }
     SpecPage("מכסות שימוש", "הגדרת זמן שימוש יומי לאפליקציה בודדת או לקבוצת אפליקציות.") {
         SpecCard("מכסה אישית לאפליקציה", "הזמן נספר רק כשהאפליקציה בחזית. 0 דקות פירושו חסימה במשך כל היום.") {
+            SpecField("בחירת אפליקציה", "YouTube")
             Text("מכסה יומית: $minutes דקות")
             Slider(value = minutes.toFloat(), onValueChange = { minutes = it.toInt() }, valueRange = 0f..360f, steps = 35)
             SpecToggle("התראה 5 דקות לפני סיום", initial = true)
+            SpecToggle("השהיית המכסה האישית")
             SpecToggle("מכסה שונה לפי יום בשבוע")
         }
         SpecCard("קבוצות אפליקציות", "כל אפליקציה יכולה להשתייך לקבוצה אחת לכל היותר. אפשר להפעיל מכסה אישית וקבוצתית יחד.") {
@@ -170,6 +172,7 @@ private fun ShabbatScreen() {
     var angle by rememberSaveable { mutableFloatStateOf(8.5f) }
     SpecPage("שבת וחגים", "חסימה כללית של האפליקציות המנוהלות. ההגדרה גוברת על מכסות ולוחות זמנים רגילים.") {
         SpecCard("מיקום ולוח שנה") {
+            SpecField("מדינה", "ישראל")
             SpecField("עיר או מיקום", "בחירת מיקום מהמכשיר")
             SpecToggle("שימוש במיקום המכשיר")
             SpecToggle("יום טוב שני בישראל", initial = false)
@@ -179,6 +182,7 @@ private fun ShabbatScreen() {
             Text("הדלקת נרות: $candles דקות לפני השקיעה")
             Slider(value = candles.toFloat(), onValueChange = { candles = it.toInt() }, valueRange = 0f..60f, steps = 59)
             SpecToggle("התראה 30 דקות לפני תחילת החסימה", initial = true)
+            SpecToggle("בדיקת תקינות 30 דקות לפני הכניסה", initial = true)
         }
         SpecCard("יציאת שבת וחג") {
             Text("זווית צאת הכוכבים: ${"%.1f".format(angle)} מעלות")
@@ -187,7 +191,7 @@ private fun ShabbatScreen() {
         }
         SpecCard("בזמן שבת וחג") {
             SpecToggle("הצגת מגן במצב קריאה בלבד", initial = true)
-            Text("שירותי מערכת חיוניים נשארים זמינים. אתחול במהלך שבת או חג אמור להחיל את החסימה מחדש.")
+            Text("שירותי מערכת חיוניים נשארים זמינים. אתחול במהלך שבת או חג אמור להחיל את החסימה מחדש. שינוי מיקום לא יבטל חסימה שכבר החלה.")
         }
     }
 }
