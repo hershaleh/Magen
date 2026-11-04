@@ -451,5 +451,9 @@
     <string name="times_wrong_title">After wrong codes</string>
     <string name="times_wrong_body">After 5 wrong codes the keypad pauses for 30 seconds. Each further wrong code doubles the pause, up to 15 minutes.</string>
     <string name="times_wrong_now">Paused: %1$d s</string>
+    <string name="policy_check_title">Protection policy check</string>
+    <string name="policy_check_failed">Policy enforcement problems were found:\n%1$s</string>
+    <string name="policy_check_ok">No failures were reported in the last check. This reflects the policy state reported by Android; it does not guarantee that every device manufacturer enforces it in practice.</string>
+    <string name="policy_check_now">Check policy now</string>
 </resources>
 
