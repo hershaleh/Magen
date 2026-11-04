@@ -35,7 +35,7 @@ object ProfileStore {
         prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         profiles = decodeProfiles(prefs.getString(KEY_DATA, null))
         if (profiles.isEmpty()) {
-            val initial = LockProfile("default", "Default", Store.locked)
+            val initial = LockProfile("default", context.getString(R.string.profile_default_name), Store.locked)
             profiles = listOf(initial)
             persistProfiles()
         }
