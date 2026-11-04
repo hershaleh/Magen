@@ -177,6 +177,7 @@ object Store {
         locked = if (mode == null) locked - pkg else locked + (pkg to mode)
         if (mode != LockMode.MAIN) mainUnlocked = mainUnlocked - pkg
         sp.edit().putStringSet("locked", locked.map { "${it.key}:${it.value.name}" }.toSet()).apply()
+        if (::app.isInitialized) ProfileStore.setAppMode(pkg, mode)
     }
 
     fun toggleMainUnlocked(pkg: String) {
