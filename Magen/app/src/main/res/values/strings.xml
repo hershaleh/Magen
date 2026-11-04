@@ -472,7 +472,7 @@
     <string name="schedule_calendar_later">Monthly calendar exceptions and flexible-time allowances will be added with the full calendar and usage-limit implementation.</string>
     <string name="usage_limit_title">Daily usage limit</string>
     <string name="usage_limit_desc">Set a maximum number of minutes per day for this app. Android Usage Access is required; usage data may be delayed by the device.</string>
-    <string name="usage_permission_needed">Usage Access permission is not enabled, so the limit cannot be enforced yet.</string>
+    <string name="usage_permission_needed">Usage Access permission is missing. This app stays blocked until permission is enabled, so the limit cannot be bypassed.</string>
     <string name="usage_open_settings">Open Usage Access settings</string>
     <string name="usage_limit_minutes">Minutes per day (1–1440)</string>
     <string name="usage_limit_save">Save limit</string>
