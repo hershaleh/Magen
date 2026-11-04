@@ -297,15 +297,15 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
         (if (Store.blockApk) 1 else 0) + Store.customKeywords.size
 
     MagenScreen {
-        // The repository currently has no global enforcement master switch. Do not reuse
-        // Store.protect here: that preference protects Magen itself, not all blocking rules.
+        // This switch controls user-configured blocking rules. Magen's self-protection remains independent.
         Surface(
+            onClick = { Store.setBlockingEnabled(!Store.blockingEnabled) },
             modifier = Modifier.fillMaxWidth(),
             shape = CircleShape,
-            color = if (serviceRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+            color = if (Store.blockingEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
             border = androidx.compose.foundation.BorderStroke(
                 2.dp,
-                if (serviceRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                if (Store.blockingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
             ),
         ) {
             Column(
@@ -317,17 +317,17 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
                     Icons.Filled.Shield,
                     contentDescription = null,
                     modifier = Modifier.size(42.dp),
-                    tint = if (serviceRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    tint = if (Store.blockingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    if (serviceRunning) "שירות הנגישות פועל" else "שירות הנגישות אינו פועל",
+                    if (Store.blockingEnabled) "החסימות מופעלות" else "החסימות כבויות",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
             }
         }
 
-        if (problems.isNotEmpty()) {
+        if (problems.isNotEmpty() && hasAnyRule()) {
             Surface(
                 onClick = { onNavigate(Tabs.PROTECTION) },
                 modifier = Modifier.fillMaxWidth(),
