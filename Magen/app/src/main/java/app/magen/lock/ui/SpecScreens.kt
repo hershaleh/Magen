@@ -123,7 +123,7 @@ fun BlockingsHub() {
     BackHandler(enabled = selected >= 0) { selected = -1 }
     if (selected >= 0) {
         Column(Modifier.fillMaxSize()) {
-            TextButton(onClick = { selected = -1 }, modifier = Modifier.padding(start = 8.dp, top = 4.dp)) {
+            TextButton(onClick = { selected = -1 }, modifier = Modifier.padding(start = 8.dp, top = 4.dp).testTag("blocking_back")) {
                 Text("‹  חסימות")
             }
             Box(Modifier.weight(1f)) {
