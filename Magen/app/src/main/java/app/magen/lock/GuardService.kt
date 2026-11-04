@@ -73,6 +73,8 @@ class GuardService : AccessibilityService() {
     private var lastScan = 0L
     private var lastBlock = 0L
     private var lastMaint = 0L
+    private var lastLoggedPkg = ""
+    private var lastLoggedAt = 0L
     private var imePkgs: Set<String> = emptySet()
     private var imeAt = 0L
 
@@ -109,6 +111,7 @@ class GuardService : AccessibilityService() {
 
     fun markUnlocked(pkg: String) {
         tempUnlocked.add(pkg)
+        ActivityLog.record("APP_UNLOCKED", pkg)
         hideCoverSoon()
     }
 
@@ -416,6 +419,14 @@ class GuardService : AccessibilityService() {
             return
         }
         lastLaunch = now
+        if (lastLoggedPkg != pkg || now - lastLoggedAt > 30_000L) {
+            ActivityLog.record(
+                if (quotaReached) "APP_USAGE_LIMIT_REACHED" else "APP_LOCK_ENFORCED",
+                pkg,
+            )
+            lastLoggedPkg = pkg
+            lastLoggedAt = now
+        }
         showCover()
         startActivity(
             Intent(this, LockActivity::class.java)
