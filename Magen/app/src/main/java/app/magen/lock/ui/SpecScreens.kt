@@ -91,7 +91,7 @@ private fun SpecField(label: String, initial: String = "") {
 @Composable
 fun BlockingsHub() {
     var selected by rememberSaveable { mutableIntStateOf(0) }
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxSize()) {
         Text("חסימות", Modifier.padding(start = 16.dp, top = 12.dp), style = MaterialTheme.typography.headlineSmall)
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             listOf("אפליקציות", "הגדרות מערכת", "כללים מותאמים").forEachIndexed { i, label ->
@@ -106,7 +106,7 @@ fun BlockingsHub() {
 @Composable
 fun TimesHub() {
     var selected by rememberSaveable { mutableIntStateOf(0) }
-    Column(Modifier.fillMaxWidth()) {
+    Column(Modifier.fillMaxSize()) {
         Text("זמנים", Modifier.padding(start = 16.dp, top = 12.dp), style = MaterialTheme.typography.headlineSmall)
         Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             listOf("מכסות", "לוחות זמנים", "שבת וחגים", "נעילה").forEachIndexed { i, label ->
