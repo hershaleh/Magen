@@ -247,8 +247,8 @@ Implemented in the current branch:
 
 Still not complete:
 - [ ] A true global protection on/off control. The current code has no global master switch: `Store.protect` only protects Magen itself, while app rules are enforced separately. The Home UI intentionally does not misuse that setting or claim that it toggles all protection.
-- [ ] Complete animation coverage across the app, including the blocked-app screen's agreed enter/exit effects, subtle control feedback, splash/other transitions, and reduced-motion handling everywhere.
-- [ ] PIN auto-submit immediately after the final correct digit.
+- [ ] Complete animation coverage across the app. Gentle blocked-app screen enter/exit transitions, drawer transitions, splash rotation, persisted global preference, and Android animation-scale checks are now implemented; other screen/control transitions still need review and reduced-motion QA.
+- [x] PIN auto-submit for installations with a stored PIN length. New PINs save their length; existing installations migrate it after the first successful legacy confirmation. That one-time migration still uses the old confirm key.
 - [ ] Persisted group data and real group schedules; move app-specific quotas and schedules into the corresponding app/rule configuration screens.
 - [ ] Persistent notification/event center and real event actions.
 - [ ] Compact Protection sub-navigation and full visual/functional review.
