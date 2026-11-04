@@ -94,7 +94,7 @@ object ProfileStore {
         return profiles.firstOrNull { it.id == id }?.apps ?: Store.locked
     }
 
-    fun setWindows(items: List<WeeklyProfileWindow>) {
+    fun saveWindows(items: List<WeeklyProfileWindow>) {
         windows = items.take(100)
         val array = JSONArray()
         windows.forEach { w ->
