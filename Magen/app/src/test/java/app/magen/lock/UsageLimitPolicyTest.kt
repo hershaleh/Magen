@@ -13,8 +13,12 @@ class UsageLimitPolicyTest {
         assertTrue(UsageLimitPolicy.isReached(60, 60 * 60_000L))
     }
 
-    @Test fun missingOrInvalidLimitDoesNotBlock() {
+    @Test fun missingLimitDoesNotBlock() {
         assertFalse(UsageLimitPolicy.isReached(null, 90 * 60_000L))
-        assertFalse(UsageLimitPolicy.isReached(0, 90 * 60_000L))
+    }
+
+    @Test fun zeroMinuteLimitBlocksImmediately() {
+        assertTrue(UsageLimitPolicy.isReached(0, 0L))
+        assertTrue(UsageLimitPolicy.isReached(0, 1L))
     }
 }
