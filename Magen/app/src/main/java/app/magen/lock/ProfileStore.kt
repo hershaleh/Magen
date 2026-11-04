@@ -70,6 +70,7 @@ object ProfileStore {
     fun deleteProfile(id: String): Boolean {
         if (profiles.size <= 1 || profiles.none { it.id == id }) return false
         profiles = profiles.filterNot { it.id == id }
+        saveWindows(windows.filterNot { it.profileId == id })
         if (activeProfileId == id) select(profiles.first().id)
         persistProfiles()
         refresh()
@@ -109,6 +110,10 @@ object ProfileStore {
         }
         prefs.edit().putString(KEY_WINDOWS, array.toString()).apply()
         refresh()
+    }
+
+    fun removeWindow(id: String) {
+        saveWindows(windows.filterNot { it.id == id })
     }
 
     fun resolveActiveProfileId(nowMillis: Long): String? {
