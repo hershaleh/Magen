@@ -468,5 +468,6 @@
     <string name="schedule_saved">טווחים שמורים</string>
     <string name="schedule_window_summary">יום %1$d · %2$s–%3$s · %4$s</string>
     <string name="schedule_clear">מחיקת כל התזמון</string>
+    <string name="schedule_remove">הסרה</string>
 </resources>
 
