@@ -369,14 +369,14 @@ fun MainScaffold() {
             Triple(Tabs.TIMES, context.getString(R.string.nav_times), Icons.Filled.Schedule),
             Triple(Tabs.PROTECTION, context.getString(R.string.nav_protection), Icons.Filled.Shield),
             Triple(notificationsTab, notificationLabel, Icons.Filled.Notifications),
-            Triple(Tabs.SETTINGS, context.getString(R.string.nav_more), Icons.Filled.MoreHoriz),
+            Triple(Tabs.SETTINGS, if (Lang.current().startsWith("en")) "Settings" else "הגדרות", Icons.Filled.Settings),
         )
         BackHandler(enabled = drawerState.isOpen) {
             closeDrawer()
         }
         ModalNavigationDrawer(
             drawerState = drawerState,
-            gesturesEnabled = false,
+            gesturesEnabled = true,
             drawerContent = {
                 ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.86f)) {
                     Column(
@@ -391,7 +391,7 @@ fun MainScaffold() {
                             ShieldBadge(38.dp)
                             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                         }
-                        navItems.forEach { (target, label, icon) ->
+                        navItems.filter { it.first != Tabs.SETTINGS }.forEach { (target, label, icon) ->
                             NavigationDrawerItem(
                                 label = { Text(label) },
                                 icon = { Icon(icon, contentDescription = null) },
@@ -403,6 +403,16 @@ fun MainScaffold() {
                                 modifier = Modifier.padding(horizontal = 10.dp),
                             )
                         }
+                        Spacer(Modifier.weight(1f))
+                        androidx.compose.material3.HorizontalDivider(Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                        val settingsItem = navItems.first { it.first == Tabs.SETTINGS }
+                        NavigationDrawerItem(
+                            label = { Text(settingsItem.second) },
+                            icon = { Icon(settingsItem.third, contentDescription = null) },
+                            selected = tab == Tabs.SETTINGS,
+                            onClick = { tab = Tabs.SETTINGS; closeDrawer() },
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+                        )
                     }
                 }
             },
@@ -559,7 +569,7 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
     TabColumn {
         Text(stringResource(R.string.protection_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
-        SectionCard(stringResource(R.string.grp_play), stringResource(R.string.grp_play_desc)) {
+        CompactProtectionCard(stringResource(R.string.grp_play), stringResource(R.string.grp_play_desc)) {
             SwitchRow(
                 Icons.Filled.Storefront,
                 stringResource(R.string.rule_play),
@@ -569,7 +579,7 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             StatusLine(playLine(running), fix)
         }
 
-        SectionCard(stringResource(R.string.grp_apk), stringResource(R.string.grp_apk_desc)) {
+        CompactProtectionCard(stringResource(R.string.grp_apk), stringResource(R.string.grp_apk_desc)) {
             SwitchRow(
                 Icons.Filled.Android,
                 stringResource(R.string.rule_apk),
@@ -580,7 +590,7 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
         }
 
 
-        SectionCard(stringResource(R.string.grp_self), stringResource(R.string.grp_self_desc)) {
+        CompactProtectionCard(stringResource(R.string.grp_self), stringResource(R.string.grp_self_desc)) {
             SwitchRow(
                 Icons.Filled.Security,
                 stringResource(R.string.protect_title),
@@ -590,12 +600,12 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             StatusLine(selfLine(p, running), fix)
         }
 
-        SectionCard("הגנה מפני שינוי שעה ותאריך", "זיהוי ותיעוד שינויי זמן יתחברו בשלב הלוגיקה.") {
+        CompactProtectionCard("הגנה מפני שינוי שעה ותאריך", "זיהוי ותיעוד שינויי זמן יתחברו בשלב הלוגיקה.") {
             Text("מניעה מלאה של שינוי שעה דורשת Device Owner. שינוי שעה קדימה מעבר לאתחול אינו ניתן לאימות מלא ללא הרשאת ניהול מתאימה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             StatusLine(ownerLine(p), fix)
         }
 
-        SectionCard("ניטור והתאוששות", "בדיקת הרשאות, שירות הנגישות, ניהול המכשיר ומצב האכיפה בפועל.") {
+        CompactProtectionCard("ניטור והתאוששות", "בדיקת הרשאות, שירות הנגישות, ניהול המכשיר ומצב האכיפה בפועל.") {
             OutlinedButton(
                 onClick = onOpenHome,
                 shape = RoundedCornerShape(16.dp),
@@ -603,7 +613,7 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             ) { Text("פתיחת בדיקת ההגנה") }
         }
 
-        SectionCard(stringResource(R.string.protection_adv_title), stringResource(R.string.protection_adv_desc)) {
+        CompactProtectionCard(stringResource(R.string.protection_adv_title), stringResource(R.string.protection_adv_desc)) {
             StatusLine(ownerLine(p), fix)
             StatusLine(adminLine(p), fix)
             OutlinedButton(
@@ -615,6 +625,29 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
                 onClick = { Session.showGuide = true },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.guide_open)) }
+        }
+    }
+}
+
+@Composable
+private fun CompactProtectionCard(
+    title: String,
+    subtitle: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            if (subtitle != null) {
+                Text(subtitle, style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.height(4.dp))
+            content()
         }
     }
 }
