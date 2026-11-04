@@ -1,6 +1,7 @@
 package app.magen.lock
 
 import org.json.JSONObject
+import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
@@ -20,6 +21,11 @@ class BackupCodecTest {
             assertEquals(encoded, Base64Codec.encode(plain.toByteArray(Charsets.UTF_8)))
             assertEquals(plain, Base64Codec.decode(encoded).toString(Charsets.UTF_8))
         }
+    }
+
+    @Test fun base64CodecRoundTripsAllByteValues() {
+        val bytes = ByteArray(256) { it.toByte() }
+        assertArrayEquals(bytes, Base64Codec.decode(Base64Codec.encode(bytes)))
     }
 
     @Test fun base64CodecRejectsInvalidPadding() {

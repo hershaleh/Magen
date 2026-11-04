@@ -121,7 +121,7 @@ object BackupCodec {
 
 /** Small JVM/Android-compatible Base64 codec; avoids API-26-only java.util.Base64 on minSdk 23. */
 internal object Base64Codec {
-    private const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+"
+    private const val ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 
     fun encode(input: ByteArray): String {
         val out = StringBuilder(((input.size + 2) / 3) * 4)
