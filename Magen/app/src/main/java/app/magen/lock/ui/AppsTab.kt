@@ -310,11 +310,13 @@ private fun AppDetailsScreen(a: AppItem, onBack: () -> Unit) {
                             LockMode.PIN -> "דרישת קוד"
                             LockMode.MAIN -> "פתיחה דרך מגן"
                         }
-                        androidx.compose.material3.RadioButton(
-                            selected = mode == option,
-                            onClick = { Store.setMode(a.pkg, option) },
-                        )
-                        Text(label)
+                        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                            androidx.compose.material3.RadioButton(
+                                selected = mode == option,
+                                onClick = { Store.setMode(a.pkg, option) },
+                            )
+                            Text(label)
+                        }
                     }
                     Text("בחירת שיטת החסימה נשמרת במגן ומשפיעה על נעילת האפליקציה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
