@@ -1,5 +1,6 @@
 package app.magen.lock
 
+import org.json.JSONArray
 import org.json.JSONObject
 import java.security.SecureRandom
 import java.util.Base64
@@ -90,11 +91,22 @@ object BackupCodec {
     }
 
     private fun validateComponents(components: JSONObject) {
-        val keys = components.keys()
-        while (keys.hasNext()) {
-            val key = keys.next()
-            if (key in forbiddenKeys) throw BackupException("Backup contains a prohibited secret or system-owner field")
+        fun inspect(value: Any?) {
+            when (value) {
+                is JSONObject -> {
+                    val keys = value.keys()
+                    while (keys.hasNext()) {
+                        val key = keys.next()
+                        if (key.lowercase() in forbiddenKeys) {
+                            throw BackupException("Backup contains a prohibited secret or system-owner field")
+                        }
+                        inspect(value.opt(key))
+                    }
+                }
+                is JSONArray -> for (index in 0 until value.length()) inspect(value.opt(index))
+            }
         }
+        inspect(components)
     }
 
     private fun deriveKey(password: CharArray, salt: ByteArray): SecretKeySpec {
