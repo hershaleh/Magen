@@ -283,7 +283,8 @@ object Store {
 
     fun isUsageLimitReached(packageName: String): Boolean {
         val limit = usageLimitFor(packageName) ?: return false
-        if (!UsageTracker.hasAccess(app)) return false
+        // Fail closed: a configured quota is not silently bypassed if Android revokes usage access.
+        if (!UsageTracker.hasAccess(app)) return true
         return UsageTracker.isLimitReached(limit, UsageTracker.todayUsageMillis(app, packageName))
     }
 
