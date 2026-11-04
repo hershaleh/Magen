@@ -2,6 +2,8 @@ package app.magen.lock.ui
 
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.runtime.saveable.rememberSaveable
 import android.content.Context
@@ -26,7 +28,10 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.FactCheck
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,6 +50,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -280,7 +287,6 @@ internal fun openFix(ctx: Context, fix: Fix, onNavigate: (Int) -> Unit) {
 fun HomeTab(onNavigate: (Int) -> Unit) {
     val ctx = LocalContext.current
     val p = rememberPerms()
-    // Re-read when the person comes back from Android settings, and again on every press of the check button.
     var tick by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { tick++ }
     var checkedAt by remember { mutableStateOf<Long?>(null) }
@@ -289,35 +295,44 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
     val level = Store.level
     val health = remember(tick, p, locked, level) { computeHealth(ctx) }
     val policyError = Policy.lastApplyError
-
-    // "Ready, no rules" is shown instead of "active" while nothing is selected to enforce.
     val idle = health.overall == Sev.OK && !hasAnyRule()
-    val bannerSev = if (idle) Sev.INFO else health.overall
     val problems = health.checks.filter { it.sev == Sev.WARN || it.sev == Sev.BAD }
     val fix: (Fix) -> Unit = { openFix(ctx, it, onNavigate) }
+    val verifiedActive = health.overall == Sev.OK && hasAnyRule() && Store.protect
 
     MagenScreen {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
-            ShieldBadge(36.dp)
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
+            ShieldBadge(34.dp)
+            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
 
-        StatusBanner(
-            sev = bannerSev,
-            title = stringResource(
+        // The round control is a visual shortcut to protection settings; it never changes enforcement
+        // state merely because the user tapped the Home screen.
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Surface(
+                onClick = { onNavigate(Tabs.PROTECTION) },
+                modifier = Modifier.size(148.dp),
+                shape = CircleShape,
+                color = if (verifiedActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                border = androidx.compose.foundation.BorderStroke(2.dp, if (verifiedActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
+                tonalElevation = 2.dp,
+            ) {
+                Column(Modifier.fillMaxSize().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
+                    Icon(Icons.Filled.Shield, contentDescription = null, modifier = Modifier.size(42.dp), tint = if (verifiedActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(if (verifiedActive) "מוגן" else if (idle) "מוכן להגדרה" else "נדרשת בדיקה", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+                    Text(if (verifiedActive) "ההגנה אומתה" else "לחץ לפרטי ההגנה", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
+            }
+            Text(
                 when {
-                    idle -> R.string.status_idle
-                    health.overall == Sev.OK -> R.string.status_full
-                    health.overall == Sev.WARN -> R.string.status_partial
-                    else -> R.string.status_none
+                    verifiedActive -> stringResource(R.string.status_full)
+                    idle -> stringResource(R.string.status_idle)
+                    health.overall == Sev.WARN -> stringResource(R.string.status_partial)
+                    else -> stringResource(R.string.status_none)
                 },
-            ),
-            subtitle = when {
-                health.issues > 0 -> stringResource(R.string.status_sub_issues, health.issues)
-                idle -> stringResource(if (Store.protect) R.string.status_sub_idle else R.string.status_sub_idle_off)
-                else -> stringResource(R.string.status_sub_ok)
-            },
-        ) {
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
             TonalButton(
                 stringResource(R.string.check_button),
                 onClick = {
@@ -329,75 +344,60 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
             )
         }
 
-        if (policyError != null && Policy.isOwner(ctx)) {
-            Text(
-                "תקלה בהחלת הגנת המערכת: " + policyError,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-
-        if (problems.isNotEmpty()) {
-            SectionHeader(stringResource(R.string.home_attention))
-            GroupCard {
-                problems.forEachIndexed { i, c ->
-                    if (i > 0) RowDivider()
-                    CheckRow(c, fix)
+        // Fixed-height attention card: its size does not jump as the event count changes.
+        Surface(
+            onClick = { onNavigate(Tabs.MORE) },
+            modifier = Modifier.fillMaxWidth().height(104.dp),
+            shape = RoundedCornerShape(18.dp),
+            color = MaterialTheme.colorScheme.surface,
+            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        ) {
+            Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Icon(Icons.Filled.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text("התראות ומרכז תשומת לב", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                    Text(
+                        if (problems.isEmpty()) "אין כרגע בעיות שזוהו בבדיקת ההגנה" else "${problems.size} פריטים דורשים תשומת לב",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                    )
                 }
+                Text(if (problems.isEmpty()) "›" else problems.size.toString(), style = MaterialTheme.typography.titleLarge, color = if (problems.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
             }
         }
 
-        // Counts show what is selected (saved settings), not what is proven to work; the status above does that.
+        if (policyError != null && Policy.isOwner(ctx)) {
+            Text("תקלה בהחלת הגנת המערכת: " + policyError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
+        }
+
         SectionHeader(stringResource(R.string.home_summary))
         val installBlocks = (if (Store.blockPlay) 1 else 0) + (if (Store.blockApk) 1 else 0)
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
-            SummaryTile(
-                "${Store.locked.size}",
-                stringResource(R.string.tile_apps),
-                { onNavigate(Tabs.APPS) },
-                Modifier.weight(1f).fillMaxHeight(),
-            )
-            SummaryTile(
-                "$installBlocks/2",
-                stringResource(R.string.tile_installs),
-                { onNavigate(Tabs.PROTECTION) },
-                Modifier.weight(1f).fillMaxHeight(),
-            )
+            SummaryTile("${Store.locked.size}", stringResource(R.string.tile_apps), { onNavigate(Tabs.APPS) }, Modifier.weight(1f).fillMaxHeight())
+            SummaryTile("$installBlocks/2", stringResource(R.string.tile_installs), { onNavigate(Tabs.PROTECTION) }, Modifier.weight(1f).fillMaxHeight())
         }
         Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
-            SummaryTile(
-                "${Store.blockedSettings.size + Store.customKeywords.size}",
-                stringResource(R.string.tile_settings),
-                { onNavigate(Tabs.PROTECTION) },
-                Modifier.weight(1f).fillMaxHeight(),
-            )
+            SummaryTile("${Store.blockedSettings.size + Store.customKeywords.size}", stringResource(R.string.tile_settings), { onNavigate(Tabs.PROTECTION) }, Modifier.weight(1f).fillMaxHeight())
             SummaryTile(
                 stringResource(if (level == "strong") R.string.level_strong else R.string.level_regular),
                 stringResource(R.string.tile_level),
                 { onNavigate(Tabs.PROTECTION) },
                 Modifier.weight(1f).fillMaxHeight(),
-                caption = if (level == "strong") {
-                    stringResource(if (p.owner) R.string.tile_owner_on else R.string.tile_owner_off)
-                } else {
-                    stringResource(if (p.admin) R.string.tile_admin_on else R.string.tile_admin_off)
-                },
+                caption = if (level == "strong") stringResource(if (p.owner) R.string.tile_owner_on else R.string.tile_owner_off) else stringResource(if (p.admin) R.string.tile_admin_on else R.string.tile_admin_off),
             )
         }
 
         GroupCard {
             ExpandRow(
                 title = stringResource(R.string.home_details),
-                supporting = checkedAt?.let {
-                    stringResource(R.string.check_time, java.text.DateFormat.getTimeInstance(java.text.DateFormat.MEDIUM).format(java.util.Date(it)))
-                } ?: stringResource(R.string.home_details_sub),
+                supporting = checkedAt?.let { stringResource(R.string.check_time, java.text.DateFormat.getTimeInstance(java.text.DateFormat.MEDIUM).format(java.util.Date(it))) } ?: stringResource(R.string.home_details_sub),
                 expanded = detailsOpen,
                 onToggle = { detailsOpen = !detailsOpen },
             )
-            if (detailsOpen) {
-                health.checks.forEach { c ->
-                    RowDivider()
-                    CheckRow(c, fix)
-                }
+            if (detailsOpen) health.checks.forEach { c ->
+                RowDivider()
+                CheckRow(c, fix)
             }
         }
         if (detailsOpen) {
