@@ -278,7 +278,7 @@ object Store {
 
     fun setUsageLimit(packageName: String, minutes: Int?) {
         if (packageName == app.packageName || usageLimits[packageName] == minutes) return
-        usageLimits = if (minutes == null || minutes <= 0) usageLimits - packageName
+        usageLimits = if (minutes == null || minutes < 0) usageLimits - packageName
         else usageLimits + (packageName to minutes.coerceAtMost(1440))
         val json = JSONObject()
         usageLimits.forEach { (pkg, limit) -> json.put(pkg, limit) }
@@ -300,7 +300,7 @@ object Store {
             while (keys.hasNext()) {
                 val pkg = keys.next()
                 val minutes = json.optInt(pkg, 0)
-                if (pkg != app.packageName && minutes in 1..1440) put(pkg, minutes)
+                if (pkg != app.packageName && minutes in 0..1440) put(pkg, minutes)
             }
         }
     }.getOrDefault(emptyMap())
