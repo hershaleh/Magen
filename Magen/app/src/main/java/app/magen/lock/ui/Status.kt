@@ -297,15 +297,6 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
         (if (Store.blockApk) 1 else 0) + Store.customKeywords.size
 
     MagenScreen {
-        Row(
-            Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(Sp.m),
-        ) {
-            ShieldBadge(36.dp)
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-        }
-
         // The repository currently has no global enforcement master switch. Do not reuse
         // Store.protect here: that preference protects Magen itself, not all blocking rules.
         Surface(
