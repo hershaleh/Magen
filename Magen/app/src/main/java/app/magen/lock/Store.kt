@@ -49,8 +49,8 @@ object Store {
     var biometric by mutableStateOf(false)
         private set
     var hasRecovery by mutableStateOf(false)
-    var appSchedules by mutableStateOf<Map<String, AppSchedule>>(emptyMap())
         private set
+    var appSchedules by mutableStateOf<Map<String, AppSchedule>>(emptyMap())
         private set
 
     fun init(ctx: Context) {
