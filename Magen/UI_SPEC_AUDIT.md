@@ -103,6 +103,90 @@ This audit is based on the archived conversation `hershaleh/Magen-Chat-Archive/g
 - [ ] Release flow keeps “Disable strong mode (required for uninstall)” distinct from “Approve uninstall”; show verified Android result and safe recovery. Do not change this flow in the UI-only pass.
 - [ ] Credit “הערשלה” and the agreed Mitmachim link.
 
+
+
+## Settings information architecture and visual organization — added requirement
+
+The current “More” screen is not an acceptable final settings experience. Settings must be redesigned as a proper Android-style settings hub, with category landing page and separate category screens. Do not simply add more cards to one long scrolling page.
+
+### Settings hub
+
+- [ ] A dedicated Settings entry/hub, visually distinct from operational screens (Home, Apps, Times, Protection).
+- [ ] Category list with a clear icon, concise title and one-line current summary for each category.
+- [ ] Tapping a category opens a dedicated screen with a consistent top app bar, back navigation, category title and grouped options.
+- [ ] Consistent ordering, typography, row heights, dividers, icon treatment and spacing throughout.
+- [ ] Compact, information-dense layout: avoid oversized cards, excessive vertical padding, repeated explanatory paragraphs and large empty gaps. Use short summaries and put longer explanations behind a detail/help action where appropriate.
+- [ ] Related options stay together; advanced or destructive options are visually separated and not mixed into everyday preferences.
+- [ ] Use switches only for immediate on/off preferences; use radio/segmented choices for mutually exclusive modes; use a clear secondary screen for multi-step configuration; use confirmation dialogs for consequential actions.
+- [ ] Every row communicates its current value/state where applicable. Disabled/unsupported options explain why and are not styled as active.
+- [ ] No duplicate settings in multiple places unless the secondary location is a deliberate shortcut to the same source of truth.
+- [ ] Search settings by name/keyword, with results opening the exact category/setting.
+- [ ] Responsive to small displays, landscape, font scaling, RTL/LTR, TalkBack and reduced motion.
+
+### Required top-level settings categories
+
+1. **התראות (Notifications)** — a first-class category, not buried under another page:
+   - [ ] Notification permission/status and shortcut to Android's app notification settings.
+   - [ ] Persistent protection-status notification preference and its truthful capability/status.
+   - [ ] Event/diagnostic notification preferences, including severity/read behavior already specified in the event-log section.
+   - [ ] Quota warning preferences (default 5-minute warning; user-configurable where supported).
+   - [ ] Sound/vibration and other notification presentation options only where Android supports them.
+   - [ ] Explain which notifications are essential to protection and cannot safely be disabled, if any; do not imply a disabled Android permission can be bypassed.
+   - [ ] A preview/example and a clear route to the in-app notification/event center.
+
+2. **מראה ושפה (Appearance & language)**:
+   - [ ] Light / dark / follow system.
+   - [ ] Hebrew / English, immediate application and correct RTL/LTR.
+   - [ ] App-wide animation preference, respecting Android reduced-motion settings.
+   - [ ] Any other appearance options only if confirmed in the archived specification; do not invent cosmetic toggles.
+
+3. **אבטחה וכניסה (Security & sign-in)**:
+   - [ ] Change PIN (verify current PIN first).
+   - [ ] Recovery code creation/renewal and clear one-time display/copy guidance.
+   - [ ] Biometric unlock only when available and supported.
+   - [ ] Failed-attempt delay / lockout status.
+   - [ ] Keep release/uninstall controls out of routine security preferences; they remain in their dedicated protected flow.
+
+4. **הרשאות והגנת מערכת (Permissions & system protection)**:
+   - [ ] Permission center with current status, why each permission is needed, Android Settings deep link and re-check on return.
+   - [ ] Device Admin and Device Owner shown separately, based on verified Android state.
+   - [ ] Accessibility, usage access, notification access, battery/background operation and other actually-required capabilities shown only if relevant to the build/device.
+   - [ ] Advanced protection diagnostics and safe recovery entry point, without changing ownership/release/Keeper logic.
+
+5. **פרטיות (Privacy)**:
+   - [ ] Group only privacy options that are actually specified and implemented.
+   - [ ] Explain diagnostic data handling and what is included in exports/backups.
+   - [ ] Never expose PIN, recovery material, hashes/salts or sensitive internal state.
+   - [ ] Do not add telemetry, cloud sync or data collection preferences unless the product actually contains those features and the archived decisions authorize them.
+
+6. **אבחון ויומן אירועים (Diagnostics & event log)**:
+   - [ ] Event center entry, filters/search, read/unread actions, severity and state.
+   - [ ] Retention policy and export options from the event-log specification.
+   - [ ] Explicit diagnostic/protection check and understandable results.
+   - [ ] Technical details and safe repair actions remain in dedicated detail screens.
+
+7. **גיבוי ושחזור (Backup & restore)**:
+   - [ ] Manual/automatic backup, selectable contents, restore preview and selective restore.
+   - [ ] Schema/checksum validation and safety backup before restore.
+   - [ ] Retention management/reminders.
+   - [ ] Clearly list excluded secrets and non-restorable Android system ownership/restrictions.
+
+8. **מידע על האפליקציה (About Magen)**:
+   - [ ] Version/build information, app identity, credits (“הערשלה”) and agreed Mitmachim profile link.
+   - [ ] Help/guides and support/contact details only when verified in the project/spec.
+   - [ ] No fake update checker or unsupported links.
+
+### Settings completeness and quality gate
+
+- [ ] Inventory every existing preference, setting, control and route in the current code and archived specification before moving or removing anything.
+- [ ] Map each setting to exactly one category and one canonical state owner; preserve existing storage keys and data formats.
+- [ ] Identify missing settings explicitly; do not silently omit an existing capability because the current UI does not expose it.
+- [ ] Identify duplicate, obsolete, contradictory or placeholder controls and resolve them against the archived decisions.
+- [ ] Verify every row and action: opens the right screen, saves the intended value, survives app restart, reflects the actual current value, and has correct disabled/error states.
+- [ ] Verify category navigation/back stack, settings search, language switch, RTL/LTR, light/dark/system theme, compact spacing and large-font layout.
+- [ ] Do not claim the settings redesign complete until the inventory is reconciled and every specified setting has a real destination and truthful behavior.
+
+
 ## Explicitly deferred / optional unless the archived decisions say otherwise
 
 Intruder photo, alternate launcher identity/icon, remote approval, Wi-Fi/location rules, home-screen widget, website/DNS filtering, and other ideas initially listed as future/P2/P3 must not be presented as implemented merely because they appeared in brainstorming.
