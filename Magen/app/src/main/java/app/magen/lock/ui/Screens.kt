@@ -23,6 +23,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.ExitTransition
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -459,20 +461,32 @@ fun MainScaffold() {
                 },
             ) { inner ->
                 Box(Modifier.fillMaxSize().padding(inner)) {
-                    when (tab) {
-                        Tabs.HOME -> HomeTab(onNavigate = { tab = it })
-                        Tabs.BLOCKINGS -> BlockingsHub()
-                        Tabs.TIMES -> TimesHub()
-                        Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
-                        notificationsTab -> NotificationsCenterScreen()
-                        else -> SettingsHub(
-                            onChangePin = { changingPin = true },
-                            onRecovery = { recoveryMode = true },
-                            onOpenHome = { tab = Tabs.HOME },
-                            onOpenProtection = { tab = Tabs.PROTECTION },
-                            onNavigate = { specRoute = it },
-                            onOpenLegacy = { legacyMore = true },
-                        )
+                    AnimatedContent(
+                        targetState = tab,
+                        transitionSpec = {
+                            if (SpecUiPreferences.shouldAnimate(context)) {
+                                fadeIn(tween(170)) togetherWith fadeOut(tween(130))
+                            } else {
+                                EnterTransition.None togetherWith ExitTransition.None
+                            }
+                        },
+                        label = "main-screen-transition",
+                    ) { destination ->
+                        when (destination) {
+                            Tabs.HOME -> HomeTab(onNavigate = { tab = it })
+                            Tabs.BLOCKINGS -> BlockingsHub()
+                            Tabs.TIMES -> TimesHub()
+                            Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
+                            notificationsTab -> NotificationsCenterScreen()
+                            else -> SettingsHub(
+                                onChangePin = { changingPin = true },
+                                onRecovery = { recoveryMode = true },
+                                onOpenHome = { tab = Tabs.HOME },
+                                onOpenProtection = { tab = Tabs.PROTECTION },
+                                onNavigate = { specRoute = it },
+                                onOpenLegacy = { legacyMore = true },
+                            )
+                        }
                     }
                 }
             }
