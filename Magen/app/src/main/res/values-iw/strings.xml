@@ -451,5 +451,9 @@
     <string name="times_wrong_title">אחרי קודים שגויים</string>
     <string name="times_wrong_body">אחרי 5 קודים שגויים לוח המקשים נעצר ל־30 שניות. כל קוד שגוי נוסף מכפיל את ההשהיה, עד 15 דקות.</string>
     <string name="times_wrong_now">מושהה: %1$d שניות</string>
+    <string name="policy_check_title">בדיקת מדיניות ההגנה</string>
+    <string name="policy_check_failed">נמצאו בעיות באכיפת מדיניות:\n%1$s</string>
+    <string name="policy_check_ok">לא דווחו כשלים בבדיקה האחרונה. זו בדיקת מצב המדיניות ש-Android מדווח, ולא הבטחה שכל יצרן אוכף אותה בפועל.</string>
+    <string name="policy_check_now">בדוק מדיניות עכשיו</string>
 </resources>
 
