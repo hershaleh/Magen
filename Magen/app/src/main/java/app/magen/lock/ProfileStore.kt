@@ -29,6 +29,7 @@ object ProfileStore {
     var windows by mutableStateOf<List<WeeklyProfileWindow>>(emptyList())
         private set
     var activeProfileName by mutableStateOf("")
+    private var lastResolvedId: String? = null
 
     fun init(context: Context) {
         prefs = context.applicationContext.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -77,6 +78,7 @@ object ProfileStore {
 
     fun select(id: String) {
         if (profiles.none { it.id == id }) return
+        Store.clearMainUnlocked()
         activeProfileId = id
         prefs.edit().putString(KEY_ACTIVE, id).apply()
         refresh()
@@ -90,7 +92,10 @@ object ProfileStore {
     }
 
     fun activeLocks(): Map<String, LockMode> {
-        val id = resolveActiveProfileId(System.currentTimeMillis()) ?: activeProfileId
+        val resolved = resolveActiveProfileId(System.currentTimeMillis())
+        val id = resolved?.takeIf { candidate -> profiles.any { it.id == candidate } } ?: activeProfileId
+        if (lastResolvedId != null && lastResolvedId != id) Store.clearMainUnlocked()
+        lastResolvedId = id
         return profiles.firstOrNull { it.id == id }?.apps ?: Store.locked
     }
 
