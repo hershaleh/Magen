@@ -450,5 +450,7 @@
     <string name="times_wrong_title">After wrong codes</string>
     <string name="times_wrong_body">After 5 wrong codes the keypad pauses for 30 seconds. Each further wrong code doubles the pause, up to 15 minutes.</string>
     <string name="times_wrong_now">Paused: %1$d s</string>
+    <string name="nav_blockings">Blocking</string>
+    <string name="nav_more">More</string>
 </resources>
 
