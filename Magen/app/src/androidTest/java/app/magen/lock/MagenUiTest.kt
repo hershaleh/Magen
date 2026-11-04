@@ -306,6 +306,31 @@ class MagenUiTest {
         compose.await(str(R.string.apps_title)).assertIsDisplayed()
     }
 
+    @Test
+    fun newSpecificationSectionsAreReachable() {
+        openMainScreenDirectly()
+
+        goToTab(R.string.nav_blockings)
+        compose.await("הגדרות מערכת").performClick()
+        compose.await("חסימת רכיבי הגדרות Android").assertIsDisplayed()
+        compose.await("כללים מותאמים").performClick()
+        compose.await("VideoStop").assertIsDisplayed()
+
+        goToTab(R.string.nav_times)
+        compose.await("מכסות שימוש").assertIsDisplayed()
+        compose.await("לוחות זמנים").performClick()
+        compose.await("חלון זה חוצה חצות").assertIsDisplayed()
+        compose.await("שבת וחגים").performClick()
+        compose.await("יום טוב שני בישראל").assertIsDisplayed()
+
+        goToTab(R.string.nav_more)
+        compose.await("יומן אבטחה").performClick()
+        compose.await("אין עדיין אירועים שמורים בממשק החדש.").assertIsDisplayed()
+        compose.await("חזרה").performClick()
+        compose.await("גיבוי ושחזור").performClick()
+        compose.await("בחירת קובץ לשחזור (טרם חובר)").assertIsDisplayed()
+    }
+
     /**
      * Deliberately slow walkthrough so the CI recording is useful for a human review,
      * rather than a blur of short-lived activities from the individual tests.
