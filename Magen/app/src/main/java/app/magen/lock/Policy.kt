@@ -94,8 +94,13 @@ object Policy {
                         lastUninstallError ?: "Could not clear Magen's uninstall block first. Nothing was changed."
                     } else {
                         // A unique name each time, so an older backup is never overwritten.
-                        val backup = "$file.magen-backup-${System.currentTimeMillis() / 1000}"
-                        val (code, out) = su("test -e $backup || mv $file $backup")
+                        val backup = "$file.magen-backup-${System.currentTimeMillis()}"
+                        // A pre-existing backup must be treated as a failure, not as success: the old
+                        // shell expression (test -e backup || mv source backup) returned 0 when the
+                        // backup already existed, even though the owner file had not been moved.
+                        val command = "if [ -e '$backup' ]; then echo 'Backup already exists'; exit 17; fi; " +
+                            "mv '$file' '$backup' && test ! -e '$file' && test -e '$backup'"
+                        val (code, out) = su(command)
                         if (code == 0) {
                             null
                         } else {
