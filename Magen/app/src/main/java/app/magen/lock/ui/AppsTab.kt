@@ -26,6 +26,10 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -55,7 +59,10 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import app.magen.lock.AppSchedule
 import app.magen.lock.LockMode
+import app.magen.lock.ScheduleAction
+import app.magen.lock.WeeklyAppWindow
 import app.magen.lock.R
 import app.magen.lock.Store
 import kotlinx.coroutines.Dispatchers
@@ -95,6 +102,12 @@ fun AppsTab() {
     var q by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableIntStateOf(FILTER_ALL) }
     var bulk by remember { mutableStateOf<Int?>(null) } // 1 = select shown, 2 = deselect shown
+    var selectedApp by remember { mutableStateOf<AppItem?>(null) }
+
+    if (selectedApp != null) {
+        AppSettingsScreen(selectedApp!!, onBack = { selectedApp = null })
+        return
+    }
 
     // Search and filter only decide what is displayed; they never touch the saved lock list.
     val locked = Store.locked
@@ -193,7 +206,7 @@ fun AppsTab() {
                 LazyColumn {
                     itemsIndexed(shown, key = { _, item -> item.pkg }) { i, item ->
                         Column {
-                            AppRow(item, showPkg = query.isNotEmpty())
+                            AppRow(item, showPkg = query.isNotEmpty(), onOpen = { selectedApp = item })
                             if (i < shown.lastIndex) RowDivider()
                         }
                     }
@@ -222,23 +235,14 @@ fun AppsTab() {
 }
 
 @Composable
-private fun AppRow(a: AppItem, showPkg: Boolean) {
-    val mode = (ProfileStore.current()?.apps ?: Store.locked)[a.pkg]
+private fun AppRow(a: AppItem, showPkg: Boolean, onOpen: () -> Unit) {
+    val mode = Store.locked[a.pkg]
     val released = a.pkg in Store.mainUnlocked
     // A selected app is tinted, so the list can be scanned at a glance.
     val tint = if (mode != null) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else Color.Transparent
     Row(
         Modifier.fillMaxWidth().background(tint)
-            .clickable {
-                Store.setMode(
-                    a.pkg,
-                    when (mode) {
-                        null -> LockMode.PIN
-                        LockMode.PIN -> LockMode.MAIN
-                        LockMode.MAIN -> null
-                    },
-                )
-            }
+            .clickable(onClick = onOpen)
             .heightIn(min = 56.dp)
             .padding(horizontal = Sp.m, vertical = Sp.s),
         verticalAlignment = Alignment.CenterVertically,
@@ -270,6 +274,145 @@ private fun AppRow(a: AppItem, showPkg: Boolean) {
         }
     }
 }
+ 
+
+@Composable
+private fun AppSettingsScreen(a: AppItem, onBack: () -> Unit) {
+    var tab by rememberSaveable(a.pkg) { mutableIntStateOf(0) }
+    val mode = Store.locked[a.pkg]
+    Column(Modifier.fillMaxSize().padding(horizontal = Sp.l)) {
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = Sp.m),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Sp.m),
+        ) {
+            IconButton(onClick = onBack) { Icon(Icons.Filled.Close, stringResource(R.string.back)) }
+            Image(a.icon, null, Modifier.size(42.dp).clip(RoundedCornerShape(10.dp)))
+            Text(a.label, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+        }
+        TabRow(selectedTabIndex = tab) {
+            Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.app_tab_method)) })
+            Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.app_tab_more)) })
+        }
+        if (tab == 0) {
+            Column(Modifier.weight(1f).padding(vertical = Sp.m), verticalArrangement = Arrangement.spacedBy(Sp.m)) {
+                Text(stringResource(R.string.app_method_help), style = MaterialTheme.typography.bodyMedium)
+                listOf(LockMode.MAIN, LockMode.PIN).forEach { choice ->
+                    val selected = mode == choice
+                    Button(
+                        onClick = { Store.setMode(a.pkg, choice) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !selected,
+                    ) {
+                        Text(stringResource(if (choice == LockMode.MAIN) R.string.mode_main else R.string.mode_pin) +
+                            if (selected) "  ✓" else "")
+                    }
+                }
+                OutlinedButton(
+                    onClick = { Store.setMode(a.pkg, null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = mode != null,
+                ) { Text(stringResource(R.string.app_unblock)) }
+            }
+        } else {
+            AppScheduleEditor(a.pkg)
+        }
+    }
+}
+
+@Composable
+private fun AppScheduleEditor(packageName: String) {
+    val schedule = Store.scheduleFor(packageName)
+    var day by remember(packageName) { mutableStateOf("1") }
+    var start by remember(packageName) { mutableStateOf("08:00") }
+    var end by remember(packageName) { mutableStateOf("16:00") }
+    var action by remember(packageName) { mutableStateOf(ScheduleAction.ALLOW) }
+
+    Column(
+        Modifier.fillMaxSize().padding(vertical = Sp.m),
+        verticalArrangement = Arrangement.spacedBy(Sp.m),
+    ) {
+        Text(stringResource(R.string.app_schedule_help), style = MaterialTheme.typography.bodyMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(Sp.s)) {
+            OutlinedTextField(
+                value = day, onValueChange = { day = it.filter(Char::isDigit).take(1) },
+                label = { Text(stringResource(R.string.schedule_day)) }, modifier = Modifier.weight(1f),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = start, onValueChange = { start = it.take(5) },
+                label = { Text(stringResource(R.string.schedule_start)) }, modifier = Modifier.weight(1f),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = end, onValueChange = { end = it.take(5) },
+                label = { Text(stringResource(R.string.schedule_end)) }, modifier = Modifier.weight(1f),
+                singleLine = true,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(Sp.s)) {
+            FilterChip(
+                selected = action == ScheduleAction.ALLOW,
+                onClick = { action = ScheduleAction.ALLOW },
+                label = { Text(stringResource(R.string.schedule_allow)) },
+            )
+            FilterChip(
+                selected = action == ScheduleAction.LOCK,
+                onClick = { action = ScheduleAction.LOCK },
+                label = { Text(stringResource(R.string.schedule_lock)) },
+            )
+        }
+        val dayNumber = day.toIntOrNull()
+        val startMinute = parseScheduleMinute(start)
+        val endMinute = parseScheduleMinute(end)
+        Button(
+            onClick = {
+                val next = schedule.weekly + WeeklyAppWindow(
+                    java.util.UUID.randomUUID().toString(), packageName,
+                    dayNumber!!, startMinute!!, endMinute!!, action,
+                )
+                Store.setSchedule(packageName, schedule.copy(weekly = next))
+            },
+            enabled = dayNumber != null && dayNumber in 1..7 && startMinute != null &&
+                endMinute != null && startMinute != endMinute,
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text(stringResource(R.string.schedule_add)) }
+
+        if (schedule.weekly.isNotEmpty()) {
+            Text(stringResource(R.string.schedule_saved), style = MaterialTheme.typography.titleSmall)
+            schedule.weekly.forEach { rule ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        stringResource(
+                            R.string.app_schedule_summary,
+                            rule.dayOfWeek, formatScheduleMinute(rule.startMinute),
+                            formatScheduleMinute(rule.endMinute),
+                            if (rule.action == ScheduleAction.LOCK) stringResource(R.string.schedule_lock)
+                            else stringResource(R.string.schedule_allow),
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = {
+                        Store.setSchedule(packageName, schedule.copy(weekly = schedule.weekly.filterNot { it.id == rule.id }))
+                    }) { Text(stringResource(R.string.schedule_remove)) }
+                }
+            }
+        }
+        Text(stringResource(R.string.schedule_calendar_later), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+private fun parseScheduleMinute(value: String): Int? {
+    val parts = value.split(":")
+    if (parts.size != 2) return null
+    val hour = parts[0].toIntOrNull() ?: return null
+    val minute = parts[1].toIntOrNull() ?: return null
+    if (hour !in 0..23 || minute !in 0..59) return null
+    return hour * 60 + minute
+}
+
+private fun formatScheduleMinute(value: Int): String = "%02d:%02d".format(value / 60, value % 60)
 
 @Composable
 private fun ModePill(mode: LockMode?) {
