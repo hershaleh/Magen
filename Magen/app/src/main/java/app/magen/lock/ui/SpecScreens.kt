@@ -15,7 +15,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -113,17 +112,17 @@ fun BlockingsHub() {
     val labels = listOf("חסימת אפליקציות", "חסימת חלקים בהגדרות", "חסימות נוספות")
     Column(Modifier.fillMaxSize()) {
         Text("חסימות", Modifier.padding(start = 16.dp, top = 12.dp, bottom = 8.dp), style = MaterialTheme.typography.headlineSmall)
-        androidx.compose.material3.NavigationBar(
-            modifier = Modifier.fillMaxWidth(),
-            containerColor = MaterialTheme.colorScheme.surface,
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             labels.forEachIndexed { i, label ->
-                NavigationBarItem(
-                    selected = selected == i,
+                Button(
                     onClick = { selected = i },
-                    icon = {},
-                    label = { Text(label, maxLines = 2, style = MaterialTheme.typography.labelMedium) },
-                )
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(label, maxLines = 2, style = MaterialTheme.typography.labelMedium)
+                }
             }
         }
         Box(Modifier.weight(1f)) {
@@ -142,17 +141,17 @@ fun TimesHub() {
     val labels = listOf("כל המכשיר", "קבוצות", "שבת וחגים")
     Column(Modifier.fillMaxSize()) {
         Text("זמנים", Modifier.padding(start = 16.dp, top = 12.dp, bottom = 8.dp), style = MaterialTheme.typography.headlineSmall)
-        androidx.compose.material3.NavigationBar(
-            modifier = Modifier.fillMaxWidth(),
-            containerColor = MaterialTheme.colorScheme.surface,
+        Row(
+            Modifier.fillMaxWidth().padding(horizontal = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             labels.forEachIndexed { i, label ->
-                androidx.compose.material3.NavigationBarItem(
-                    selected = selected == i,
+                Button(
                     onClick = { selected = i },
-                    icon = {},
-                    label = { Text(label, maxLines = 1, style = MaterialTheme.typography.labelMedium) },
-                )
+                    modifier = Modifier.weight(1f),
+                ) {
+                    Text(label, maxLines = 1, style = MaterialTheme.typography.labelMedium)
+                }
             }
         }
         Box(Modifier.weight(1f)) {
