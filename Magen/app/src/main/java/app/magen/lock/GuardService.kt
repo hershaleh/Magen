@@ -64,7 +64,7 @@ class GuardService : AccessibilityService() {
     private val recheck = Runnable {
         val p = recheckPkg ?: return@Runnable
         recheckPkg = null
-        if (Store.hasPin && ProfileStore.activeLocks().containsKey(p) && activeIs(p)) enforceLock(p)
+        if (Store.hasPin && Store.locked.containsKey(p) && activeIs(p)) enforceLock(p)
     }
 
     private var currentApp = ""
@@ -335,7 +335,7 @@ class GuardService : AccessibilityService() {
         if (state) onForeground(pkg, e.className?.toString())
         maintain()
 
-        if (Store.hasPin && ProfileStore.activeLocks().containsKey(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
+        if (Store.hasPin && Store.locked.containsKey(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
         updateCapture(pkg, state)
 
         val now = SystemClock.uptimeMillis()
@@ -396,7 +396,7 @@ class GuardService : AccessibilityService() {
     private fun activeIs(pkg: String) = rootInActiveWindow?.packageName?.toString() == pkg
 
     private fun enforceLock(pkg: String) {
-        val mode = ProfileStore.activeLocks()[pkg] ?: return
+        val mode = Store.locked[pkg] ?: return
         if (pkg in tempUnlocked) return
         if (mode == LockMode.MAIN && pkg in Store.mainUnlocked) return
         val now = SystemClock.uptimeMillis()
