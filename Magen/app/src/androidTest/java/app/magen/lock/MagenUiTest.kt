@@ -111,10 +111,9 @@ class MagenUiTest {
         compose.onAllNodes(hasClickAction() and hasText(key))[0].performClick()
     }
 
-    /** Types [pin] on the keypad and presses the confirm key. */
+    /** Types the PIN; the keypad submits automatically when the saved PIN length is reached. */
     private fun enterPin(pin: String) {
         pin.forEach { pressKey(it.toString()) }
-        compose.onAllNodes(hasClickAction() and hasContentDescription(str(R.string.pin_confirm)))[0].performClick()
     }
 
     private fun setCodeAndSkipSetup(pin: String = "2468") {
@@ -311,23 +310,29 @@ class MagenUiTest {
         openMainScreenDirectly()
 
         goToTab(R.string.nav_blockings)
-        compose.await("הגדרות מערכת").performClick()
+        compose.await("חסימת חלקים בהגדרות").performClick()
         compose.await("חסימת רכיבי הגדרות Android").assertIsDisplayed()
-        compose.await("כללים מותאמים").performClick()
+        compose.await("איך למצוא חלק מסוים בהגדרות?").assertIsDisplayed()
+        compose.await("חסימות נוספות").performClick()
         compose.await("VideoStop").assertIsDisplayed()
 
         goToTab(R.string.nav_times)
-        compose.await("מכסות שימוש").assertIsDisplayed()
-        compose.await("לוחות זמנים").performClick()
-        compose.await("חלון זה חוצה חצות").assertIsDisplayed()
+        compose.await("כל המכשיר").performClick()
+        compose.await("לוח זמנים לכל המכשיר").assertIsDisplayed()
+        compose.await("החלון חוצה חצות").assertIsDisplayed()
+        compose.await("קבוצות").performClick()
+        compose.await("הקבוצות שלי").assertIsDisplayed()
         compose.await("שבת וחגים").performClick()
-        compose.await("יום טוב שני בישראל").assertIsDisplayed()
+        compose.await("יום טוב שני: פעיל").assertIsDisplayed()
 
         goToTab(R.string.nav_more)
-        compose.await("יומן אבטחה").performClick()
+        compose.await("אבחון ויומן אירועים").performClick()
+        compose.await("יומן אירועים").performClick()
         compose.await("אין עדיין אירועים שמורים בממשק החדש.").assertIsDisplayed()
         compose.await("חזרה").performClick()
+        compose.await("חזרה").performClick()
         compose.await("גיבוי ושחזור").performClick()
+        compose.await("פתיחת גיבוי ושחזור").performClick()
         compose.await("בחירת קובץ לשחזור (טרם חובר)").assertIsDisplayed()
     }
 
