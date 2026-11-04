@@ -1,6 +1,7 @@
 package app.magen.lock
 
 import android.content.Context
+import app.magen.lock.ui.hasAnyRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
