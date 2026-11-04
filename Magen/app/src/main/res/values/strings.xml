@@ -468,5 +468,6 @@
     <string name="schedule_saved">Saved windows</string>
     <string name="schedule_window_summary">Day %1$d · %2$s–%3$s · %4$s</string>
     <string name="schedule_clear">Clear schedule</string>
+    <string name="schedule_remove">Remove</string>
 </resources>
 
