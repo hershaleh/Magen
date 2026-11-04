@@ -32,6 +32,7 @@ import app.magen.lock.Catalog
 import app.magen.lock.Store
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import android.content.Context
 import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
@@ -119,7 +120,7 @@ fun BlockingsHub() {
             labels.forEachIndexed { i, label ->
                 Button(
                     onClick = { selected = i },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).testTag(if (selected == i) "blocking_tab_$i" else "blocking_tab_$i"),
                 ) {
                     Text(label, maxLines = 2, style = MaterialTheme.typography.labelMedium)
                 }
@@ -148,7 +149,7 @@ fun TimesHub() {
             labels.forEachIndexed { i, label ->
                 Button(
                     onClick = { selected = i },
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).testTag("times_tab_$i"),
                 ) {
                     Text(label, maxLines = 1, style = MaterialTheme.typography.labelMedium)
                 }
