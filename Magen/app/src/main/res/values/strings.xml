@@ -452,7 +452,6 @@
     <string name="times_wrong_now">Paused: %1$d s</string>
     <string name="nav_blockings">Blocking</string>
     <string name="nav_more">More</string>
-    <string name="nav_settings">Settings</string>
     <string name="filter_system">System apps</string>
     <string name="filter_user">User apps</string>
 </resources>
