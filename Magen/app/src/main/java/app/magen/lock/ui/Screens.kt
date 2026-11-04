@@ -4,7 +4,6 @@ import androidx.compose.material.icons.outlined.Schedule as OutlinedScheduleIcon
 import androidx.compose.material.icons.outlined.Shield as OutlinedShieldIcon
 import androidx.compose.material.icons.outlined.Apps as OutlinedAppsIcon
 import androidx.compose.material.icons.outlined.Home as OutlinedHomeIcon
-import androidx.compose.material.icons.filled.Settings as SettingsIcon
 import androidx.activity.compose.BackHandler
 import android.app.admin.DevicePolicyManager
 import android.content.Context
@@ -368,7 +367,7 @@ fun MainScaffold() {
             Triple(Tabs.TIMES, context.getString(R.string.nav_times), Icons.Filled.Schedule),
             Triple(Tabs.PROTECTION, context.getString(R.string.nav_protection), Icons.Filled.Shield),
             Triple(notificationsTab, notificationLabel, Icons.Filled.Notifications),
-            Triple(Tabs.SETTINGS, context.getString(R.string.nav_settings), SettingsIcon),
+            Triple(Tabs.SETTINGS, context.getString(R.string.nav_settings), Icons.Filled.Tune),
         )
         BackHandler(enabled = drawerState.isOpen) {
             closeDrawer()
