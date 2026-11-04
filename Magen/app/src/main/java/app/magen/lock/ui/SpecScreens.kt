@@ -308,10 +308,14 @@ private fun AppSettingsScreen() {
             Text("החלפת השפה משנה את שפת הממשק ואת כיוון הכתיבה.")
         }
         SpecCard("מראה") {
-            SpecToggle("ערכת נושא בהירה")
-            SpecToggle("ערכת נושא כהה")
-            SpecToggle("לפי הגדרות המכשיר", initial = true)
+            var theme by rememberSaveable { mutableIntStateOf(2) }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("בהיר", "כהה", "לפי המכשיר").forEachIndexed { i, label ->
+                    FilterChip(selected = theme == i, onClick = { theme = i }, label = { Text(label) })
+                }
+            }
             SpecToggle("כיבוי אנימציות")
+            Text("בחירת ערכת הנושא מוצגת כעת בממשק; החלתה על כל רכיבי האפליקציה תושלם בשלב הבא.")
         }
         SpecCard("ניווט") {
             listOf("תפריט צד", "סרגל תחתון", "סרגל עליון").forEachIndexed { i, label ->
