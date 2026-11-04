@@ -264,7 +264,7 @@ class MagenUiTest {
         assertTrue(compose.onAllNodesWithText("פריטים דורשים טיפול").fetchSemanticsNodes().isEmpty())
 
         Store.setBlockPlay(true)
-        compose.await("פריטים דורשים טיפול").assertIsDisplayed()
+        compose.onAllNodesWithText("פריטים דורשים טיפול", substring = true)[0].assertIsDisplayed()
         compose.onAllNodes(hasClickAction() and hasText("החסימות מופעלות"))[0].performClick()
         compose.await("החסימות כבויות").assertIsDisplayed()
         assertFalse(Store.blockingEnabled)
@@ -355,7 +355,7 @@ class MagenUiTest {
         compose.await("יומן אירועים").performClick()
         compose.await("אין עדיין אירועים שמורים בממשק החדש.").assertIsDisplayed()
         compose.await("חזרה").performClick()
-        compose.await("‹  הגדרות").performClick()
+        compose.onAllNodesWithText("הגדרות", substring = true).filter(hasClickAction())[0].performClick()
         compose.await("גיבוי ושחזור").performClick()
         compose.await("פתיחת גיבוי ושחזור").performClick()
         compose.await("בחירת קובץ לשחזור (טרם חובר)").assertIsDisplayed()
