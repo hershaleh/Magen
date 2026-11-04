@@ -1,6 +1,10 @@
 package app.magen.lock.ui
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.IntentFilter
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.content.Intent
 import android.provider.Settings
 import androidx.compose.foundation.BorderStroke
@@ -41,12 +45,14 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -62,6 +68,8 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.content.ContextCompat
+import app.magen.lock.AppSchedule
 import app.magen.lock.LockMode
 import app.magen.lock.ScheduleAction
 import app.magen.lock.WeeklyAppWindow
@@ -70,27 +78,62 @@ import app.magen.lock.R
 import app.magen.lock.Store
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 // ---- tab: apps -------------------------------------------------------------------------------
 
-private class AppItem(val pkg: String, val label: String, val icon: ImageBitmap)
+private class AppItem(
+    val pkg: String,
+    val label: String,
+    val icon: ImageBitmap,
+    val essentialSystemApp: Boolean,
+)
+
+/**
+ * Critical Android components remain visible for transparency but cannot be locked.
+ * The list is deliberately narrow: ordinary preinstalled apps remain manageable.
+ */
+private val ESSENTIAL_SYSTEM_PACKAGES = setOf(
+    "android",
+    "com.android.systemui",
+    "com.android.settings",
+    "com.android.phone",
+    "com.android.server.telecom",
+    "com.android.providers.telephony",
+    "com.android.providers.settings",
+    "com.android.permissioncontroller",
+    "com.google.android.permissioncontroller",
+    "com.android.packageinstaller",
+    "com.google.android.packageinstaller",
+    "com.android.shell",
+    "com.android.inputmethod.latin",
+    "com.google.android.inputmethod.latin",
+    "com.android.providers.downloads",
+    "com.android.providers.downloads.ui",
+)
 
 private fun loadApps(ctx: Context): List<AppItem> {
     val pm = ctx.packageManager
-    val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-    return pm.queryIntentActivities(launcher, 0)
-        .filter { it.activityInfo.packageName != ctx.packageName }
-        .distinctBy { it.activityInfo.packageName }
-        .map {
-            AppItem(
-                it.activityInfo.packageName,
-                it.loadLabel(pm).toString(),
-                it.loadIcon(pm).toBitmap(96, 96).asImageBitmap(),
-            )
+    return pm.getInstalledApplications(PackageManager.GET_META_DATA)
+        .asSequence()
+        .filter { it.packageName != ctx.packageName }
+        .mapNotNull { info ->
+            runCatching {
+                AppItem(
+                    info.packageName,
+                    pm.getApplicationLabel(info).toString(),
+                    pm.getApplicationIcon(info).toBitmap(96, 96).asImageBitmap(),
+                    info.packageName in ESSENTIAL_SYSTEM_PACKAGES,
+                )
+            }.getOrNull()
         }
-        .sortedBy { it.label.lowercase() }
+        .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.label }.thenBy { it.pkg })
+        .toList()
 }
+
+private fun normalizedSearch(value: String): String =
+    value.trim().lowercase().replace(Regex("\\s+"), " ")
 
 private const val FILTER_ALL = 0
 private const val FILTER_SELECTED = 1
@@ -100,9 +143,28 @@ private const val FILTER_UNSELECTED = 2
 @Composable
 fun AppsTab() {
     val ctx = LocalContext.current
-    // null while the list is still loading, so "no apps" is not shown by mistake.
-    val loaded by produceState<List<AppItem>?>(null) { value = withContext(Dispatchers.Default) { loadApps(ctx) } }
-    val apps = loaded
+    // Refresh on first display and whenever Android reports an install, removal or replacement.
+    var apps by remember { mutableStateOf<List<AppItem>?>(null) }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(ctx) {
+        apps = withContext(Dispatchers.IO) { loadApps(ctx) }
+    }
+    DisposableEffect(ctx) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                scope.launch { apps = withContext(Dispatchers.IO) { loadApps(ctx) } }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED)
+            addDataScheme("package")
+        }
+        ContextCompat.registerReceiver(ctx, receiver, filter, ContextCompat.RECEIVER_EXPORTED)
+        onDispose { runCatching { ctx.unregisterReceiver(receiver) } }
+    }
     var q by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableIntStateOf(FILTER_ALL) }
     var bulk by remember { mutableStateOf<Int?>(null) } // 1 = select shown, 2 = deselect shown
@@ -115,10 +177,10 @@ fun AppsTab() {
 
     // Search and filter only decide what is displayed; they never touch the saved lock list.
     val locked = Store.locked
-    val query = q.trim()
+    val query = normalizedSearch(q)
     val shown = remember(apps, query, filter, locked) {
         (apps ?: emptyList()).filter { a ->
-            (query.isEmpty() || a.label.contains(query, ignoreCase = true) || a.pkg.contains(query, ignoreCase = true)) &&
+            (query.isEmpty() || normalizedSearch(a.label).contains(query) || normalizedSearch(a.pkg).contains(query)) &&
                 when (filter) {
                     FILTER_SELECTED -> a.pkg in locked
                     FILTER_UNSELECTED -> a.pkg !in locked
@@ -128,7 +190,7 @@ fun AppsTab() {
     }
     val total = apps?.size ?: 0
     val selectedCount = apps?.count { it.pkg in locked } ?: 0
-    val toSelect = shown.filter { it.pkg !in locked }
+    val toSelect = shown.filter { it.pkg !in locked && !it.essentialSystemApp }
     val toDeselect = shown.filter { it.pkg in locked }
 
     Column(Modifier.fillMaxSize().padding(horizontal = Sp.l)) {
@@ -298,7 +360,20 @@ private fun AppSettingsScreen(a: AppItem, onBack: () -> Unit) {
             Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.app_tab_method)) })
             Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.app_tab_more)) })
         }
-        if (tab == 0) {
+        if (a.essentialSystemApp) {
+            Column(Modifier.weight(1f).padding(vertical = Sp.m), verticalArrangement = Arrangement.spacedBy(Sp.m)) {
+                Text(stringResource(R.string.apps_system_essential), color = MaterialTheme.colorScheme.error)
+                OutlinedButton(
+                    onClick = {
+                        Store.setMode(a.pkg, null)
+                        Store.setSchedule(a.pkg, AppSchedule())
+                        Store.setUsageLimit(a.pkg, null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = mode != null || Store.scheduleFor(a.pkg) != AppSchedule() || Store.usageLimitFor(a.pkg) != null,
+                ) { Text(stringResource(R.string.app_unblock)) }
+            }
+        } else if (tab == 0) {
             Column(Modifier.weight(1f).padding(vertical = Sp.m), verticalArrangement = Arrangement.spacedBy(Sp.m)) {
                 Text(stringResource(R.string.app_method_help), style = MaterialTheme.typography.bodyMedium)
                 listOf(LockMode.MAIN, LockMode.PIN).forEach { choice ->

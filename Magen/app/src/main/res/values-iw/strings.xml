@@ -7,7 +7,7 @@
     <string name="admin_disable_warning">ביטול הרשאת מנהל המכשיר מחליש את ההגנה. כדי להסיר את מגן, השתמשו ב״אישור הסרה״ בתוך האפליקציה.</string>
 
     <string name="nav_home">בית</string>
-    <string name="nav_apps">אפליקציות</string>
+    <string name="nav_apps">חסימות</string>
 
     <string name="welcome_title">ברוכים הבאים למגן</string>
     <string name="welcome_sub">נעילת אפליקציות, חסימת התקנות והגנה מהסרה – הכול במקום אחד.</string>
@@ -38,7 +38,7 @@
     <string name="copy_cmd">העתקת הפקודה</string>
     <string name="copied">הועתק</string>
 
-    <string name="apps_title">אפליקציות נעולות</string>
+    <string name="apps_title">חסימת אפליקציות</string>
     <string name="apps_count">%1$d אפליקציות נעולות</string>
     <string name="search_apps">חיפוש אפליקציה</string>
     <string name="mode_off">כבוי</string>
@@ -494,5 +494,6 @@
     <string name="event_schedule_changed">התזמון שונה: %1$s</string>
     <string name="event_usage_limit_changed">מכסת השימוש שונתה: %1$s</string>
     <string name="event_uninstall_approval">חלון אישור הסרה: %1$s</string>
+    <string name="apps_system_essential">זהו רכיב מערכת חיוני. מגן מציגה אותו, אך אינה מאפשרת לנעול אותו כדי למנוע פגיעה בפעולת Android.</string>
 </resources>
 

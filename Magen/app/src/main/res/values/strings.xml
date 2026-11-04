@@ -7,7 +7,7 @@
     <string name="admin_disable_warning">Disabling Magen\'s device-admin permission weakens protection. To remove Magen, use “Approve uninstall” inside the app.</string>
 
     <string name="nav_home">Home</string>
-    <string name="nav_apps">Apps</string>
+    <string name="nav_apps">Blocks</string>
 
     <string name="welcome_title">Welcome to Magen</string>
     <string name="welcome_sub">App locking, install blocking and removal protection, all in one place.</string>
@@ -38,7 +38,7 @@
     <string name="copy_cmd">Copy command</string>
     <string name="copied">Copied</string>
 
-    <string name="apps_title">Locked apps</string>
+    <string name="apps_title">App blocking</string>
     <string name="apps_count">%1$d apps locked</string>
     <string name="search_apps">Search apps</string>
     <string name="mode_off">Off</string>
@@ -339,7 +339,7 @@
     <string name="bulk_confirm_title">Apply to the shown apps?</string>
     <string name="bulk_select_msg">%1$d shown apps will be locked with the code. Apps that are already locked keep their mode, and apps that are not shown are not changed.</string>
     <string name="bulk_deselect_msg">The lock will be removed from %1$d shown apps. Apps that are not shown are not changed.</string>
-    <string name="apps_none">No launchable apps were found on this device.</string>
+    <string name="apps_none">No installed apps were found.</string>
     <string name="apps_no_results">No apps match your search or filter.</string>
     <string name="apps_clear_search">Clear search and filter</string>
     <string name="times_pause_active">Active until %1$s. Protection is paused until then.</string>
@@ -494,5 +494,6 @@
     <string name="event_schedule_changed">App schedule changed: %1$s</string>
     <string name="event_usage_limit_changed">Usage limit changed: %1$s</string>
     <string name="event_uninstall_approval">Uninstall approval window: %1$s</string>
+    <string name="apps_system_essential">This is an essential system component. Magen shows it for transparency but does not allow locking it, to avoid disrupting Android.</string>
 </resources>
 
