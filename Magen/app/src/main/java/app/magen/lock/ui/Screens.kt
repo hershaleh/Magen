@@ -68,6 +68,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -298,6 +300,7 @@ fun MainScaffold() {
     var changingPin by remember { mutableStateOf(false) }
     var recoveryMode by remember { mutableStateOf(false) }
     var specRoute by rememberSaveable { mutableStateOf<String?>(null) }
+    val navigationMode = SpecUiPreferences.navigationMode
     LaunchedEffect(Session.goTab) {
         Session.goTab?.let {
             tab = it
@@ -322,32 +325,62 @@ fun MainScaffold() {
         )
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
+            topBar = {
+                if (navigationMode == 2) {
+                    Surface(color = MaterialTheme.colorScheme.surface) {
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                            items.forEachIndexed { i, (label, filled, outlined) ->
+                                TextButton(onClick = { tab = i }) {
+                                    Icon(if (tab == i) filled else outlined, null)
+                                    Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                                }
+                            }
+                        }
+                    }
+                }
+            },
             bottomBar = {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                    items.forEachIndexed { i, (label, filled, outlined) ->
-                        NavigationBarItem(
-                            selected = tab == i,
-                            onClick = { tab = i },
-                            icon = { Icon(if (tab == i) filled else outlined, null) },
-                            label = { Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                        )
+                if (navigationMode == 1) {
+                    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                        items.forEachIndexed { i, (label, filled, outlined) ->
+                            NavigationBarItem(
+                                selected = tab == i,
+                                onClick = { tab = i },
+                                icon = { Icon(if (tab == i) filled else outlined, null) },
+                                label = { Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                            )
+                        }
                     }
                 }
             },
         ) { inner ->
-            Box(Modifier.padding(inner).statusBarsPadding()) {
-                when (tab) {
-                    Tabs.HOME -> HomeTab(onNavigate = { tab = it })
-                    Tabs.BLOCKINGS -> BlockingsHub()
-                    Tabs.TIMES -> TimesHub()
-                    Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
-                    else -> MoreTab(
-                        onChangePin = { changingPin = true },
-                        onRecovery = { recoveryMode = true },
-                        onOpenHome = { tab = Tabs.HOME },
-                        onOpenProtection = { tab = Tabs.PROTECTION },
-                        onNavigate = { specRoute = it },
-                    )
+            Row(Modifier.fillMaxSize().padding(inner)) {
+                if (navigationMode == 0) {
+                    NavigationRail(containerColor = MaterialTheme.colorScheme.surface) {
+                        items.forEachIndexed { i, (label, filled, outlined) ->
+                            NavigationRailItem(
+                                selected = tab == i,
+                                onClick = { tab = i },
+                                icon = { Icon(if (tab == i) filled else outlined, null) },
+                                label = { Text(stringResource(label), maxLines = 1) },
+                            )
+                        }
+                    }
+                }
+                Box(Modifier.weight(1f).fillMaxSize().statusBarsPadding()) {
+                    when (tab) {
+                        Tabs.HOME -> HomeTab(onNavigate = { tab = it })
+                        Tabs.BLOCKINGS -> BlockingsHub()
+                        Tabs.TIMES -> TimesHub()
+                        Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
+                        else -> MoreTab(
+                            onChangePin = { changingPin = true },
+                            onRecovery = { recoveryMode = true },
+                            onOpenHome = { tab = Tabs.HOME },
+                            onOpenProtection = { tab = Tabs.PROTECTION },
+                            onNavigate = { specRoute = it },
+                        )
+                    }
                 }
             }
         }
