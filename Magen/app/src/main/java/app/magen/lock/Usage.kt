@@ -10,7 +10,7 @@ import java.util.concurrent.ConcurrentHashMap
 
 object UsageLimitPolicy {
     fun isReached(limitMinutes: Int?, usedMillis: Long): Boolean =
-        limitMinutes != null && limitMinutes > 0 && usedMillis >= limitMinutes * 60_000L
+        limitMinutes != null && usedMillis >= limitMinutes * 60_000L
 }
 
 object UsageTracker {
