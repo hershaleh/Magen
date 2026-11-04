@@ -15,6 +15,7 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
@@ -117,7 +118,7 @@ fun BlockingsHub() {
             containerColor = MaterialTheme.colorScheme.surface,
         ) {
             labels.forEachIndexed { i, label ->
-                androidx.compose.material3.NavigationBarItem(
+                NavigationBarItem(
                     selected = selected == i,
                     onClick = { selected = i },
                     icon = {},
