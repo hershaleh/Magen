@@ -300,32 +300,35 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
 
     MagenScreen {
         // This switch controls user-configured blocking rules. Magen's self-protection remains independent.
-        Surface(
-            onClick = { Store.updateBlockingEnabled(!Store.blockingEnabled) },
-            modifier = Modifier.fillMaxWidth(),
-            shape = CircleShape,
-            color = if (Store.blockingEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-            border = androidx.compose.foundation.BorderStroke(
-                2.dp,
-                if (Store.blockingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
-            ),
-        ) {
-            Column(
-                Modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(6.dp),
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Surface(
+                onClick = { Store.updateBlockingEnabled(!Store.blockingEnabled) },
+                modifier = Modifier.size(184.dp),
+                shape = CircleShape,
+                color = if (Store.blockingEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                border = androidx.compose.foundation.BorderStroke(
+                    2.dp,
+                    if (Store.blockingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                ),
             ) {
-                Icon(
-                    Icons.Filled.Shield,
-                    contentDescription = null,
-                    modifier = Modifier.size(42.dp),
-                    tint = if (Store.blockingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    if (Store.blockingEnabled) "החסימות מופעלות" else "החסימות כבויות",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                )
+                Column(
+                    Modifier.fillMaxSize().padding(18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        Icons.Filled.Shield,
+                        contentDescription = null,
+                        modifier = Modifier.size(52.dp),
+                        tint = if (Store.blockingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        if (Store.blockingEnabled) "החסימות מופעלות" else "החסימות כבויות",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
             }
         }
 
