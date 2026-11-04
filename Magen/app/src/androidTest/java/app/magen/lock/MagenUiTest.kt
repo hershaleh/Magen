@@ -147,7 +147,8 @@ class MagenUiTest {
     private fun navLabel(@StringRes id: Int) = str(id)
 
     private fun goToTab(@StringRes navLabel: Int) {
-        compose.onAllNodes(hasClickAction() and hasText(navLabel(navLabel)))[0].performClick()
+        val label = if (navLabel == R.string.nav_more) "הגדרות" else navLabel(navLabel)
+        compose.onAllNodes(hasClickAction() and hasText(label))[0].performClick()
     }
 
     /** The five areas of the bottom navigation, each with a string that only that screen shows. */
@@ -156,7 +157,7 @@ class MagenUiTest {
         R.string.nav_blockings to R.string.apps_title,
         R.string.nav_times to R.string.nav_times,
         R.string.nav_protection to R.string.protection_title,
-        R.string.nav_more to R.string.more_title,
+        R.string.nav_more to R.string.nav_more,
     )
 
     // ---- installation and launch ---------------------------------------------------------------
@@ -325,6 +326,7 @@ class MagenUiTest {
     fun appsScreenListsInstalledAppsWithoutCrashing() {
         openMainScreenDirectly()
         goToTab(R.string.nav_blockings)
+        compose.onNodeWithTag("blocking_tab_0").performClick()
         compose.await(str(R.string.apps_title)).assertIsDisplayed()
     }
 
@@ -335,8 +337,13 @@ class MagenUiTest {
         goToTab(R.string.nav_blockings)
         compose.await("חסימות").assertIsDisplayed()
         compose.onNodeWithTag("blocking_tab_1").performClick()
-        compose.await("חסימת רכיבי הגדרות Android").assertIsDisplayed()
+        compose.await("חסימת חלקי הגדרות").assertIsDisplayed()
         compose.await("איך למצוא חלק מסוים בהגדרות?").assertIsDisplayed()
+        compose.onNodeWithText("רשת ואינטרנט").performClick()
+        compose.await("חסימת רשת ואינטרנט").assertIsDisplayed()
+        compose.await("VPN").assertIsDisplayed()
+        compose.onNodeWithText("סיום").performClick()
+        compose.onNodeWithText("חסימות", substring = true).performClick()
         compose.onNodeWithTag("blocking_tab_2").performClick()
         compose.await("VideoStop").assertIsDisplayed()
 
