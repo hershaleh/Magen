@@ -294,12 +294,14 @@ fun LanguagePicker(modifier: Modifier = Modifier) {
 
 @Composable
 fun MainScaffold() {
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var tab by rememberSaveable { mutableIntStateOf(Tabs.HOME) }
     var changingPin by remember { mutableStateOf(false) }
     var recoveryMode by remember { mutableStateOf(false) }
+    var specRoute by rememberSaveable { mutableStateOf<String?>(null) }
     LaunchedEffect(Session.goTab) {
         Session.goTab?.let {
             tab = it
+            specRoute = null
             Session.goTab = null
         }
     }
@@ -308,14 +310,15 @@ fun MainScaffold() {
         ChangePin { changingPin = false }
     } else if (recoveryMode) {
         NewRecovery { recoveryMode = false }
+    } else if (specRoute != null) {
+        SpecRouteScreen(route = specRoute!!, onBack = { specRoute = null })
     } else {
-        // Order follows [Tabs]. Selected tabs use the filled icon, the others the outlined one.
         val items = listOf(
             Triple(R.string.nav_home, Icons.Filled.Home, Icons.Outlined.OutlinedHomeIcon),
-            Triple(R.string.nav_apps, Icons.Filled.Apps, Icons.Outlined.OutlinedAppsIcon),
-            Triple(R.string.nav_protection, Icons.Filled.Shield, Icons.Outlined.OutlinedShieldIcon),
+            Triple(R.string.nav_blockings, Icons.Filled.Apps, Icons.Outlined.OutlinedAppsIcon),
             Triple(R.string.nav_times, Icons.Filled.Schedule, Icons.Outlined.OutlinedScheduleIcon),
-            Triple(R.string.nav_settings, Icons.Filled.SettingsIcon, Icons.Outlined.OutlinedSettingsIcon),
+            Triple(R.string.nav_protection, Icons.Filled.Shield, Icons.Outlined.OutlinedShieldIcon),
+            Triple(R.string.nav_more, Icons.Filled.MoreHoriz, Icons.Outlined.OutlinedSettingsIcon),
         )
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -335,14 +338,15 @@ fun MainScaffold() {
             Box(Modifier.padding(inner).statusBarsPadding()) {
                 when (tab) {
                     Tabs.HOME -> HomeTab(onNavigate = { tab = it })
-                    Tabs.APPS -> AppsTab()
+                    Tabs.BLOCKINGS -> BlockingsHub()
+                    Tabs.TIMES -> TimesHub()
                     Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
-                    Tabs.TIMES -> TimesTab()
                     else -> MoreTab(
                         onChangePin = { changingPin = true },
                         onRecovery = { recoveryMode = true },
                         onOpenHome = { tab = Tabs.HOME },
                         onOpenProtection = { tab = Tabs.PROTECTION },
+                        onNavigate = { specRoute = it },
                     )
                 }
             }
@@ -492,7 +496,7 @@ private fun AdvancedProtection(onBack: () -> Unit, onOpenHome: () -> Unit) {
 // ---- tab: more -------------------------------------------------------------------------------
 
 @Composable
-fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit, onOpenProtection: () -> Unit) {
+fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit, onOpenProtection: () -> Unit, onNavigate: (String) -> Unit) {
     val ctx = LocalContext.current
     var confirm by remember { mutableStateOf(false) }
     var confirmOwner by remember { mutableStateOf(false) }
@@ -584,6 +588,12 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.help_open)) }
+        }
+
+        SectionCard("כלים ומידע", "יומן אבטחה, גיבוי והגדרות תצוגה.") {
+            OutlinedButton(onClick = { onNavigate("log") }, modifier = Modifier.fillMaxWidth()) { Text("יומן אבטחה") }
+            OutlinedButton(onClick = { onNavigate("backup") }, modifier = Modifier.fillMaxWidth()) { Text("גיבוי ושחזור") }
+            OutlinedButton(onClick = { onNavigate("settings") }, modifier = Modifier.fillMaxWidth()) { Text("הגדרות תצוגה ופרטיות") }
         }
 
         Text(
