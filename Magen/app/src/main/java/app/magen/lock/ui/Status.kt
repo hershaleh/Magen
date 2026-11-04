@@ -292,7 +292,6 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
     val locked = Store.locked
     val health = remember(tick, p, locked) { computeHealth(ctx) }
     val problems = health.checks.filter { (it.sev == Sev.WARN || it.sev == Sev.BAD) && it.fix != null }
-    val serviceRunning = GuardService.instance != null
     val ruleCount = (if (Store.blockPlay) 1 else 0) +
         (if (Store.blockApk) 1 else 0) + Store.customKeywords.size
 
