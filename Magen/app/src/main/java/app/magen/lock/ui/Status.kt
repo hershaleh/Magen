@@ -324,12 +324,6 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
-                Text(
-                    "הפעלה וכיבוי מרכזיים יתווספו לאחר חיבור בטוח למנגנון האכיפה",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
-                )
             }
         }
 
