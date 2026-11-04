@@ -268,11 +268,11 @@ object Store {
 
     private fun decodeSchedules(raw: String?): Map<String, AppSchedule> = runCatching {
         val root = JSONArray(raw ?: "[]")
-        buildMap {
-            for (i in 0 until root.length()) {
-                val item = root.getJSONObject(i)
-                val pkg = item.getString("package")
-                if (pkg == app.packageName) continue
+        val result = mutableMapOf<String, AppSchedule>()
+        for (i in 0 until root.length()) {
+            val item = root.getJSONObject(i)
+            val pkg = item.getString("package")
+            if (pkg != app.packageName) {
                 val weeklyJson = item.optJSONArray("weekly") ?: JSONArray()
                 val weekly = (0 until weeklyJson.length()).mapNotNull { index ->
                     runCatching {
@@ -293,9 +293,10 @@ object Store {
                         )
                     }.getOrNull()
                 }
-                put(pkg, AppSchedule(weekly, dates))
+                result[pkg] = AppSchedule(weekly, dates)
             }
         }
+        result
     }.getOrDefault(emptyMap())
 
     // ---- uninstall approval ------------------------------------------------------------------
