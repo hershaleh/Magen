@@ -203,3 +203,30 @@ The current branch is a partial UI scaffold, not a full implementation:
 - Unit-test failure around `hasAnyRule` remains separate from APK compilation and must be fixed before calling validation complete.
 
 This document must be updated as each item is implemented and tested. A screen title or inert switch does not count as implementation.
+
+
+## Implementation progress — 2026-11-04
+
+The following visual work has now been added to `feature/ui-spec-v1`:
+
+- [x] Home layout updated with a prominent circular protection-status control, a fixed-height attention/notification card, and the existing summary/check details retained. The circular control navigates to Protection; it does not toggle enforcement.
+- [x] “More” now opens a categorized Settings hub rather than the old unstructured long page.
+- [x] Settings categories added: Notifications, Appearance & language, Security & sign-in, Permissions & system protection, Privacy, Diagnostics & event log, Backup & restore, About Magen, and a separate Release & uninstall entry.
+- [x] Category landing rows use compact Android-style navigation, summaries, separate category pages and category-level search.
+- [x] Existing PIN/recovery flows, biometric enrollment, permission shortcuts, advanced protection and release/uninstall screen remain routed to their existing code paths; release/uninstall and Device Owner/Keeper logic were not edited.
+- [x] Quota, weekly schedule and Shabbat/holiday screens expanded into fuller visual workflows, including app selection, personal/group quotas, independent pauses, warning timing, multi-window schedules, day selection, date exceptions, Israel/location settings, offsets, local calendar coverage and read-only Shabbat mode.
+
+### Still incomplete — do not mark the specification complete
+
+- [ ] Settings switches and several values are currently local preview state only; persist/verify them only in the later functionality phase.
+- [ ] Settings search currently searches category names and summaries, not every individual setting.
+- [ ] Theme choice is shown but not yet applied globally; animation preference is preview-only.
+- [ ] Notifications category is a visual settings surface; persistent notification preferences, severity rules and in-app event center are not yet wired.
+- [ ] Security log still lacks the real persistent event list, grouping, detail, read/unread, repair verification and export workflows.
+- [ ] Backup/restore still lacks real file selection, validation, selective restore and retention management.
+- [ ] App-detail configuration and all existing per-app options still require a complete inventory and visual reconciliation.
+- [ ] Full English translation and RTL/LTR verification across all new and existing screens remain outstanding.
+- [ ] Complete visual QA remains outstanding for small screens, landscape, large fonts, accessibility and navigation/back behavior.
+- [ ] Build and tests must be checked on the latest commit. The pre-existing unit-test import failure around `hasAnyRule` is being addressed separately; a successful debug APK build alone does not mean tests pass.
+
+These additions are a first implementation pass, not a claim that all 283+ archived decisions have been implemented. Continue reconciling the original archive against every screen before presenting the preview APK as the full UI concept.
