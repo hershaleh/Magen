@@ -8,6 +8,7 @@ import android.provider.Settings
 import android.util.Base64
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import app.magen.lock.core.Credential
@@ -26,6 +27,9 @@ object Store {
     private lateinit var sp: SharedPreferences
 
     var hasPin by mutableStateOf(false)
+        private set
+    /** Length is stored so the keypad can submit as soon as a complete PIN has been entered. */
+    var pinLength by mutableIntStateOf(0)
         private set
     var locked by mutableStateOf<Map<String, LockMode>>(emptyMap())
         private set
@@ -61,6 +65,7 @@ object Store {
         app = ctx.applicationContext
         sp = app.getSharedPreferences("magen", Context.MODE_PRIVATE)
         hasPin = sp.contains("hash")
+        pinLength = sp.getInt("pinLength", 0).coerceIn(0, 8)
         locked = (sp.getStringSet("locked", emptySet()) ?: emptySet()).mapNotNull { s ->
             val i = s.lastIndexOf(':')
             if (i < 0) null else runCatching { s.substring(0, i) to LockMode.valueOf(s.substring(i + 1)) }.getOrNull()
@@ -110,10 +115,12 @@ object Store {
         sp.edit()
             .putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP))
             .putString("hash", hash(pin, salt))
+            .putInt("pinLength", pin.length)
             .putInt("fails", 0)
             .apply()
         saveDeadline("lockUntil", "lock", Deadline.NONE)
         hasPin = true
+        pinLength = pin.length
     }
 
     /** Seconds the keypad stays disabled after too many wrong attempts. */
@@ -133,6 +140,11 @@ object Store {
         if (lockRemaining() > 0) return false
         // Missing or damaged stored data is a failed attempt, never a crash and never a success.
         val ok = Credential.matches(pin, decode("salt"), sp.getString("hash", null)) { p, s -> hash(p, s) }
+        if (ok && pinLength == 0) {
+            // One-time migration for installations created before PIN length was persisted.
+            pinLength = pin.length
+            sp.edit().putInt("pinLength", pin.length).apply()
+        }
         return registerAttempt(ok)
     }
 
