@@ -12,6 +12,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -118,10 +119,15 @@ fun TimesTab() {
                 Text(stringResource(R.string.schedule_saved))
                 ProfileStore.windows.forEach { window ->
                     val profileName = ProfileStore.profiles.firstOrNull { it.id == window.profileId }?.name ?: "?"
-                    Text(stringResource(
-                        R.string.schedule_window_summary,
-                        window.dayOfWeek, formatMinute(window.startMinute), formatMinute(window.endMinute), profileName,
-                    ))
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text(stringResource(
+                            R.string.schedule_window_summary,
+                            window.dayOfWeek, formatMinute(window.startMinute), formatMinute(window.endMinute), profileName,
+                        ), modifier = Modifier.weight(1f))
+                        TextButton(onClick = { ProfileStore.removeWindow(window.id) }) {
+                            Text(stringResource(R.string.schedule_remove))
+                        }
+                    }
                 }
                 Button(onClick = { ProfileStore.saveWindows(emptyList()) }) {
                     Text(stringResource(R.string.schedule_clear))
