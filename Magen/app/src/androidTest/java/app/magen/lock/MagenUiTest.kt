@@ -54,6 +54,7 @@ class MagenUiTest {
         ctx = instrumentation.targetContext
         // A clean install: no code, no saved settings, no leftover session state from a previous test.
         ctx.getSharedPreferences("magen", Context.MODE_PRIVATE).edit().clear().commit()
+        ctx.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).edit().clear().commit()
         instrumentation.runOnMainSync {
             Store.init(ctx)
             Session.authed = false
@@ -150,10 +151,10 @@ class MagenUiTest {
     /** The five areas of the bottom navigation, each with a string that only that screen shows. */
     private val areas: List<Pair<Int, Int>> = listOf(
         R.string.nav_home to R.string.app_name,
-        R.string.nav_apps to R.string.apps_title,
+        R.string.nav_blockings to R.string.apps_title,
+        R.string.nav_times to R.string.nav_times,
         R.string.nav_protection to R.string.protection_title,
-        R.string.nav_times to R.string.times_lock_title,
-        R.string.nav_settings to R.string.more_title,
+        R.string.nav_more to R.string.more_title,
     )
 
     // ---- installation and launch ---------------------------------------------------------------
@@ -293,15 +294,15 @@ class MagenUiTest {
     fun selectedAreaSurvivesRecreationOfTheActivity() {
         openMainScreenDirectly()
         goToTab(R.string.nav_times)
-        compose.await(str(R.string.times_lock_title))
+        compose.await(str(R.string.nav_times))
         scenario!!.recreate()
-        compose.await(str(R.string.times_lock_title)).assertIsDisplayed()
+        compose.await(str(R.string.nav_times)).assertIsDisplayed()
     }
 
     @Test
     fun appsScreenListsInstalledAppsWithoutCrashing() {
         openMainScreenDirectly()
-        goToTab(R.string.nav_apps)
+        goToTab(R.string.nav_blockings)
         compose.await(str(R.string.apps_title)).assertIsDisplayed()
     }
 
