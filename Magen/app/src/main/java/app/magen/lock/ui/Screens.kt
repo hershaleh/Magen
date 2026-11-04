@@ -48,6 +48,8 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
@@ -68,6 +70,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.ui.unit.width
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.NavigationRail
 import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedButton
@@ -303,6 +311,9 @@ fun MainScaffold() {
     var legacyMore by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val navigationMode = SpecUiPreferences.navigationMode
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val notificationsTab = 5
     LaunchedEffect(Unit) { SpecUiPreferences.load(context) }
     LaunchedEffect(Session.goTab) {
         Session.goTab?.let {
@@ -329,63 +340,111 @@ fun MainScaffold() {
     } else if (specRoute != null) {
         SpecRouteScreen(route = specRoute!!, onBack = { specRoute = null })
     } else {
-        val items = listOf(
-            Triple(R.string.nav_home, Icons.Filled.Home, Icons.Outlined.OutlinedHomeIcon),
-            Triple(R.string.nav_blockings, Icons.Filled.Apps, Icons.Outlined.OutlinedAppsIcon),
-            Triple(R.string.nav_times, Icons.Filled.Schedule, Icons.Outlined.OutlinedScheduleIcon),
-            Triple(R.string.nav_protection, Icons.Filled.Shield, Icons.Outlined.OutlinedShieldIcon),
-            Triple(R.string.nav_more, Icons.Filled.MoreHoriz, Icons.Outlined.OutlinedSettingsIcon),
+        val notificationLabel = if (Lang.current().startsWith("en")) "Notifications" else "התראות"
+        val navItems = listOf(
+            Triple(Tabs.HOME, context.getString(R.string.nav_home), Icons.Filled.Home),
+            Triple(Tabs.BLOCKINGS, context.getString(R.string.nav_blockings), Icons.Filled.Apps),
+            Triple(Tabs.TIMES, context.getString(R.string.nav_times), Icons.Filled.Schedule),
+            Triple(Tabs.PROTECTION, context.getString(R.string.nav_protection), Icons.Filled.Shield),
+            Triple(notificationsTab, notificationLabel, Icons.Filled.Notifications),
+            Triple(Tabs.SETTINGS, context.getString(R.string.nav_more), Icons.Filled.Settings),
         )
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background,
-            topBar = {
-                if (navigationMode == 2) {
-                    Surface(color = MaterialTheme.colorScheme.surface) {
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-                            items.forEachIndexed { i, (label, filled, outlined) ->
-                                TextButton(onClick = { tab = i }) {
-                                    Icon(if (tab == i) filled else outlined, null)
-                                    Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis)
+        BackHandler(enabled = drawerState.isOpen) {
+            scope.launch { drawerState.close() }
+        }
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            gesturesEnabled = navigationMode == 0,
+            drawerContent = {
+                ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.86f)) {
+                    Column(
+                        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            ShieldBadge(38.dp)
+                            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        }
+                        navItems.forEach { (target, label, icon) ->
+                            NavigationDrawerItem(
+                                label = { Text(label) },
+                                icon = { Icon(icon, contentDescription = null) },
+                                selected = tab == target,
+                                onClick = {
+                                    tab = target
+                                    scope.launch { drawerState.close() }
+                                },
+                                modifier = Modifier.padding(horizontal = 10.dp),
+                            )
+                        }
+                    }
+                }
+            },
+        ) {
+            Scaffold(
+                containerColor = MaterialTheme.colorScheme.background,
+                topBar = {
+                    Column(Modifier.fillMaxWidth().statusBarsPadding()) {
+                        Surface(color = MaterialTheme.colorScheme.surface) {
+                            Row(
+                                Modifier.fillMaxWidth().height(58.dp).padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                if (navigationMode == 0) {
+                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                        Icon(Icons.Filled.Menu, contentDescription = if (Lang.current().startsWith("en")) "Open menu" else "פתיחת תפריט")
+                                    }
+                                }
+                                ShieldBadge(32.dp)
+                                Text(
+                                    stringResource(R.string.app_name),
+                                    style = MaterialTheme.typography.titleLarge,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f),
+                                )
+                            }
+                        }
+                        if (navigationMode == 2) {
+                            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                                navItems.forEach { (target, label, icon) ->
+                                    NavigationBarItem(
+                                        selected = tab == target,
+                                        onClick = { tab = target },
+                                        icon = { Icon(icon, contentDescription = null) },
+                                        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                    )
                                 }
                             }
                         }
                     }
-                }
-            },
-            bottomBar = {
-                if (navigationMode == 1) {
-                    NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                        items.forEachIndexed { i, (label, filled, outlined) ->
-                            NavigationBarItem(
-                                selected = tab == i,
-                                onClick = { tab = i },
-                                icon = { Icon(if (tab == i) filled else outlined, null) },
-                                label = { Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
-                            )
+                },
+                bottomBar = {
+                    if (navigationMode == 1) {
+                        NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                            navItems.forEach { (target, label, icon) ->
+                                NavigationBarItem(
+                                    selected = tab == target,
+                                    onClick = { tab = target },
+                                    icon = { Icon(icon, contentDescription = null) },
+                                    label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                )
+                            }
                         }
                     }
-                }
-            },
-        ) { inner ->
-            Row(Modifier.fillMaxSize().padding(inner)) {
-                if (navigationMode == 0) {
-                    NavigationRail(containerColor = MaterialTheme.colorScheme.surface) {
-                        items.forEachIndexed { i, (label, filled, outlined) ->
-                            NavigationRailItem(
-                                selected = tab == i,
-                                onClick = { tab = i },
-                                icon = { Icon(if (tab == i) filled else outlined, null) },
-                                label = { Text(stringResource(label), maxLines = 1) },
-                            )
-                        }
-                    }
-                }
-                Box(Modifier.weight(1f).fillMaxSize().statusBarsPadding()) {
+                },
+            ) { inner ->
+                Box(Modifier.fillMaxSize().padding(inner)) {
                     when (tab) {
                         Tabs.HOME -> HomeTab(onNavigate = { tab = it })
                         Tabs.BLOCKINGS -> BlockingsHub()
                         Tabs.TIMES -> TimesHub()
                         Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
+                        notificationsTab -> NotificationsCenterScreen()
                         else -> SettingsHub(
                             onChangePin = { changingPin = true },
                             onRecovery = { recoveryMode = true },
