@@ -15,6 +15,14 @@ import android.provider.Settings
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.Image
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -123,6 +131,7 @@ import app.magen.lock.Policy
 import app.magen.lock.R
 import app.magen.lock.Store
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -1081,6 +1090,7 @@ private fun approveUninstall(ctx: Context, onError: (String) -> Unit) {
 @Composable
 fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onBack: () -> Unit) {
     val ctx = LocalContext.current
+    val animate = SpecUiPreferences.shouldAnimate(ctx)
     val mode = Store.locked[pkg]
     val label = remember(pkg) {
         runCatching {
@@ -1090,14 +1100,111 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
     val icon = remember(pkg) {
         runCatching { ctx.packageManager.getApplicationIcon(pkg).toBitmap(160, 160).asImageBitmap() }.getOrNull()
     }
+    var visible by remember { mutableStateOf(false) }
+    var closing by remember { mutableStateOf(false) }
+    var exitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-    androidx.compose.runtime.LaunchedEffect(mode) { if (mode == null) onUnlocked() }
+    fun leave(action: () -> Unit) {
+        if (closing) return
+        if (animate) {
+            exitAction = action
+            closing = true
+        } else {
+            action()
+        }
+    }
 
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        if (mode == LockMode.MAIN) {
+    LaunchedEffect(Unit) { visible = true }
+    LaunchedEffect(closing) {
+        if (closing) {
+            delay(190)
+            exitAction?.invoke()
+        }
+    }
+    LaunchedEffect(mode) {
+        if (mode == null) leave(onUnlocked)
+    }
+
+    AnimatedVisibility(
+        visible = visible && !closing,
+        enter = if (animate) fadeIn(tween(190)) + slideInVertically(tween(190)) { it / 24 } else EnterTransition.None,
+        exit = if (animate) fadeOut(tween(170)) + slideOutVertically(tween(170)) { it / 30 } else ExitTransition.None,
+    ) {
+        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            if (mode == LockMode.MAIN) {
+                Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        IconButton(onClick = { leave(onBack) }) {
+                            Icon(Icons.Filled.Home, contentDescription = "חזרה למסך הבית")
+                        }
+                    }
+                    Column(
+                        Modifier.weight(1f).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        AppBadge(icon, 96.dp)
+                        Spacer(Modifier.height(24.dp))
+                        Text(
+                            stringResource(R.string.blocked_message),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.lock_main_desc, label),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(Modifier.height(28.dp))
+                        Button(
+                            onClick = { leave(onOpenMain) },
+                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier.fillMaxWidth().height(54.dp),
+                        ) { Text(stringResource(R.string.open_magen)) }
+                    }
+                }
+            } else {
+                PinGate(
+                    title = stringResource(R.string.lock_pin_title),
+                    subtitle = stringResource(R.string.lock_pin_sub, label),
+                    icon = { AppBadge(icon) },
+                    onCancel = { leave(onBack) },
+                    allowAlt = true,
+                    onSuccess = { leave(onUnlocked) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun BlockContent(@StringRes reason: Int, onClose: () -> Unit) {
+    val ctx = LocalContext.current
+    val animate = SpecUiPreferences.shouldAnimate(ctx)
+    val reasonText = remember(reason) { runCatching { ctx.getString(reason) }.getOrNull() }
+    var visible by remember { mutableStateOf(false) }
+    var closing by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    LaunchedEffect(closing) {
+        if (closing) {
+            if (animate) delay(190)
+            onClose()
+        }
+    }
+    BackHandler(enabled = true) { /* The blocked screen cannot be dismissed with Back. */ }
+    AnimatedVisibility(
+        visible = visible && !closing,
+        enter = if (animate) fadeIn(tween(190)) + slideInVertically(tween(190)) { it / 24 } else EnterTransition.None,
+        exit = if (animate) fadeOut(tween(170)) + slideOutVertically(tween(170)) { it / 30 } else ExitTransition.None,
+    ) {
+        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
             Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    IconButton(onClick = onBack) {
+                    IconButton(onClick = {
+                        if (animate) closing = true else onClose()
+                    }) {
                         Icon(Icons.Filled.Home, contentDescription = "חזרה למסך הבית")
                     }
                 }
@@ -1106,7 +1213,7 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    AppBadge(icon, 96.dp)
+                    ShieldBadge(104.dp)
                     Spacer(Modifier.height(24.dp))
                     Text(
                         stringResource(R.string.blocked_message),
@@ -1114,68 +1221,17 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     )
-                    Spacer(Modifier.height(8.dp))
+                    if (reasonText != null) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(reasonText, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    }
+                    Spacer(Modifier.height(14.dp))
                     Text(
-                        stringResource(R.string.lock_main_desc, label),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
+                        "מוגן באמצעות ${stringResource(R.string.app_name)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.tertiary,
                     )
-                    Spacer(Modifier.height(28.dp))
-                    Button(
-                        onClick = onOpenMain,
-                        shape = RoundedCornerShape(18.dp),
-                        modifier = Modifier.fillMaxWidth().height(54.dp),
-                    ) { Text(stringResource(R.string.open_magen)) }
                 }
-            }
-        } else {
-            PinGate(
-                title = stringResource(R.string.lock_pin_title),
-                subtitle = stringResource(R.string.lock_pin_sub, label),
-                icon = { AppBadge(icon) },
-                onCancel = onBack,
-                allowAlt = true,
-                onSuccess = onUnlocked,
-            )
-        }
-    }
-}
-
-@Composable
-fun BlockContent(@StringRes reason: Int, onClose: () -> Unit) {
-    val ctx = LocalContext.current
-    val reasonText = remember(reason) { runCatching { ctx.getString(reason) }.getOrNull() }
-    BackHandler(enabled = true) { /* The blocked screen cannot be dismissed with Back. */ }
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                IconButton(onClick = onClose) {
-                    Icon(Icons.Filled.Home, contentDescription = "חזרה למסך הבית")
-                }
-            }
-            Column(
-                Modifier.weight(1f).fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                ShieldBadge(104.dp)
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    stringResource(R.string.blocked_message),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                )
-                if (reasonText != null) {
-                    Spacer(Modifier.height(10.dp))
-                    Text(reasonText, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
-                }
-                Spacer(Modifier.height(14.dp))
-                Text(
-                    "מוגן באמצעות ${stringResource(R.string.app_name)}",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.tertiary,
-                )
             }
         }
     }
