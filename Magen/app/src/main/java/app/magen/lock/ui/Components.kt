@@ -99,6 +99,7 @@ fun PinPad(
     icon: @Composable () -> Unit = { ShieldBadge() },
     onCancel: (() -> Unit)? = null,
     extra: (@Composable () -> Unit)? = null,
+    autoSubmitLength: Int? = null,
     onSubmit: (String) -> Unit,
 ) {
     var pin by remember { mutableStateOf("") }
@@ -148,7 +149,7 @@ fun PinPad(
                     listOf("1", "2", "3"),
                     listOf("4", "5", "6"),
                     listOf("7", "8", "9"),
-                    listOf("<", "0", ">"),
+                    if (autoSubmitLength == null) listOf("<", "0", ">") else listOf("<", "0"),
                 ).forEach { row ->
                     Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
                         row.forEach { k ->
@@ -162,7 +163,13 @@ fun PinPad(
                                         onSubmit(p)
                                     }
                                 } else if (pin.length < maxLen) {
-                                    pin += k
+                                    val next = pin + k
+                                    if (autoSubmitLength != null && next.length == autoSubmitLength) {
+                                        pin = ""
+                                        onSubmit(next)
+                                    } else {
+                                        pin = next
+                                    }
                                 }
                             }) {
                                 when (k) {
@@ -261,6 +268,7 @@ fun PinGate(
         icon = icon,
         onCancel = onCancel,
         extra = if (allowAlt && (useBio || Store.hasRecovery)) altUi else null,
+        autoSubmitLength = Store.pinLength.takeIf { it in 4..8 },
     ) { pin ->
         if (Store.checkPin(pin)) {
             onSuccess()
