@@ -286,7 +286,7 @@ private fun AppSettingsScreen(a: AppItem, onBack: () -> Unit) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(Sp.m),
         ) {
-            IconButton(onClick = onBack) { Icon(Icons.Filled.Close, stringResource(R.string.back)) }
+            IconButton(onClick = onBack) { Icon(Icons.Filled.Close, stringResource(R.string.cancel)) }
             Image(a.icon, null, Modifier.size(42.dp).clip(RoundedCornerShape(10.dp)))
             Text(a.label, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
         }
