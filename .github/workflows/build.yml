@@ -35,7 +35,9 @@ jobs:
 
       - name: Run Android checks
         working-directory: ${{ steps.loc.outputs.dir }}
-        run: gradle testDebugUnitTest lintDebug --no-daemon --console=plain
+        run: |
+          set -o pipefail
+          gradle testDebugUnitTest lintDebug --no-daemon --console=plain 2>&1 | tee "$GITHUB_WORKSPACE/checks.log"
 
       - name: Build debug APK
         working-directory: ${{ steps.loc.outputs.dir }}
@@ -55,15 +57,20 @@ jobs:
           {
             echo '## Build errors'
             echo '```'
-            grep -E '^e: |error:|What went wrong|Execution failed|OutOfMemory|Caused by|not found|Could not' -A2 build.log | head -60 || true
+            grep -E '^e: |error:|What went wrong|Execution failed|OutOfMemory|Caused by|not found|Could not|Lint found' -A2 checks.log build.log 2>/dev/null | head -100 || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
       - uses: actions/upload-artifact@v4
         if: failure()
         with:
-          name: build-log
-          path: build.log
+          name: build-and-check-logs
+          path: |
+            checks.log
+            build.log
+            ${{ steps.loc.outputs.dir }}/app/build/reports/lint-results-debug.html
+            ${{ steps.loc.outputs.dir }}/app/build/intermediates/lint_intermediate_text_report/debug/lintReportDebug/lint-results-debug.txt
+          if-no-files-found: warn
 
       - uses: actions/upload-artifact@v4
         with:
