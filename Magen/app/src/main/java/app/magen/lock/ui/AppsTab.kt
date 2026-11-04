@@ -72,16 +72,19 @@ private class AppItem(val pkg: String, val label: String, val icon: ImageBitmap)
 
 private fun loadApps(ctx: Context): List<AppItem> {
     val pm = ctx.packageManager
-    val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-    return pm.queryIntentActivities(launcher, 0)
-        .filter { it.activityInfo.packageName != ctx.packageName }
-        .distinctBy { it.activityInfo.packageName }
-        .map {
-            AppItem(
-                it.activityInfo.packageName,
-                it.loadLabel(pm).toString(),
-                it.loadIcon(pm).toBitmap(96, 96).asImageBitmap(),
-            )
+    // Include installed packages even when they do not publish a launcher icon/activity.
+    // Magen itself is excluded so the protection UI cannot lock its own management surface.
+    return pm.getInstalledApplications(0)
+        .filter { it.packageName != ctx.packageName }
+        .distinctBy { it.packageName }
+        .mapNotNull { info ->
+            runCatching {
+                AppItem(
+                    info.packageName,
+                    info.loadLabel(pm).toString(),
+                    pm.getApplicationIcon(info).toBitmap(96, 96).asImageBitmap(),
+                )
+            }.getOrNull()
         }
         .sortedBy { it.label.lowercase() }
 }
