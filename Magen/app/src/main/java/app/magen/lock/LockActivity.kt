@@ -24,7 +24,7 @@ class LockActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         pkg = intent.getStringExtra(EXTRA_PKG).orEmpty()
-        onBackPressedDispatcher.addCallback(this) { goHome() }
+        onBackPressedDispatcher.addCallback(this) { /* Back cannot dismiss a blocking screen. */ }
         setContent {
             MagenTheme {
                 LockContent(
