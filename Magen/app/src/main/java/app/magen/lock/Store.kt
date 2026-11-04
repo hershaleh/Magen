@@ -62,7 +62,11 @@ object Store {
         blockedSettings = sp.getStringSet("blockedSettings", emptySet()) ?: emptySet()
         protect = sp.getBoolean("protect", true)
         relockOnScreenOff = sp.getBoolean("relock", true)
-        allowedUntil = sp.getLong("allowedUntil", 0L)
+        // The uninstall approval window exists only while the system uninstall screen is in the
+        // foreground. It must never survive a process restart: otherwise a force-stop/process death
+        // while that screen is open could leave protection paused after the user cancels.
+        allowedUntil = 0L
+        sp.edit().remove("allowedUntil").apply()
         level = sp.getString("level", "regular") ?: "regular"
         customKeywords = sp.getStringSet("customKeywords", emptySet()) ?: emptySet()
         biometric = sp.getBoolean("bio", false)
