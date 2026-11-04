@@ -326,7 +326,7 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
             }
         }
 
-        if (problems.isNotEmpty() && hasAnyRule()) {
+        if (problems.isNotEmpty() && hasAnyRule() && Store.blockingEnabled) {
             Surface(
                 onClick = { onNavigate(Tabs.PROTECTION) },
                 modifier = Modifier.fillMaxWidth(),
