@@ -450,5 +450,7 @@
     <string name="times_wrong_title">אחרי קודים שגויים</string>
     <string name="times_wrong_body">אחרי 5 קודים שגויים לוח המקשים נעצר ל־30 שניות. כל קוד שגוי נוסף מכפיל את ההשהיה, עד 15 דקות.</string>
     <string name="times_wrong_now">מושהה: %1$d שניות</string>
+    <string name="nav_blockings">חסימות</string>
+    <string name="nav_more">עוד</string>
 </resources>
 
