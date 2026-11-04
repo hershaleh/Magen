@@ -262,6 +262,7 @@ private fun NotificationsSettings() {
 
 @Composable
 private fun AppearanceSettings() {
+    val context = LocalContext.current
     var theme by rememberSaveable { mutableIntStateOf(2) }
     SettingsGroup("ערכת נושא") {
         listOf("בהיר", "כהה", "לפי הגדרות המכשיר").forEachIndexed { i, s ->
@@ -285,8 +286,8 @@ private fun AppearanceSettings() {
     SettingsGroup("תנועה וניווט") {
         SettingsSwitch("הפחתת אנימציות", "מכבד גם את הגדרות הנגישות של Android")
         listOf("סרגל תחתון", "סרגל עליון", "תפריט צד").forEachIndexed { i, s ->
-            Row(Modifier.fillMaxWidth().clickable { SpecUiPreferences.setNavigationMode(ctxForSettings(), if (i == 0) 1 else if (i == 1) 2 else 0) }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = SpecUiPreferences.navigationMode == (if (i == 0) 1 else if (i == 1) 2 else 0), onClick = { SpecUiPreferences.setNavigationMode(ctxForSettings(), if (i == 0) 1 else if (i == 1) 2 else 0) })
+            Row(Modifier.fillMaxWidth().clickable { SpecUiPreferences.setNavigationMode(context, if (i == 0) 1 else if (i == 1) 2 else 0) }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = SpecUiPreferences.navigationMode == (if (i == 0) 1 else if (i == 1) 2 else 0), onClick = { SpecUiPreferences.setNavigationMode(context, if (i == 0) 1 else if (i == 1) 2 else 0) })
                 Text(s)
             }
         }
@@ -294,7 +295,7 @@ private fun AppearanceSettings() {
 }
 
 @Composable
-private fun ctxForSettings(): Context = LocalContext.current
+private fun context: Context = LocalContext.current
 
 @Composable
 private fun SecuritySettings(ctx: Context, onChangePin: () -> Unit, onRecovery: () -> Unit) {
