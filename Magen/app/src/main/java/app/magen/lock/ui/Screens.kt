@@ -538,6 +538,12 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
     val removalPrefs = ctx.getSharedPreferences("magen", Context.MODE_PRIVATE)
     var normalBroken by remember { mutableStateOf(removalPrefs.getBoolean("normalRemovalBroken", false)) }
     val perms = rememberPerms()
+    var showStats by rememberSaveable { mutableStateOf(false) }
+    if (showStats) {
+        BackHandler { showStats = false }
+        ActivityLogScreen(onBack = { showStats = false })
+        return
+    }
 
     TabColumn {
         Text(stringResource(R.string.more_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -604,6 +610,14 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 6.dp),
             )
+        }
+
+        SectionCard(stringResource(R.string.stats_title), stringResource(R.string.stats_desc)) {
+            OutlinedButton(
+                onClick = { showStats = true },
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.stats_open)) }
         }
 
         SectionCard(stringResource(R.string.more_guides_title), stringResource(R.string.more_guides_desc)) {
