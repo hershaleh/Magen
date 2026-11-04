@@ -544,7 +544,6 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             StatusLine(apkLine(ctx, p, running), fix)
         }
 
-        HowToCard()
 
         SectionCard(stringResource(R.string.grp_self), stringResource(R.string.grp_self_desc)) {
             SwitchRow(
