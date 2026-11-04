@@ -111,7 +111,7 @@ fun TimesTab() {
                     )
                     ProfileStore.setWindows(next)
                 },
-                enabled = dayNumber in 1..7 && startMinute != null && endMinute != null &&
+                enabled = dayNumber != null && dayNumber in 1..7 && startMinute != null && endMinute != null &&
                     startMinute != endMinute && ProfileStore.profiles.any { it.id == selected },
             ) { Text(stringResource(R.string.schedule_add)) }
             if (ProfileStore.windows.isNotEmpty()) {
