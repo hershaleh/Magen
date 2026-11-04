@@ -285,7 +285,16 @@ private fun AppearanceSettings() {
     }
     Spacer(Modifier.size(10.dp))
     SettingsGroup("תנועה וניווט") {
-        SettingsSwitch("הפחתת אנימציות", "מכבד גם את הגדרות הנגישות של Android")
+        Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("הפעלת אנימציות", fontWeight = FontWeight.Medium)
+                Text("מכבד גם את הגדרות הפחתת התנועה של Android", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Switch(
+                checked = SpecUiPreferences.animationsEnabled,
+                onCheckedChange = { SpecUiPreferences.setAnimationsEnabled(context, it) },
+            )
+        }
         listOf("סרגל תחתון", "סרגל עליון", "תפריט צד").forEachIndexed { i, s ->
             Row(Modifier.fillMaxWidth().clickable { SpecUiPreferences.setNavigationMode(context, if (i == 0) 1 else if (i == 1) 2 else 0) }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 RadioButton(selected = SpecUiPreferences.navigationMode == (if (i == 0) 1 else if (i == 1) 2 else 0), onClick = { SpecUiPreferences.setNavigationMode(context, if (i == 0) 1 else if (i == 1) 2 else 0) })
