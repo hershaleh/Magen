@@ -1049,34 +1049,38 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
 fun BlockContent(@StringRes reason: Int, onClose: () -> Unit) {
     val ctx = LocalContext.current
     val reasonText = remember(reason) { runCatching { ctx.getString(reason) }.getOrNull() }
+    BackHandler(enabled = true) { /* The blocked screen cannot be dismissed with Back. */ }
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            Modifier.fillMaxSize().systemBarsPadding().padding(28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            ShieldBadge(104.dp)
-            Spacer(Modifier.height(24.dp))
-            Text(
-                stringResource(R.string.blocked_message),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            if (reasonText != null) {
-                Spacer(Modifier.height(10.dp))
+        Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                IconButton(onClick = onClose) {
+                    Icon(Icons.Filled.Home, contentDescription = "חזרה למסך הבית")
+                }
+            }
+            Column(
+                Modifier.weight(1f).fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+            ) {
+                ShieldBadge(104.dp)
+                Spacer(Modifier.height(24.dp))
                 Text(
-                    reasonText,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    stringResource(R.string.blocked_message),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
                 )
+                if (reasonText != null) {
+                    Spacer(Modifier.height(10.dp))
+                    Text(reasonText, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                }
+                Spacer(Modifier.height(14.dp))
+                Text(
+                    "מוגן באמצעות ${stringResource(R.string.app_name)}",
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.tertiary,
+                )
             }
-            Spacer(Modifier.height(28.dp))
-            Button(
-                onClick = onClose,
-                shape = RoundedCornerShape(18.dp),
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-            ) { Text(stringResource(R.string.ok)) }
         }
     }
 }
