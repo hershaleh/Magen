@@ -114,7 +114,10 @@ fun AppsTab() {
     var refreshKey by rememberSaveable { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refreshKey++ }
     // null while the list is still loading, so "no apps" is not shown by mistake.
-    val loaded by produceState<List<AppItem>?>(null, refreshKey) {\n        val refreshedApps = withContext(Dispatchers.Default) { loadApps(ctx) }\n        value = refreshedApps\n    }
+    val loaded by produceState<List<AppItem>?>(null, refreshKey) {
+        val refreshedApps = withContext(Dispatchers.Default) { loadApps(ctx) }
+        value = refreshedApps
+    }
     val apps = loaded
     var q by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableIntStateOf(FILTER_ALL) }
