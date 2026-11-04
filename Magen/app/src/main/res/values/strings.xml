@@ -478,5 +478,21 @@
     <string name="usage_limit_save">Save limit</string>
     <string name="usage_limit_remove">Remove limit</string>
     <string name="usage_today_used">Used today: %1$d minutes</string>
+    <string name="stats_title">Statistics</string>
+    <string name="stats_desc">Review recent protection activity and security events.</string>
+    <string name="stats_open">Open statistics and activity log</string>
+    <string name="activity_log_title">Recent activity</string>
+    <string name="activity_log_desc">Up to 500 recent events are stored locally. PINs and recovery codes are never recorded.</string>
+    <string name="activity_log_clear">Clear log</string>
+    <string name="activity_log_empty">No events have been recorded yet.</string>
+    <string name="event_pin_failed">Incorrect master code entered</string>
+    <string name="event_app_unlocked">App unlocked: %1$s</string>
+    <string name="event_app_locked">App lock enforced: %1$s</string>
+    <string name="event_usage_limit">Daily usage limit reached: %1$s</string>
+    <string name="event_block_method">Blocking method changed: %1$s</string>
+    <string name="event_app_unblocked">App blocking removed: %1$s</string>
+    <string name="event_schedule_changed">App schedule changed: %1$s</string>
+    <string name="event_usage_limit_changed">Usage limit changed: %1$s</string>
+    <string name="event_uninstall_approval">Uninstall approval window: %1$s</string>
 </resources>
 
