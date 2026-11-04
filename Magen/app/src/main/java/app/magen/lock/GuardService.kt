@@ -64,7 +64,7 @@ class GuardService : AccessibilityService() {
     private val recheck = Runnable {
         val p = recheckPkg ?: return@Runnable
         recheckPkg = null
-        if (Store.hasPin && Store.locked.containsKey(p) && activeIs(p)) enforceLock(p)
+        if (Store.hasPin && isManagedPackage(p) && activeIs(p)) enforceLock(p)
     }
 
     private var currentApp = ""
@@ -338,7 +338,7 @@ class GuardService : AccessibilityService() {
         if (state) onForeground(pkg, e.className?.toString())
         maintain()
 
-        if (Store.hasPin && Store.locked.containsKey(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
+        if (Store.hasPin && isManagedPackage(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
         updateCapture(pkg, state)
 
         val now = SystemClock.uptimeMillis()
@@ -398,10 +398,14 @@ class GuardService : AccessibilityService() {
 
     private fun activeIs(pkg: String) = rootInActiveWindow?.packageName?.toString() == pkg
 
+    /** Includes apps governed only by a schedule or usage quota, even without a permanent lock mode. */
+    private fun isManagedPackage(pkg: String): Boolean =
+        pkg in Store.locked || pkg in Store.appSchedules || pkg in Store.usageLimits
+
     private fun enforceLock(pkg: String) {
         // Magen must never lock itself, regardless of imported or persisted rules.
         if (pkg == packageName) return
-        val mode = Store.locked[pkg] ?: return
+        val mode = Store.locked[pkg]
         val decision = Store.scheduleDecision(pkg)
         val quotaReached = Store.isUsageLimitReached(pkg)
         if (!decision.locked && !quotaReached) return
