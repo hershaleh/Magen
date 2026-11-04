@@ -312,6 +312,18 @@ fun MainScaffold() {
     val navigationMode = SpecUiPreferences.navigationMode
     val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
     val scope = rememberCoroutineScope()
+    val openDrawer: () -> Unit = {
+        scope.launch {
+            if (SpecUiPreferences.shouldAnimate(context)) drawerState.open()
+            else drawerState.snapTo(DrawerValue.Open)
+        }
+    }
+    val closeDrawer: () -> Unit = {
+        scope.launch {
+            if (SpecUiPreferences.shouldAnimate(context)) drawerState.close()
+            else drawerState.snapTo(DrawerValue.Closed)
+        }
+    }
     val notificationsTab = 5
     LaunchedEffect(Unit) { SpecUiPreferences.load(context) }
     LaunchedEffect(Session.goTab) {
@@ -349,7 +361,7 @@ fun MainScaffold() {
             Triple(Tabs.SETTINGS, context.getString(R.string.nav_more), SettingsIcon),
         )
         BackHandler(enabled = drawerState.isOpen) {
-            scope.launch { drawerState.close() }
+            closeDrawer()
         }
         ModalNavigationDrawer(
             drawerState = drawerState,
@@ -375,7 +387,7 @@ fun MainScaffold() {
                                 selected = tab == target,
                                 onClick = {
                                     tab = target
-                                    scope.launch { drawerState.close() }
+                                    closeDrawer()
                                 },
                                 modifier = Modifier.padding(horizontal = 10.dp),
                             )
@@ -395,7 +407,7 @@ fun MainScaffold() {
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 if (navigationMode == 0) {
-                                    IconButton(onClick = { scope.launch { drawerState.open() } }) {
+                                    IconButton(onClick = openDrawer) {
                                         Icon(Icons.Filled.Menu, contentDescription = if (Lang.current().startsWith("en")) "Open menu" else "פתיחת תפריט")
                                     }
                                 }
