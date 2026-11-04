@@ -474,6 +474,11 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             StatusLine(selfLine(p, running), fix)
         }
 
+        SectionCard("הגנה מפני שינוי שעה ותאריך", "זיהוי ותיעוד שינויי זמן יתחברו בשלב הלוגיקה.") {
+            Text("מניעה מלאה של שינוי שעה דורשת Device Owner. שינוי שעה קדימה מעבר לאתחול אינו ניתן לאימות מלא ללא הרשאת ניהול מתאימה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            StatusLine(ownerLine(p), fix)
+        }
+
         SectionCard("ניטור והתאוששות", "בדיקת הרשאות, שירות הנגישות, ניהול המכשיר ומצב האכיפה בפועל.") {
             OutlinedButton(
                 onClick = onOpenHome,
