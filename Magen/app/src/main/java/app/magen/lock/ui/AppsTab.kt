@@ -277,7 +277,7 @@ private fun AppRow(a: AppItem, showPkg: Boolean, onOpen: () -> Unit) {
         }
     }
 }
- 
+
 
 @Composable
 private fun AppSettingsScreen(a: AppItem, onBack: () -> Unit) {
@@ -327,19 +327,22 @@ private fun AppSettingsScreen(a: AppItem, onBack: () -> Unit) {
 private fun AppScheduleEditor(packageName: String) {
     val schedule = Store.scheduleFor(packageName)
     val context = LocalContext.current
-    val hasUsageAccess by produceState(UsageTracker.hasAccess(context), packageName) {
+    val initialUsageAccess = UsageTracker.hasAccess(context)
+    val hasUsageAccess by produceState(initialUsageAccess, packageName) {
+        value = initialUsageAccess
         while (true) {
-            value = UsageTracker.hasAccess(context)
             delay(2_000)
+            value = UsageTracker.hasAccess(context)
         }
     }
     var usageMinutes by remember(packageName) {
         mutableStateOf(Store.usageLimitFor(packageName)?.toString().orEmpty())
     }
     val usedMillis by produceState(0L, packageName, hasUsageAccess) {
+        value = if (hasUsageAccess) UsageTracker.todayUsageMillis(context, packageName, forceRefresh = true) else 0L
         while (hasUsageAccess) {
-            value = UsageTracker.todayUsageMillis(context, packageName, forceRefresh = true)
             delay(10_000)
+            value = UsageTracker.todayUsageMillis(context, packageName, forceRefresh = true)
         }
     }
     var day by remember(packageName) { mutableStateOf("1") }
