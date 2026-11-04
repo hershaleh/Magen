@@ -165,6 +165,7 @@ fun TimesHub() {
 }
 
 @Composable
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 private fun WholeDeviceScheduleScreen() {
     var enabled by rememberSaveable { mutableStateOf(false) }
     var windowCount by rememberSaveable { mutableIntStateOf(1) }
