@@ -40,6 +40,7 @@ import android.os.SystemClock
 import app.magen.lock.ui.MagenTheme
 import app.magen.lock.ui.Root
 import app.magen.lock.ui.Session
+import app.magen.lock.ui.SpecUiPreferences
 import kotlinx.coroutines.delay
 
 class MainActivity : AppCompatActivity() {
@@ -49,10 +50,12 @@ class MainActivity : AppCompatActivity() {
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        SpecUiPreferences.load(this)
+        val animateUi = SpecUiPreferences.shouldAnimate(this)
         setContent {
             MagenTheme {
                 // Saved across rotation and language changes, so the opening screen shows once per start only.
-                var showLaunchScreen by rememberSaveable { mutableStateOf(true) }
+                var showLaunchScreen by rememberSaveable { mutableStateOf(animateUi) }
                 LaunchedEffect(Unit) {
                     if (showLaunchScreen) {
                         delay(1100)
@@ -69,11 +72,15 @@ class MainActivity : AppCompatActivity() {
                         val transition = rememberInfiniteTransition(label = "launch-spinner")
                         val rotation by transition.animateFloat(
                             initialValue = 0f,
-                            targetValue = 360f,
-                            animationSpec = infiniteRepeatable(
-                                animation = tween(850, easing = LinearEasing),
-                                repeatMode = RepeatMode.Restart,
-                            ),
+                            targetValue = if (animateUi) 360f else 0f,
+                            animationSpec = if (animateUi) {
+                                infiniteRepeatable(
+                                    animation = tween(850, easing = LinearEasing),
+                                    repeatMode = RepeatMode.Restart,
+                                )
+                            } else {
+                                tween(0)
+                            },
                             label = "launch-rotation",
                         )
                         Box(
