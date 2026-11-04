@@ -2,6 +2,7 @@ package app.magen.lock.ui
 
 import android.content.Context
 import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -63,9 +64,11 @@ import androidx.core.graphics.drawable.toBitmap
 import app.magen.lock.LockMode
 import app.magen.lock.ScheduleAction
 import app.magen.lock.WeeklyAppWindow
+import app.magen.lock.UsageTracker
 import app.magen.lock.R
 import app.magen.lock.Store
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 
 // ---- tab: apps -------------------------------------------------------------------------------
@@ -323,6 +326,22 @@ private fun AppSettingsScreen(a: AppItem, onBack: () -> Unit) {
 @Composable
 private fun AppScheduleEditor(packageName: String) {
     val schedule = Store.scheduleFor(packageName)
+    val context = LocalContext.current
+    val hasUsageAccess by produceState(UsageTracker.hasAccess(context), packageName) {
+        while (true) {
+            value = UsageTracker.hasAccess(context)
+            delay(2_000)
+        }
+    }
+    var usageMinutes by remember(packageName) {
+        mutableStateOf(Store.usageLimitFor(packageName)?.toString().orEmpty())
+    }
+    val usedMillis by produceState(0L, packageName, hasUsageAccess) {
+        while (hasUsageAccess) {
+            value = UsageTracker.todayUsageMillis(context, packageName, forceRefresh = true)
+            delay(10_000)
+        }
+    }
     var day by remember(packageName) { mutableStateOf("1") }
     var start by remember(packageName) { mutableStateOf("08:00") }
     var end by remember(packageName) { mutableStateOf("16:00") }
@@ -400,6 +419,37 @@ private fun AppScheduleEditor(packageName: String) {
         }
         Text(stringResource(R.string.schedule_calendar_later), style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        androidx.compose.material3.HorizontalDivider()
+        Text(stringResource(R.string.usage_limit_title), style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(R.string.usage_limit_desc), style = MaterialTheme.typography.bodySmall)
+        if (!hasUsageAccess) {
+            Text(stringResource(R.string.usage_permission_needed), color = MaterialTheme.colorScheme.error)
+            OutlinedButton(
+                onClick = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.usage_open_settings)) }
+        } else {
+            Text(stringResource(R.string.usage_today_used, usedMillis / 60_000L))
+            OutlinedTextField(
+                value = usageMinutes,
+                onValueChange = { usageMinutes = it.filter(Char::isDigit).take(4) },
+                label = { Text(stringResource(R.string.usage_limit_minutes)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(Sp.s)) {
+                Button(
+                    onClick = { Store.setUsageLimit(packageName, usageMinutes.toIntOrNull()) },
+                    enabled = usageMinutes.toIntOrNull() in 1..1440,
+                    modifier = Modifier.weight(1f),
+                ) { Text(stringResource(R.string.usage_limit_save)) }
+                TextButton(onClick = {
+                    Store.setUsageLimit(packageName, null)
+                    usageMinutes = ""
+                }) { Text(stringResource(R.string.app_unblock)) }
+            }
+        }
     }
 }
 
