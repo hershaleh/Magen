@@ -120,97 +120,158 @@ fun TimesHub() {
 }
 @Composable
 private fun QuotasScreen() {
+    var selectedApp by rememberSaveable { mutableIntStateOf(0) }
     var minutes by rememberSaveable { mutableIntStateOf(60) }
     var groupMinutes by rememberSaveable { mutableIntStateOf(120) }
-    SpecPage("מכסות שימוש", "הגדרת זמן שימוש יומי לאפליקציה בודדת או לקבוצת אפליקציות.") {
-        SpecCard("מכסה אישית לאפליקציה", "הזמן נספר רק כשהאפליקציה בחזית. 0 דקות פירושו חסימה במשך כל היום.") {
-            SpecField("בחירת אפליקציה", "YouTube")
-            Text("מכסה יומית: $minutes דקות")
+    var warningMinutes by rememberSaveable { mutableIntStateOf(5) }
+    var groupSelected by rememberSaveable { mutableIntStateOf(0) }
+    val apps = listOf("דפדפן", "YouTube", "Telegram", "משחקים")
+    val groups = listOf("רשתות חברתיות", "וידאו", "משחקים")
+    SpecPage("מכסות שימוש", "מכסה אישית לכל אפליקציה ומכסה משותפת לקבוצה. השימוש נספר רק כשהאפליקציה בחזית ומתאפס בחצות המקומית.") {
+        SpecCard("בחירת אפליקציה") {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                apps.forEachIndexed { i, app -> FilterChip(selected = selectedApp == i, onClick = { selectedApp = i }, label = { Text(app) }) }
+            }
+            Text("שימוש היום: 42 דקות מתוך $minutes דקות", style = MaterialTheme.typography.bodyMedium)
+            Text("נותרו: ${(minutes - 42).coerceAtLeast(0)} דקות", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        SpecCard("מכסה אישית — ${apps[selectedApp]}", "0 דקות פירושן חסימה לכל היום. שינוי מכסה אינו מאפס שימוש שכבר נצבר.") {
+            Text(if (minutes == 0) "חסימה מלאה למשך היום" else "מכסה יומית: $minutes דקות")
             Slider(value = minutes.toFloat(), onValueChange = { minutes = it.toInt() }, valueRange = 0f..360f, steps = 35)
-            SpecToggle("התראה 5 דקות לפני סיום", initial = true)
+            SpecToggle("הפעלת מכסה אישית", initial = true)
             SpecToggle("השהיית המכסה האישית")
-            SpecToggle("מכסה שונה לפי יום בשבוע")
         }
-        SpecCard("קבוצות אפליקציות", "כל אפליקציה יכולה להשתייך לקבוצה אחת לכל היותר. אפשר להפעיל מכסה אישית וקבוצתית יחד.") {
-            SpecField("שם הקבוצה", "רשתות חברתיות")
-            Text("מכסה קבוצתית: $groupMinutes דקות")
+        SpecCard("התראה לפני סיום") {
+            Text("התראה $warningMinutes דקות לפני סיום המכסה")
+            Slider(value = warningMinutes.toFloat(), onValueChange = { warningMinutes = it.toInt() }, valueRange = 1f..30f, steps = 28)
+            Text("ברירת המחדל היא 5 דקות. כשהמכסה מסתיימת, החסימה אמורה להיכנס לתוקף מיד גם אם האפליקציה פתוחה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        SpecCard("קבוצות מכסה") {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                groups.forEachIndexed { i, group -> FilterChip(selected = groupSelected == i, onClick = { groupSelected = i }, label = { Text(group) }) }
+            }
+            SpecField("שם הקבוצה", groups[groupSelected])
+            Text("מכסה משותפת: $groupMinutes דקות")
             Slider(value = groupMinutes.toFloat(), onValueChange = { groupMinutes = it.toInt() }, valueRange = 0f..360f, steps = 35)
-            SpecToggle("השהיית מכסה לקבוצה")
-            Text("אם המכסה האישית או הקבוצתית מסתיימת — האפליקציה נחסמת. מעבר קבוצה אינו מאפס שימוש שכבר נצבר.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("שימוש קבוצתי היום: 86 דקות מתוך $groupMinutes", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("כל אפליקציה יכולה להשתייך לקבוצה אחת לכל היותר. אפשר להפעיל גם מכסה אישית וגם קבוצתית; אם אחת מהן מסתיימת — האפליקציה נחסמת.", style = MaterialTheme.typography.bodySmall)
         }
-        SpecCard("אפליקציות בקבוצה") { listOf("דפדפן", "YouTube", "Telegram", "משחקים").forEach { SpecToggle(it) } }
-        SpecCard("הפסקות") {
-            SpecToggle("הפסקה מתוזמנת משהה את המכסה")
-            SpecField("שעת התחלה", "13:00")
-            SpecField("שעת סיום", "14:00")
-            Text("הפסקה משהה את ספירת המכסה בלבד; היא אינה מבטלת חסימות אחרות.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SpecCard("שיוך אפליקציות לקבוצה") {
+            apps.forEach { app -> SpecToggle(app, "שיוך לקבוצה הנבחרת") }
+            Text("מעבר קבוצה חל מיד: שימוש קודם נשאר בקבוצה הקודמת, ושימוש חדש נספר בקבוצה החדשה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        SpecCard("השהיות והפסקות") {
+            SpecToggle("השהיית המכסה הקבוצתית")
+            SpecToggle("הוספת הפסקה מתוזמנת")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.weight(1f)) { SpecField("התחלה", "13:00") }
+                Column(Modifier.weight(1f)) { SpecField("סיום", "14:00") }
+            }
+            Text("השהיה של מכסה אישית אינה משהה מכסה קבוצתית, ולהפך. הפסקה אינה מבטלת חסימות אחרות.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 @Composable
 private fun SchedulesScreen() {
-    SpecPage("לוחות זמנים", "לוח נפרד לכל אפליקציה. חלונות יכולים לחצות חצות, וניתן להגדיר חריגים לתאריכים מסוימים.") {
+    var selectedApp by rememberSaveable { mutableIntStateOf(0) }
+    var selectedDays by rememberSaveable { mutableStateOf(setOf("ראשון", "שני", "שלישי", "רביעי", "חמישי")) }
+    var windowCount by rememberSaveable { mutableIntStateOf(1) }
+    var exceptionMode by rememberSaveable { mutableIntStateOf(0) }
+    val apps = listOf("דפדפן", "YouTube", "Telegram", "משחקים")
+    val days = listOf("ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת")
+    SpecPage("לוחות זמנים", "הגדר חלונות שבהם אפליקציה מותרת או חסומה. ניתן ליצור כמה חלונות ביום, כולל חלונות שחוצים חצות.") {
         SpecCard("בחירת אפליקציה") {
-            SpecField("חיפוש אפליקציה")
-            var selectedApp by rememberSaveable { mutableIntStateOf(0) }
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf("דפדפן", "YouTube", "Telegram").forEachIndexed { i, label ->
-                    FilterChip(selected = selectedApp == i, onClick = { selectedApp = i }, label = { Text(label) })
+                apps.forEachIndexed { i, app -> FilterChip(selected = selectedApp == i, onClick = { selectedApp = i }, label = { Text(app) }) }
+            }
+        }
+        SpecCard("ימים פעילים") {
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                days.forEach { day ->
+                    FilterChip(selected = day in selectedDays, onClick = {
+                        selectedDays = if (day in selectedDays) selectedDays - day else selectedDays + day
+                    }, label = { Text(day) })
                 }
             }
         }
-        SpecCard("ימים ושעות") {
-            listOf("ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת").forEach { SpecToggle(it) }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Column(Modifier.weight(1f)) { SpecField("משעה", "08:00") }
-                Column(Modifier.weight(1f)) { SpecField("עד שעה", "20:00") }
+        repeat(windowCount) { index ->
+            SpecCard("חלון זמן ${index + 1}") {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.weight(1f)) { SpecField("משעה", if (index == 0) "08:00" else "16:00") }
+                    Column(Modifier.weight(1f)) { SpecField("עד שעה", if (index == 0) "13:00" else "20:00") }
+                }
+                SpecToggle("חלון זה חוצה חצות", initial = false)
+                SpecToggle("חסימה בכל היום", initial = false)
             }
-            SpecToggle("חלון זה חוצה חצות")
-            SpecToggle("כל היום")
-            Text("אפשר להגדיר כמה חלונות לכל יום, כולל חלונות שחוצים חצות.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        SpecCard("הפסקות וחריגים") {
-            SpecToggle("הוספת הפסקה קבועה")
-            SpecField("תחילת הפסקה", "13:00")
-            SpecField("סיום הפסקה", "14:00")
-            SpecField("תאריך חריג")
-            var exceptionMode by rememberSaveable { mutableIntStateOf(0) }
+        SpecCard("ניהול חלונות") {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(selected = exceptionMode == 0, onClick = { exceptionMode = 0 }, label = { Text("ללא חריג") })
-                FilterChip(selected = exceptionMode == 1, onClick = { exceptionMode = 1 }, label = { Text("לחסום") })
-                FilterChip(selected = exceptionMode == 2, onClick = { exceptionMode = 2 }, label = { Text("לאפשר") })
+                Button(onClick = { windowCount = (windowCount + 1).coerceAtMost(5) }, enabled = windowCount < 5) { Text("הוספת חלון") }
+                TextButton(onClick = { windowCount = (windowCount - 1).coerceAtLeast(1) }, enabled = windowCount > 1) { Text("הסרת חלון") }
             }
-            Text("כאשר חריג חוסם וחריג מתיר חופפים — החסימה גוברת.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("אפשר להגדיר חלונות נפרדים לאותו יום. חלונות חופפים אינם יוצרים היתר נוסף.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        SpecCard("הפסקות וחריגים לתאריכים") {
+            SpecToggle("הוספת הפסקה קבועה")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.weight(1f)) { SpecField("תחילת הפסקה", "13:00") }
+                Column(Modifier.weight(1f)) { SpecField("סיום הפסקה", "14:00") }
+            }
+            SpecField("תאריך חריג", "DD/MM/YYYY")
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("ללא חריג", "לחסום", "לאפשר").forEachIndexed { i, label ->
+                    FilterChip(selected = exceptionMode == i, onClick = { exceptionMode = i }, label = { Text(label) })
+                }
+            }
+            Text("כאשר לוחות זמנים, חריגים או מכסות מתנגשים — החסימה גוברת. שבת וחגים מנוהלים בנפרד.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
 @Composable
 private fun ShabbatScreen() {
+    var enabled by rememberSaveable { mutableStateOf(true) }
     var candles by rememberSaveable { mutableIntStateOf(18) }
-    var angle by rememberSaveable { mutableFloatStateOf(8.5f) }
-    SpecPage("שבת וחגים", "חסימה כללית של האפליקציות המנוהלות. ההגדרה גוברת על מכסות ולוחות זמנים רגילים.") {
-        SpecCard("מיקום ולוח שנה") {
+    var exitOffset by rememberSaveable { mutableIntStateOf(0) }
+    var locationMode by rememberSaveable { mutableIntStateOf(0) }
+    var secondDay by rememberSaveable { mutableIntStateOf(0) }
+    SpecPage("חסימה בשבתות ובחגים יהודיים", "חסימה נפרדת של האפליקציות המנוהלות בשבת ובימים טובים שבהם אסורה מלאכה. חול המועד אינו נחסם.") {
+        SpecCard("הפעלת החסימה") {
+            SpecToggle("חסימה בשבתות ובחגים יהודיים", initial = enabled)
+            Text("החסימה גוברת על מכסות, השהיות ולוחות זמנים רגילים. מגן נשארת זמינה במצב קריאה בלבד, ללא שינוי הגדרות.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        SpecCard("מיקום ומנהג") {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FilterChip(selected = locationMode == 0, onClick = { locationMode = 0 }, label = { Text("מיקום המכשיר") })
+                FilterChip(selected = locationMode == 1, onClick = { locationMode = 1 }, label = { Text("בחירה ידנית") })
+            }
             SpecField("מדינה", "ישראל")
-            SpecField("עיר או מיקום", "בחירת מיקום מהמכשיר")
-            SpecToggle("שימוש במיקום המכשיר")
-            SpecToggle("יום טוב שני בישראל", initial = false)
-            Text("חול המועד אינו נחסם.")
+            SpecField("עיר", "בחירת עיר או מיקום")
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                FilterChip(selected = secondDay == 0, onClick = { secondDay = 0 }, label = { Text("יום טוב שני: כבוי") })
+                FilterChip(selected = secondDay == 1, onClick = { secondDay = 1 }, label = { Text("יום טוב שני: פעיל") })
+            }
+            Text("לוח עברי לפי מנהג ישראל. חול המועד אינו נכלל בחסימה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         SpecCard("כניסת שבת וחג") {
-            Text("הדלקת נרות: $candles דקות לפני השקיעה")
+            Text("הקדמת תחילת החסימה: $candles דקות לפני השקיעה")
             Slider(value = candles.toFloat(), onValueChange = { candles = it.toInt() }, valueRange = 0f..60f, steps = 59)
             SpecToggle("התראה 30 דקות לפני תחילת החסימה", initial = true)
-            SpecToggle("בדיקת תקינות 30 דקות לפני הכניסה", initial = true)
-            Text("אין התראת סיום. חול המועד אינו נחסם; יום טוב שני בישראל כבוי כברירת מחדל.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            SpecField("תוספת ידנית לכניסה (דקות)", "0")
         }
         SpecCard("יציאת שבת וחג") {
-            Text("זווית צאת הכוכבים: ${"%.1f".format(angle)} מעלות")
-            Slider(value = angle, onValueChange = { angle = it }, valueRange = 4f..12f)
-            SpecToggle("חישוב לפי צאת הכוכבים")
+            Text("תוספת ידנית ליציאה: $exitOffset דקות")
+            Slider(value = exitOffset.toFloat(), onValueChange = { exitOffset = it.toInt() }, valueRange = -30f..90f, steps = 119)
+            SpecToggle("חישוב יציאה לפי צאת הכוכבים", initial = true)
+            SpecField("שיטת חישוב / זווית", "בחירת שיטה")
         }
-        SpecCard("בזמן שבת וחג") {
-            SpecToggle("הצגת מגן במצב קריאה בלבד", initial = true)
-            Text("שירותי מערכת חיוניים נשארים זמינים. אתחול במהלך שבת או חג אמור להחיל את החסימה מחדש. שינוי מיקום לא יבטל חסימה שכבר החלה.")
+        SpecCard("לוח שנה מקומי ועבודה ללא אינטרנט") {
+            SpecToggle("שמירת לוח עברי מחושב מראש במכשיר", initial = true)
+            Text("הלוח המקומי מאפשר אכיפה גם ללא חיבור לאינטרנט. יש להתריע מראש לפני שתוקף הכיסוי המקומי מסתיים.", style = MaterialTheme.typography.bodySmall)
+            Text("כיסוי לוח שנה לדוגמה: עד סוף 2028", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        SpecCard("במהלך שבת וחג") {
+            SpecToggle("מגן במצב קריאה בלבד", initial = true)
+            Text("אתחול במהלך החסימה אמור להחיל אותה מחדש. שינוי מיקום אינו מבטל חסימה שכבר החלה. אם לא ניתן להפעיל חסימה, יש לזהות, לנסות שוב, להתריע ולתעד — ולא להציג מצב פעיל כוזב.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
