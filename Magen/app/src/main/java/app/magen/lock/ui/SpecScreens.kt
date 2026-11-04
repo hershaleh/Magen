@@ -172,6 +172,7 @@ private fun QuotasScreen() {
     }
 }
 @Composable
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 private fun SchedulesScreen() {
     var selectedApp by rememberSaveable { mutableIntStateOf(0) }
     var selectedDays by rememberSaveable { mutableStateOf(setOf("ראשון", "שני", "שלישי", "רביעי", "חמישי")) }
