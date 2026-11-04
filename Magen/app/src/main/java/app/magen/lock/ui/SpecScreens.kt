@@ -33,6 +33,7 @@ import app.magen.lock.Store
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import android.content.Context
+import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
@@ -40,15 +41,32 @@ private val gap = 12.dp
 
 /** Presentation preference; enforcement settings are deliberately kept elsewhere. */
 object SpecUiPreferences {
-    var navigationMode by mutableIntStateOf(1) // 0 = side rail, 1 = bottom, 2 = top
+    var navigationMode by mutableIntStateOf(1) // 0 = overlay drawer, 1 = bottom, 2 = top
+    var animationsEnabled by mutableStateOf(true)
 
     fun load(context: Context) {
-        navigationMode = context.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).getInt("navigationMode", 1).coerceIn(0, 2)
+        val prefs = context.getSharedPreferences("magen_ui", Context.MODE_PRIVATE)
+        navigationMode = prefs.getInt("navigationMode", 1).coerceIn(0, 2)
+        animationsEnabled = prefs.getBoolean("animationsEnabled", true)
     }
 
     fun setNavigationMode(context: Context, mode: Int) {
         navigationMode = mode.coerceIn(0, 2)
         context.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).edit().putInt("navigationMode", navigationMode).apply()
+    }
+
+    fun setAnimationsEnabled(context: Context, enabled: Boolean) {
+        animationsEnabled = enabled
+        context.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).edit().putBoolean("animationsEnabled", enabled).apply()
+    }
+
+    fun shouldAnimate(context: Context): Boolean {
+        if (!animationsEnabled) return false
+        return runCatching {
+            val resolver = context.contentResolver
+            Settings.Global.getFloat(resolver, Settings.Global.ANIMATOR_DURATION_SCALE, 1f) > 0f &&
+                Settings.Global.getFloat(resolver, Settings.Global.TRANSITION_ANIMATION_SCALE, 1f) > 0f
+        }.getOrDefault(true)
     }
 }
 
