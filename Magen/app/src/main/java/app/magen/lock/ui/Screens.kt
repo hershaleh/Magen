@@ -300,7 +300,9 @@ fun MainScaffold() {
     var changingPin by remember { mutableStateOf(false) }
     var recoveryMode by remember { mutableStateOf(false) }
     var specRoute by rememberSaveable { mutableStateOf<String?>(null) }
+    val context = LocalContext.current
     val navigationMode = SpecUiPreferences.navigationMode
+    LaunchedEffect(Unit) { SpecUiPreferences.load(context) }
     LaunchedEffect(Session.goTab) {
         Session.goTab?.let {
             tab = it
