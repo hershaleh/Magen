@@ -73,14 +73,10 @@ class MainActivity : AppCompatActivity() {
                         val rotation by transition.animateFloat(
                             initialValue = 0f,
                             targetValue = if (animateUi) 360f else 0f,
-                            animationSpec = if (animateUi) {
-                                infiniteRepeatable(
-                                    animation = tween(850, easing = LinearEasing),
-                                    repeatMode = RepeatMode.Restart,
-                                )
-                            } else {
-                                tween(0)
-                            },
+                            animationSpec = infiniteRepeatable(
+                                animation = tween(850, easing = LinearEasing),
+                                repeatMode = RepeatMode.Restart,
+                            ),
                             label = "launch-rotation",
                         )
                         Box(
