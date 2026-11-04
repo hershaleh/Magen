@@ -1,7 +1,6 @@
 package app.magen.lock.ui
 
 import android.content.Context
-import android.content.Intent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -68,7 +67,14 @@ import kotlinx.coroutines.withContext
 
 // ---- tab: apps -------------------------------------------------------------------------------
 
-private class AppItem(val pkg: String, val label: String, val icon: ImageBitmap)
+private class AppItem(val pkg: String, val label: String, val icon: ImageBitmap, val manageable: Boolean)
+
+private val ESSENTIAL_PACKAGES = setOf(
+    "android", "com.android.systemui", "com.android.settings",
+    "com.google.android.permissioncontroller", "com.android.permissioncontroller",
+    "com.android.packageinstaller", "com.google.android.packageinstaller",
+    "com.android.providers.settings", "com.android.phone", "com.android.server.telecom",
+)
 
 private fun loadApps(ctx: Context): List<AppItem> {
     val pm = ctx.packageManager
@@ -83,6 +89,7 @@ private fun loadApps(ctx: Context): List<AppItem> {
                     info.packageName,
                     info.loadLabel(pm).toString(),
                     pm.getApplicationIcon(info).toBitmap(96, 96).asImageBitmap(),
+                    info.packageName !in ESSENTIAL_PACKAGES,
                 )
             }.getOrNull()
         }
@@ -244,7 +251,7 @@ private fun AppRow(a: AppItem, showPkg: Boolean, onOpenDetails: () -> Unit) {
     val tint = if (mode != null) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else Color.Transparent
     Row(
         Modifier.fillMaxWidth().background(tint)
-            .clickable(onClick = onOpenDetails)
+            .clickable(enabled = a.manageable, onClick = onOpenDetails)
             .heightIn(min = 56.dp)
             .padding(horizontal = Sp.m, vertical = Sp.s),
         verticalAlignment = Alignment.CenterVertically,
@@ -253,6 +260,9 @@ private fun AppRow(a: AppItem, showPkg: Boolean, onOpenDetails: () -> Unit) {
         Image(a.icon, null, Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)))
         Column(Modifier.weight(1f)) {
             Text(a.label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyLarge)
+            if (!a.manageable) {
+                Text("רכיב מערכת חיוני — לא ניתן לנעילה", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
+            }
             if (showPkg) {
                 Text(
                     a.pkg,
@@ -265,7 +275,7 @@ private fun AppRow(a: AppItem, showPkg: Boolean, onOpenDetails: () -> Unit) {
             }
         }
         ModePill(mode)
-        IconButton(onClick = {
+        IconButton(enabled = a.manageable, onClick = {
             Store.setMode(a.pkg, when (mode) {
                 null -> LockMode.PIN
                 LockMode.PIN -> LockMode.MAIN
