@@ -231,12 +231,12 @@ private fun SettingsAction(title: String, summary: String? = null, action: () ->
 
 @Composable
 private fun NotificationsSettings() {
+    val context = LocalContext.current
     SettingsGroup("ניהול התראות") {
         SettingsSwitch("התראות מגן", "הודעות על מצב ההגנה ושינויים חשובים", true)
         HorizontalDivider()
         SettingsAction("הרשאת התראות ב־Android", "פתיחת הגדרות ההתראות של המכשיר") {
-            val c = androidx.compose.ui.platform.LocalContext.current
-            runCatching { c.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, c.packageName)) }
+            runCatching { context.startActivity(Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)) }
         }
         HorizontalDivider()
         SettingsSwitch("התראה קבועה על מצב ההגנה", "הצגת מצב השירות והגנה ברקע", true)
