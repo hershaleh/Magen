@@ -396,7 +396,10 @@ class GuardService : AccessibilityService() {
     private fun activeIs(pkg: String) = rootInActiveWindow?.packageName?.toString() == pkg
 
     private fun enforceLock(pkg: String) {
+        // Magen must never lock itself, regardless of imported or persisted rules.
+        if (pkg == packageName) return
         val mode = Store.locked[pkg] ?: return
+        if (!Store.scheduleDecision(pkg).locked) return
         if (pkg in tempUnlocked) return
         if (mode == LockMode.MAIN && pkg in Store.mainUnlocked) return
         val now = SystemClock.uptimeMillis()
