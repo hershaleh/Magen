@@ -2,6 +2,7 @@ package app.magen.lock.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -78,7 +79,9 @@ fun BlockingsHub() {
                 FilterChip(selected = selected == i, onClick = { selected = i }, label = { Text(label) })
             }
         }
-        when (selected) { 0 -> AppsTab(); 1 -> ProtectionTab(onOpenHome = {}); else -> CustomRulesScreen() }
+        Box(Modifier.weight(1f)) {
+            when (selected) { 0 -> AppsTab(); 1 -> ProtectionTab(onOpenHome = {}); else -> CustomRulesScreen() }
+        }
     }
 }
 @Composable
@@ -91,7 +94,9 @@ fun TimesHub() {
                 FilterChip(selected = selected == i, onClick = { selected = i }, label = { Text(label) })
             }
         }
-        when (selected) { 0 -> QuotasScreen(); 1 -> SchedulesScreen(); 2 -> ShabbatScreen(); else -> TimesTab() }
+        Box(Modifier.weight(1f)) {
+            when (selected) { 0 -> QuotasScreen(); 1 -> SchedulesScreen(); 2 -> ShabbatScreen(); else -> TimesTab() }
+        }
     }
 }
 @Composable
