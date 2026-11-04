@@ -22,6 +22,7 @@ import androidx.compose.material3.Slider
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -29,6 +30,9 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
+import app.magen.lock.Catalog
+import app.magen.lock.Store
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -82,7 +86,7 @@ fun BlockingsHub() {
             }
         }
         Box(Modifier.weight(1f)) {
-            when (selected) { 0 -> AppsTab(); 1 -> ProtectionTab(onOpenHome = {}); else -> CustomRulesScreen() }
+            when (selected) { 0 -> AppsTab(); 1 -> SystemComponentsScreen(); else -> CustomRulesScreen() }
         }
     }
 }
@@ -175,17 +179,52 @@ private fun ShabbatScreen() {
     }
 }
 @Composable
+private fun SystemComponentsScreen() {
+    var query by rememberSaveable { mutableStateOf("") }
+    val groups = Catalog.settings.groupBy { it.group }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Text("חסימת רכיבי הגדרות Android", style = MaterialTheme.typography.titleLarge)
+        Text("58 קטגוריות מתוך קטלוג ההגדרות הקיים. רמת האכיפה תלויה במכשיר ובגרסת Android.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("חיפוש בהגדרות") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        groups.forEach { (group, categories) ->
+            SpecCard(stringResource(group.title)) {
+                categories.filter { cat ->
+                    query.isBlank() || stringResource(cat.title).contains(query, ignoreCase = true) ||
+                        cat.id.contains(query, ignoreCase = true) || cat.keywords.any { it.contains(query, ignoreCase = true) }
+                }.forEach { cat ->
+                    SwitchListRow(
+                        title = stringResource(cat.title),
+                        checked = cat.id in Store.blockedSettings,
+                        onChange = { Store.setBlockedSetting(cat.id, it) },
+                        supporting = if (cat.restriction != null) "קיימת גם מגבלת Android מערכתית במצב המתאים" else "מבוסס התאמת כותרת דרך שירות הנגישות",
+                        icon = cat.icon,
+                    )
+                    RowDivider()
+                }
+            }
+        }
+    }
+}
+
+@Composable
 private fun CustomRulesScreen() {
+    var keyword by rememberSaveable { mutableStateOf("") }
     SpecPage("כללים מותאמים אישית", "כללים נוספים מעבר לחסימת אפליקציות ולהגדרות המערכת.") {
         SpecCard("מילות מפתח וכותרות") {
-            SpecField("מילת מפתח או כותרת מסך")
-            Button(onClick = {}) { Text("הוספת כלל (תצוגה בלבד)") }
+            OutlinedTextField(value = keyword, onValueChange = { keyword = it }, label = { Text("מילת מפתח או כותרת מסך") }, modifier = Modifier.fillMaxWidth())
+            Button(onClick = { Store.addKeyword(keyword); keyword = "" }, enabled = keyword.isNotBlank()) { Text("הוספת כלל") }
+            Store.customKeywords.forEach { item ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text(item, Modifier.weight(1f))
+                    TextButton(onClick = { Store.removeKeyword(item) }) { Text("הסרה") }
+                }
+            }
             Text("כלל מותאם צריך להיות ממוקד כדי שלא לחסום מסכים שאינם קשורים.")
         }
         SpecCard("VideoStop", "זיהוי מסכי וידאו ונגנים באפליקציות ובדפדפן.") {
             SpecToggle("הפעלת VideoStop")
             SpecField("אפליקציות להחרגה")
-            Text("זיהוי וידאו אינו מוחלט ודורש בדיקות תאימות וביצועים.")
+            Text("VideoStop עדיין לא מחובר. זיהוי וידאו אינו מוחלט ודורש בדיקות תאימות וביצועים.")
         }
     }
 }
