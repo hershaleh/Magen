@@ -18,6 +18,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -284,7 +286,7 @@ private fun AppDetailsScreen(a: AppItem, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
     val mode = Store.locked[a.pkg]
-    Column(Modifier.fillMaxSize().padding(Sp.l), verticalArrangement = Arrangement.spacedBy(Sp.m)) {
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Sp.l), verticalArrangement = Arrangement.spacedBy(Sp.m)) {
         TextButton(onClick = onBack) { Text("חזרה לרשימת האפליקציות") }
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
             Image(a.icon, null, Modifier.size(52.dp).clip(RoundedCornerShape(12.dp)))
