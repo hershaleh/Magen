@@ -70,7 +70,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.ui.unit.width
 import androidx.compose.material3.rememberDrawerState
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.ModalNavigationDrawer
@@ -347,7 +346,7 @@ fun MainScaffold() {
             Triple(Tabs.TIMES, context.getString(R.string.nav_times), Icons.Filled.Schedule),
             Triple(Tabs.PROTECTION, context.getString(R.string.nav_protection), Icons.Filled.Shield),
             Triple(notificationsTab, notificationLabel, Icons.Filled.Notifications),
-            Triple(Tabs.SETTINGS, context.getString(R.string.nav_more), Icons.Filled.Settings),
+            Triple(Tabs.SETTINGS, context.getString(R.string.nav_more), SettingsIcon),
         )
         BackHandler(enabled = drawerState.isOpen) {
             scope.launch { drawerState.close() }
