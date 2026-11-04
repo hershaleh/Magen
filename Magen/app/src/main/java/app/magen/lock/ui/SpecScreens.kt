@@ -136,12 +136,14 @@ private fun QuotasScreen() {
             Text("מכסה קבוצתית: $groupMinutes דקות")
             Slider(value = groupMinutes.toFloat(), onValueChange = { groupMinutes = it.toInt() }, valueRange = 0f..360f, steps = 35)
             SpecToggle("השהיית מכסה לקבוצה")
+            Text("אם המכסה האישית או הקבוצתית מסתיימת — האפליקציה נחסמת. מעבר קבוצה אינו מאפס שימוש שכבר נצבר.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         SpecCard("אפליקציות בקבוצה") { listOf("דפדפן", "YouTube", "Telegram", "משחקים").forEach { SpecToggle(it) } }
         SpecCard("הפסקות") {
             SpecToggle("הפסקה מתוזמנת משהה את המכסה")
             SpecField("שעת התחלה", "13:00")
             SpecField("שעת סיום", "14:00")
+            Text("הפסקה משהה את ספירת המכסה בלבד; היא אינה מבטלת חסימות אחרות.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -165,6 +167,7 @@ private fun SchedulesScreen() {
             }
             SpecToggle("חלון זה חוצה חצות")
             SpecToggle("כל היום")
+            Text("אפשר להגדיר כמה חלונות לכל יום, כולל חלונות שחוצים חצות.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         SpecCard("הפסקות וחריגים") {
             SpecToggle("הוספת הפסקה קבועה")
@@ -177,6 +180,7 @@ private fun SchedulesScreen() {
                 FilterChip(selected = exceptionMode == 1, onClick = { exceptionMode = 1 }, label = { Text("לחסום") })
                 FilterChip(selected = exceptionMode == 2, onClick = { exceptionMode = 2 }, label = { Text("לאפשר") })
             }
+            Text("כאשר חריג חוסם וחריג מתיר חופפים — החסימה גוברת.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
     }
 }
@@ -197,6 +201,7 @@ private fun ShabbatScreen() {
             Slider(value = candles.toFloat(), onValueChange = { candles = it.toInt() }, valueRange = 0f..60f, steps = 59)
             SpecToggle("התראה 30 דקות לפני תחילת החסימה", initial = true)
             SpecToggle("בדיקת תקינות 30 דקות לפני הכניסה", initial = true)
+            Text("אין התראת סיום. חול המועד אינו נחסם; יום טוב שני בישראל כבוי כברירת מחדל.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         SpecCard("יציאת שבת וחג") {
             Text("זווית צאת הכוכבים: ${"%.1f".format(angle)} מעלות")
@@ -281,13 +286,23 @@ private fun SecurityLogScreen() {
             SpecField("חיפוש ביומן")
             SpecToggle("הצגת אירועים שלא נקראו בלבד")
         }
+        SpecCard("מצבי טיפול") {
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("פעיל", "בטיפול", "נפתר", "לא נפתר").forEach { label ->
+                    FilterChip(selected = false, onClick = {}, label = { Text(label) })
+                }
+            }
+        }
         SpecCard("אירועים") {
             Text("אין עדיין אירועים שמורים בממשק החדש.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("אירוע יכלול חומרה, זמן, מקור, מצב טיפול ופרטי אימות.")
+            Text("אירוע יכלול חומרה, זמן, מקור, מצב טיפול ופרטי אימות. אירועים חוזרים יאוחדו; פתרון יסומן רק לאחר אימות.")
+            Text("ברירת המחדל היא שימור ללא הגבלת זמן, עם אפשרות להגדיר תקופת שמירה.")
         }
         SpecCard("פעולות") {
-            Button(onClick = {}) { Text("ייצוא דוח (טרם חובר)") }
+            Button(onClick = {}) { Text("תצוגה מקדימה וייצוא דוח (טרם חובר)") }
+            Button(onClick = {}) { Text("סמן הכול כנקרא (טרם חובר)") }
             Button(onClick = {}) { Text("בדיקת הגנה ותיקון בטוח (טרם חובר)") }
+            Button(onClick = {}) { Text("מחיקת היומן (טרם חובר)") }
         }
     }
 }
