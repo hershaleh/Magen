@@ -35,6 +35,8 @@ import app.magen.lock.Catalog
 import app.magen.lock.Store
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import android.content.Context
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 private val gap = 12.dp
@@ -42,6 +44,15 @@ private val gap = 12.dp
 /** Presentation preference; enforcement settings are deliberately kept elsewhere. */
 object SpecUiPreferences {
     var navigationMode by mutableIntStateOf(1) // 0 = side rail, 1 = bottom, 2 = top
+
+    fun load(context: Context) {
+        navigationMode = context.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).getInt("navigationMode", 1).coerceIn(0, 2)
+    }
+
+    fun setNavigationMode(context: Context, mode: Int) {
+        navigationMode = mode.coerceIn(0, 2)
+        context.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).edit().putInt("navigationMode", navigationMode).apply()
+    }
 }
 
 @Composable
@@ -285,6 +296,7 @@ private fun BackupScreen() {
 }
 @Composable
 private fun AppSettingsScreen() {
+    val context = LocalContext.current
     SpecPage("הגדרות", "התאמת התצוגה, השפה והתנהגות האפליקציה.") {
         SpecCard("שפה") {
             var language by rememberSaveable { mutableStateOf(Lang.current()) }
@@ -303,7 +315,7 @@ private fun AppSettingsScreen() {
         }
         SpecCard("ניווט") {
             listOf("תפריט צד", "סרגל תחתון", "סרגל עליון").forEachIndexed { i, label ->
-                FilterChip(selected = SpecUiPreferences.navigationMode == i, onClick = { SpecUiPreferences.navigationMode = i }, label = { Text(label) })
+                FilterChip(selected = SpecUiPreferences.navigationMode == i, onClick = { SpecUiPreferences.setNavigationMode(context, i) }, label = { Text(label) })
             }
             Text("בחירת מיקום הניווט משנה מיד את מבנה הניווט.")
         }
