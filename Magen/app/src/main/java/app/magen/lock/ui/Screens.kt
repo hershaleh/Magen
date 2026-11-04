@@ -1,6 +1,5 @@
 package app.magen.lock.ui
 
-import androidx.compose.material.icons.outlined.Settings as OutlinedSettingsIcon
 import androidx.compose.material.icons.outlined.Schedule as OutlinedScheduleIcon
 import androidx.compose.material.icons.outlined.Shield as OutlinedShieldIcon
 import androidx.compose.material.icons.outlined.Apps as OutlinedAppsIcon
@@ -369,7 +368,7 @@ fun MainScaffold() {
             Triple(Tabs.TIMES, context.getString(R.string.nav_times), Icons.Filled.Schedule),
             Triple(Tabs.PROTECTION, context.getString(R.string.nav_protection), Icons.Filled.Shield),
             Triple(notificationsTab, notificationLabel, Icons.Filled.Notifications),
-            Triple(Tabs.SETTINGS, context.getString(R.string.nav_settings), OutlinedSettingsIcon),
+            Triple(Tabs.SETTINGS, context.getString(R.string.nav_settings), SettingsIcon),
         )
         BackHandler(enabled = drawerState.isOpen) {
             closeDrawer()
