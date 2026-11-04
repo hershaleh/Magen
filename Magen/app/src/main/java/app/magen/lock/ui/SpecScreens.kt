@@ -109,28 +109,49 @@ private fun SpecField(label: String, initial: String = "") {
 
 @Composable
 fun BlockingsHub() {
-    var selected by rememberSaveable { mutableIntStateOf(0) }
-    val labels = listOf("חסימת אפליקציות", "חסימת חלקים בהגדרות", "חסימות נוספות")
-    Column(Modifier.fillMaxSize()) {
-        Text("חסימות", Modifier.padding(start = 16.dp, top = 12.dp, bottom = 8.dp), style = MaterialTheme.typography.headlineSmall)
-        Row(
-            Modifier.fillMaxWidth().padding(horizontal = 12.dp),
-            horizontalArrangement = Arrangement.spacedBy(6.dp),
-        ) {
-            labels.forEachIndexed { i, label ->
-                Button(
-                    onClick = { selected = i },
-                    modifier = Modifier.weight(1f).testTag(if (selected == i) "blocking_tab_$i" else "blocking_tab_$i"),
-                ) {
-                    Text(label, maxLines = 2, style = MaterialTheme.typography.labelMedium)
+    var selected by rememberSaveable { mutableIntStateOf(-1) }
+    val labels = listOf("חסימת אפליקציות", "חסימת חלקי הגדרות", "חסימות נוספות")
+    val icons = listOf(Icons.Filled.Apps, Icons.Filled.Settings, Icons.Filled.Security)
+    BackHandler(enabled = selected >= 0) { selected = -1 }
+    if (selected >= 0) {
+        Column(Modifier.fillMaxSize()) {
+            TextButton(onClick = { selected = -1 }, modifier = Modifier.padding(start = 8.dp, top = 4.dp)) {
+                Text("‹  חסימות")
+            }
+            Box(Modifier.weight(1f)) {
+                when (selected) {
+                    0 -> AppsTab()
+                    1 -> SystemComponentsScreen()
+                    else -> CustomRulesScreen()
                 }
             }
         }
-        Box(Modifier.weight(1f)) {
-            when (selected) {
-                0 -> AppsTab()
-                1 -> SystemComponentsScreen()
-                else -> CustomRulesScreen()
+    } else {
+        Column(
+            Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Text("חסימות", style = MaterialTheme.typography.headlineSmall)
+            labels.forEachIndexed { i, label ->
+                Card(
+                    modifier = Modifier.fillMaxWidth().height(88.dp).clickable { selected = i }
+                        .testTag("blocking_tab_$i"),
+                    shape = RoundedCornerShape(20.dp),
+                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                ) {
+                    Row(
+                        Modifier.fillMaxSize().padding(horizontal = 20.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Icon(icons[i], contentDescription = null, tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(30.dp))
+                        Text(label, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold,
+                            modifier = Modifier.weight(1f))
+                        Text("‹", style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
             }
         }
     }
@@ -416,34 +437,81 @@ private fun ShabbatScreen() {
 @Composable
 private fun SystemComponentsScreen() {
     var query by rememberSaveable { mutableStateOf("") }
+    var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     val groups = Catalog.settings.groupBy { it.group }
+    val selected = Catalog.settings.firstOrNull { it.id == selectedId }
+    val nestedIds = when (selected?.id) {
+        "network" -> setOf("wifi", "mobile", "hotspot", "datausage", "privatedns", "bluetooth", "nfc", "cast", "print", "usb", "vpn")
+        else -> emptySet()
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text("חסימת רכיבי הגדרות Android", style = MaterialTheme.typography.titleLarge)
-        Text("58 קטגוריות מתוך קטלוג ההגדרות הקיים. רמת האכיפה תלויה במכשיר ובגרסת Android.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        Text("חסימת חלקי הגדרות", style = MaterialTheme.typography.titleLarge)
+        Text("בחר קטגוריה כדי לפתוח את תתי־ההגדרות שלה. הפעלת חסימה בקטגוריה תחסום רק את המסך המרכזי שלה.",
+            style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         SpecCard("איך למצוא חלק מסוים בהגדרות?") {
-            Text("פתח את אפליקציית ההגדרות במכשיר, נווט למסך או לתת־המסך המבוקש, וחזור למגן. אפשר גם להשתמש בחיפוש למטה לפי שם ההגדרה או מילת מפתח.")
-            Text("במכשירים נתמכים אפשר להפעיל את כלי הבחירה מתוך שירות הנגישות כדי לזהות את המסך הפתוח.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text("פתח את אפליקציית ההגדרות במכשיר, נווט למסך המבוקש וחזור למגן. אפשר גם לחפש לפי שם ההגדרה או מילת מפתח.")
+            Text("במכשירים נתמכים אפשר להפעיל את כלי הבחירה מתוך שירות הנגישות כדי לזהות את המסך הפתוח.",
+                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
-        OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("חיפוש בהגדרות") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+        OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("חיפוש בהגדרות") },
+            singleLine = true, modifier = Modifier.fillMaxWidth())
         groups.forEach { (group, categories) ->
             SpecCard(stringResource(group.title)) {
-                categories.forEach { cat ->
+                categories.filter { cat ->
                     val label = stringResource(cat.title)
-                    if (query.isBlank() || label.contains(query, ignoreCase = true) ||
-                        cat.id.contains(query, ignoreCase = true) || cat.keywords.any { it.contains(query, ignoreCase = true) }
+                    query.isBlank() || label.contains(query, true) || cat.id.contains(query, true) ||
+                        cat.keywords.any { it.contains(query, true) }
+                }.forEach { cat ->
+                    val label = stringResource(cat.title)
+                    Row(
+                        Modifier.fillMaxWidth().clickable { selectedId = cat.id }.padding(vertical = 9.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
                     ) {
-                        SwitchListRow(
-                            title = label,
-                            checked = cat.id in Store.blockedSettings,
-                            onChange = { Store.setBlockedSetting(cat.id, it) },
-                            supporting = if (cat.restriction != null) "קיימת גם מגבלת Android מערכתית במצב המתאים" else "מבוסס התאמת כותרת דרך שירות הנגישות",
-                            icon = cat.icon,
-                        )
-                        RowDivider()
+                        Icon(cat.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
+                        Column(Modifier.weight(1f)) {
+                            Text(label, fontWeight = FontWeight.Medium)
+                            Text(if (cat.id == "network") "תתי־הגדרות: VPN, נקודה חמה ועוד" else "פתיחת אפשרויות החסימה",
+                                style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text(if (cat.id in Store.blockedSettings) "חסום" else "›",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
+                    RowDivider()
                 }
             }
         }
+    }
+    if (selected != null) {
+        val label = stringResource(selected.title)
+        AlertDialog(
+            onDismissRequest = { selectedId = null },
+            title = { Text(label) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SwitchListRow(
+                        title = "חסימת $label",
+                        checked = selected.id in Store.blockedSettings,
+                        onChange = { Store.setBlockedSetting(selected.id, it) },
+                        supporting = if (selected.restriction != null) "חסימה מרכזית; אינה כוללת תתי־הגדרות" else "חסימת המסך המרכזי בלבד",
+                        icon = selected.icon,
+                    )
+                    if (nestedIds.isNotEmpty()) {
+                        Text("תתי־הגדרות", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+                        nestedIds.mapNotNull { id -> Catalog.settings.firstOrNull { it.id == id } }.forEach { child ->
+                            SwitchListRow(
+                                title = stringResource(child.title),
+                                checked = child.id in Store.blockedSettings,
+                                onChange = { Store.setBlockedSetting(child.id, it) },
+                                supporting = "חסימה נפרדת של תת־ההגדרה",
+                                icon = child.icon,
+                            )
+                        }
+                    }
+                }
+            },
+            confirmButton = { TextButton(onClick = { selectedId = null }) { Text("סיום") } },
+        )
     }
 }
 
