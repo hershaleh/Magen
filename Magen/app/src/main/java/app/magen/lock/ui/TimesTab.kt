@@ -109,7 +109,7 @@ fun TimesTab() {
                     val next = ProfileStore.windows + WeeklyProfileWindow(
                         UUID.randomUUID().toString(), dayNumber!!, startMinute!!, endMinute!!, selected,
                     )
-                    ProfileStore.setWindows(next)
+                    ProfileStore.saveWindows(next)
                 },
                 enabled = dayNumber != null && dayNumber in 1..7 && startMinute != null && endMinute != null &&
                     startMinute != endMinute && ProfileStore.profiles.any { it.id == selected },
@@ -123,7 +123,7 @@ fun TimesTab() {
                         window.dayOfWeek, formatMinute(window.startMinute), formatMinute(window.endMinute), profileName,
                     ))
                 }
-                Button(onClick = { ProfileStore.setWindows(emptyList()) }) {
+                Button(onClick = { ProfileStore.saveWindows(emptyList()) }) {
                     Text(stringResource(R.string.schedule_clear))
                 }
             }
