@@ -365,7 +365,7 @@ fun MainScaffold() {
         }
         ModalNavigationDrawer(
             drawerState = drawerState,
-            gesturesEnabled = navigationMode == 0,
+            gesturesEnabled = false,
             drawerContent = {
                 ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.86f)) {
                     Column(
