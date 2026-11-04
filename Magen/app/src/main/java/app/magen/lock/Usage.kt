@@ -8,6 +8,11 @@ import android.os.SystemClock
 import java.util.Calendar
 import java.util.concurrent.ConcurrentHashMap
 
+object UsageLimitPolicy {
+    fun isReached(limitMinutes: Int?, usedMillis: Long): Boolean =
+        limitMinutes != null && limitMinutes > 0 && usedMillis >= limitMinutes * 60_000L
+}
+
 object UsageTracker {
     private data class Cached(val checkedAt: Long, val usedMillis: Long)
     private val cache = ConcurrentHashMap<String, Cached>()
@@ -49,5 +54,5 @@ object UsageTracker {
     }
 
     fun isLimitReached(limitMinutes: Int?, usedMillis: Long): Boolean =
-        limitMinutes != null && limitMinutes > 0 && usedMillis >= limitMinutes * 60_000L
+        UsageLimitPolicy.isReached(limitMinutes, usedMillis)
 }
