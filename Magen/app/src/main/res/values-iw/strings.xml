@@ -470,5 +470,13 @@
     <string name="schedule_lock">חסום</string>
     <string name="app_schedule_summary">יום %1$d · %2$s–%3$s · %4$s</string>
     <string name="schedule_calendar_later">חריגים חודשיים וזמנים גמישים יתווספו במסגרת מימוש לוח השנה ומגבלות השימוש המלא.</string>
+    <string name="usage_limit_title">מכסת שימוש יומית</string>
+    <string name="usage_limit_desc">הגדירו מספר דקות מרבי ליום עבור האפליקציה. נדרשת הרשאת גישה לנתוני שימוש; ייתכן עיכוב בעדכון הנתונים מצד Android.</string>
+    <string name="usage_permission_needed">הרשאת גישה לנתוני שימוש אינה מופעלת, ולכן אי אפשר לאכוף את המכסה עדיין.</string>
+    <string name="usage_open_settings">פתיחת הגדרות גישה לנתוני שימוש</string>
+    <string name="usage_limit_minutes">דקות ליום (1–1440)</string>
+    <string name="usage_limit_save">שמירת המכסה</string>
+    <string name="usage_limit_remove">הסרת המכסה</string>
+    <string name="usage_today_used">נוצלו היום: %1$d דקות</string>
 </resources>
 
