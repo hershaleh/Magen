@@ -320,7 +320,7 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
                     tint = if (serviceRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    if (serviceRunning) "שירות ההגנה פועל" else "שירות ההגנה אינו פועל",
+                    if (serviceRunning) "שירות הנגישות פועל" else "שירות הנגישות אינו פועל",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                 )
