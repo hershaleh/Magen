@@ -148,7 +148,15 @@ private fun QuotasScreen() {
 @Composable
 private fun SchedulesScreen() {
     SpecPage("לוחות זמנים", "לוח נפרד לכל אפליקציה. חלונות יכולים לחצות חצות, וניתן להגדיר חריגים לתאריכים מסוימים.") {
-        SpecCard("בחירת אפליקציה") { SpecField("חיפוש אפליקציה"); listOf("דפדפן", "YouTube", "Telegram").forEach { SpecToggle(it) } }
+        SpecCard("בחירת אפליקציה") {
+            SpecField("חיפוש אפליקציה")
+            var selectedApp by rememberSaveable { mutableIntStateOf(0) }
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf("דפדפן", "YouTube", "Telegram").forEachIndexed { i, label ->
+                    FilterChip(selected = selectedApp == i, onClick = { selectedApp = i }, label = { Text(label) })
+                }
+            }
+        }
         SpecCard("ימים ושעות") {
             listOf("ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת").forEach { SpecToggle(it) }
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -160,9 +168,15 @@ private fun SchedulesScreen() {
         }
         SpecCard("הפסקות וחריגים") {
             SpecToggle("הוספת הפסקה קבועה")
+            SpecField("תחילת הפסקה", "13:00")
+            SpecField("סיום הפסקה", "14:00")
             SpecField("תאריך חריג")
-            SpecToggle("ביום זה לחסום")
-            SpecToggle("ביום זה לאפשר")
+            var exceptionMode by rememberSaveable { mutableIntStateOf(0) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = exceptionMode == 0, onClick = { exceptionMode = 0 }, label = { Text("ללא חריג") })
+                FilterChip(selected = exceptionMode == 1, onClick = { exceptionMode = 1 }, label = { Text("לחסום") })
+                FilterChip(selected = exceptionMode == 2, onClick = { exceptionMode = 2 }, label = { Text("לאפשר") })
+            }
         }
     }
 }
