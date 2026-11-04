@@ -423,6 +423,7 @@
     <string name="pin_delete">מחיקת הספרה האחרונה</string>
     <string name="pin_confirm">אישור הקוד</string>
     <string name="nav_settings">הגדרות</string>
+    <string name="nav_more">עוד</string>
     <string name="home_attention">דורש טיפול</string>
     <string name="home_summary">תקציר</string>
     <string name="home_details">בדיקות והרשאות</string>
