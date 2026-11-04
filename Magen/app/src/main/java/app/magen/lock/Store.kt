@@ -129,7 +129,9 @@ object Store {
         if (lockRemaining() > 0) return false
         val salt = Base64.decode(sp.getString("salt", "") ?: "", Base64.NO_WRAP)
         val want = sp.getString("hash", "") ?: ""
-        return registerAttempt(MessageDigest.isEqual(hash(pin, salt).toByteArray(), want.toByteArray()))
+        val ok = registerAttempt(MessageDigest.isEqual(hash(pin, salt).toByteArray(), want.toByteArray()))
+        if (!ok) ActivityLog.record("PIN_FAILED")
+        return ok
     }
 
     /** Counts a wrong attempt (PIN or recovery code) and starts the lockout delay after five misses. */
@@ -182,8 +184,9 @@ object Store {
     // ---- app locking -------------------------------------------------------------------------
 
     fun setMode(pkg: String, mode: LockMode?) {
-        if (pkg == app.packageName) return
+        if (pkg == app.packageName || locked[pkg] == mode) return
         locked = if (mode == null) locked - pkg else locked + (pkg to mode)
+        ActivityLog.record(if (mode == null) "APP_UNBLOCKED" else "APP_BLOCK_METHOD_SET", pkg)
         if (mode != LockMode.MAIN) mainUnlocked = mainUnlocked - pkg
         sp.edit().putStringSet("locked", locked.map { "${it.key}:${it.value.name}" }.toSet()).apply()
     }
@@ -242,7 +245,7 @@ object Store {
     }
 
     fun setSchedule(packageName: String, schedule: AppSchedule) {
-        if (packageName == app.packageName) return
+        if (packageName == app.packageName || schedule == scheduleFor(packageName)) return
         appSchedules = if (schedule.weekly.isEmpty() && schedule.dateOverrides.isEmpty()) {
             appSchedules - packageName
         } else {
@@ -267,18 +270,20 @@ object Store {
             root.put(JSONObject().put("package", pkg).put("weekly", weekly).put("dates", dates))
         }
         sp.edit().putString("appSchedules", root.toString()).apply()
+        ActivityLog.record("APP_SCHEDULE_CHANGED", packageName)
     }
 
     fun usageLimitFor(packageName: String): Int? =
         if (packageName == app.packageName) null else usageLimits[packageName]
 
     fun setUsageLimit(packageName: String, minutes: Int?) {
-        if (packageName == app.packageName) return
+        if (packageName == app.packageName || usageLimits[packageName] == minutes) return
         usageLimits = if (minutes == null || minutes <= 0) usageLimits - packageName
         else usageLimits + (packageName to minutes.coerceAtMost(1440))
         val json = JSONObject()
         usageLimits.forEach { (pkg, limit) -> json.put(pkg, limit) }
         sp.edit().putString("usageLimits", json.toString()).apply()
+        ActivityLog.record("APP_USAGE_LIMIT_CHANGED", packageName)
     }
 
     fun isUsageLimitReached(packageName: String): Boolean {
@@ -338,6 +343,7 @@ object Store {
     fun uninstallAllowed() = System.currentTimeMillis() < allowedUntil
 
     fun allowUninstall(minutes: Int) {
+        ActivityLog.record("UNINSTALL_APPROVAL_WINDOW", "$minutes minutes")
         allowedUntil = System.currentTimeMillis() + minutes * 60_000L
         sp.edit().putLong("allowedUntil", allowedUntil).apply()
         Policy.apply()
