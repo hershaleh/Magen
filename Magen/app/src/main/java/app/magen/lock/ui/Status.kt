@@ -290,7 +290,10 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
     var tick by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { tick++ }
     val locked = Store.locked
-    val health = remember(tick, p, locked) { computeHealth(ctx) }
+    val health = remember(
+        tick, p, locked, Store.blockPlay, Store.blockApk, Store.blockedSettings,
+        Store.customKeywords, Store.protect, Store.blockingEnabled, Store.level,
+    ) { computeHealth(ctx) }
     val problems = health.checks.filter { (it.sev == Sev.WARN || it.sev == Sev.BAD) && it.fix != null }
     val ruleCount = (if (Store.blockPlay) 1 else 0) +
         (if (Store.blockApk) 1 else 0) + Store.customKeywords.size
