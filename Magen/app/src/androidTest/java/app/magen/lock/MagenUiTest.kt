@@ -147,7 +147,7 @@ class MagenUiTest {
     private fun navLabel(@StringRes id: Int) = str(id)
 
     private fun goToTab(@StringRes navLabel: Int) {
-        val label = if (navLabel == R.string.nav_more) "הגדרות" else navLabel(navLabel)
+        val label = if (navLabel == R.string.nav_more) navLabel(R.string.nav_settings) else navLabel(navLabel)
         compose.onAllNodes(hasClickAction() and hasText(label))[0].performClick()
     }
 
@@ -157,7 +157,7 @@ class MagenUiTest {
         R.string.nav_blockings to R.string.apps_title,
         R.string.nav_times to R.string.nav_times,
         R.string.nav_protection to R.string.protection_title,
-        R.string.nav_more to R.string.nav_more,
+        R.string.nav_more to R.string.nav_settings,
     )
 
     // ---- installation and launch ---------------------------------------------------------------
