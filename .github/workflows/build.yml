@@ -33,6 +33,10 @@ jobs:
         with:
           gradle-version: 8.10.2
 
+      - name: Run Android checks
+        working-directory: ${{ steps.loc.outputs.dir }}
+        run: gradle testDebugUnitTest lintDebug --no-daemon --console=plain
+
       - name: Build debug APK
         working-directory: ${{ steps.loc.outputs.dir }}
         run: |
