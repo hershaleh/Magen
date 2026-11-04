@@ -52,6 +52,8 @@ object Store {
         private set
     var appSchedules by mutableStateOf<Map<String, AppSchedule>>(emptyMap())
         private set
+    var usageLimits by mutableStateOf<Map<String, Int>>(emptyMap())
+        private set
 
     fun init(ctx: Context) {
         app = ctx.applicationContext
@@ -76,6 +78,7 @@ object Store {
         biometric = sp.getBoolean("bio", false)
         hasRecovery = sp.contains("rhash")
         appSchedules = decodeSchedules(sp.getString("appSchedules", null))
+        usageLimits = decodeUsageLimits(sp.getString("usageLimits", null))
         Policy.apply()
     }
 
@@ -265,6 +268,36 @@ object Store {
         }
         sp.edit().putString("appSchedules", root.toString()).apply()
     }
+
+    fun usageLimitFor(packageName: String): Int? =
+        if (packageName == app.packageName) null else usageLimits[packageName]
+
+    fun setUsageLimit(packageName: String, minutes: Int?) {
+        if (packageName == app.packageName) return
+        usageLimits = if (minutes == null || minutes <= 0) usageLimits - packageName
+        else usageLimits + (packageName to minutes.coerceAtMost(1440))
+        val json = JSONObject()
+        usageLimits.forEach { (pkg, limit) -> json.put(pkg, limit) }
+        sp.edit().putString("usageLimits", json.toString()).apply()
+    }
+
+    fun isUsageLimitReached(packageName: String): Boolean {
+        val limit = usageLimitFor(packageName) ?: return false
+        if (!UsageTracker.hasAccess(app)) return false
+        return UsageTracker.isLimitReached(limit, UsageTracker.todayUsageMillis(app, packageName))
+    }
+
+    private fun decodeUsageLimits(raw: String?): Map<String, Int> = runCatching {
+        val json = JSONObject(raw ?: "{}")
+        buildMap {
+            val keys = json.keys()
+            while (keys.hasNext()) {
+                val pkg = keys.next()
+                val minutes = json.optInt(pkg, 0)
+                if (pkg != app.packageName && minutes in 1..1440) put(pkg, minutes)
+            }
+        }
+    }.getOrDefault(emptyMap())
 
     private fun decodeSchedules(raw: String?): Map<String, AppSchedule> = runCatching {
         val root = JSONArray(raw ?: "[]")
