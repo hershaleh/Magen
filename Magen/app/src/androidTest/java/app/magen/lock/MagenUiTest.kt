@@ -259,12 +259,18 @@ class MagenUiTest {
         compose.await("החסימות מופעלות").assertIsDisplayed()
         assertTrue(Store.blockingEnabled)
         assertTrue(compose.onAllNodesWithText("פריטים דורשים טיפול").fetchSemanticsNodes().isEmpty())
+
+        Store.setBlockPlay(true)
+        compose.await("פריטים דורשים טיפול").assertIsDisplayed()
         compose.onAllNodes(hasClickAction() and hasText("החסימות מופעלות"))[0].performClick()
         compose.await("החסימות כבויות").assertIsDisplayed()
         assertFalse(Store.blockingEnabled)
+        assertTrue(compose.onAllNodesWithText("פריטים דורשים טיפול").fetchSemanticsNodes().isEmpty())
+
         compose.onAllNodes(hasClickAction() and hasText("החסימות כבויות"))[0].performClick()
         compose.await("החסימות מופעלות").assertIsDisplayed()
         assertTrue(Store.blockingEnabled)
+        compose.await("פריטים דורשים טיפול").assertIsDisplayed()
     }
 
 
