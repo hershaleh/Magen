@@ -441,7 +441,7 @@ private fun AppScheduleEditor(packageName: String) {
             Row(horizontalArrangement = Arrangement.spacedBy(Sp.s)) {
                 Button(
                     onClick = { Store.setUsageLimit(packageName, usageMinutes.toIntOrNull()) },
-                    enabled = usageMinutes.toIntOrNull() in 1..1440,
+                    enabled = usageMinutes.toIntOrNull()?.let { it in 1..1440 } == true,
                     modifier = Modifier.weight(1f),
                 ) { Text(stringResource(R.string.usage_limit_save)) }
                 TextButton(onClick = {
