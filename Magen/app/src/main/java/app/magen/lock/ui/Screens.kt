@@ -1147,8 +1147,8 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
             exitAction?.invoke()
         }
     }
-    LaunchedEffect(mode) {
-        if (mode == null) leave(onUnlocked)
+    LaunchedEffect(mode, Store.blockingEnabled) {
+        if (mode == null || !Store.blockingEnabled) leave(onUnlocked)
     }
 
     AnimatedVisibility(
