@@ -399,9 +399,12 @@ class GuardService : AccessibilityService() {
         // Magen must never lock itself, regardless of imported or persisted rules.
         if (pkg == packageName) return
         val mode = Store.locked[pkg] ?: return
-        if (!Store.scheduleDecision(pkg).locked) return
-        if (pkg in tempUnlocked) return
-        if (mode == LockMode.MAIN && pkg in Store.mainUnlocked) return
+        val decision = Store.scheduleDecision(pkg)
+        if (!decision.locked) return
+        // A scheduled locked window takes precedence over temporary unlocks.
+        if (decision.reason == ScheduleDecision.Reason.BASE_SETTING && pkg in tempUnlocked) return
+        if (decision.reason == ScheduleDecision.Reason.BASE_SETTING &&
+            mode == LockMode.MAIN && pkg in Store.mainUnlocked) return
         val now = SystemClock.uptimeMillis()
         if (now - lastLaunch < 600) {
             // The event arrived too soon after the previous lock screen. It may be the only one this app
