@@ -1014,7 +1014,7 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
                 AppBadge(icon, 96.dp)
                 Spacer(Modifier.height(24.dp))
                 Text(
-                    stringResource(R.string.lock_pin_title),
+                    stringResource(R.string.blocked_message),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                 )
