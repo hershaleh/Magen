@@ -455,21 +455,12 @@
     <string name="policy_check_failed">Policy enforcement problems were found:\n%1$s</string>
     <string name="policy_check_ok">No failures were reported in the last check. This reflects the policy state reported by Android; it does not guarantee that every device manufacturer enforces it in practice.</string>
     <string name="policy_check_now">Check policy now</string>
-    <string name="profiles_title">Profiles</string>
-    <string name="profiles_active">Active profile: %1$s</string>
-    <string name="profile_new_name">New profile name</string>
-    <string name="profile_add">Add profile</string>
-    <string name="schedule_title">Weekly schedule</string>
-    <string name="schedule_help">Choose a weekday (1=Monday, 7=Sunday), start and end times, and the profile to activate. Overnight windows are supported.</string>
     <string name="schedule_day">Day (1–7)</string>
     <string name="schedule_start">Start (HH:mm)</string>
     <string name="schedule_end">End (HH:mm)</string>
     <string name="schedule_add">Add time window</string>
     <string name="schedule_saved">Saved windows</string>
-    <string name="schedule_window_summary">Day %1$d · %2$s–%3$s · %4$s</string>
-    <string name="schedule_clear">Clear schedule</string>
     <string name="schedule_remove">Remove</string>
-    <string name="profile_default_name">Default</string>
     <string name="app_tab_method">Blocking method</string>
     <string name="app_tab_more">Additional settings</string>
     <string name="app_method_help">Choose how this app should be blocked. The selected method applies only after it is saved successfully.</string>
