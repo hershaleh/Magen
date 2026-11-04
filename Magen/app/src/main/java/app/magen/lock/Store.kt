@@ -245,7 +245,7 @@ object Store {
         Policy.apply()
     }
 
-    fun setBlockingEnabled(on: Boolean) {
+    fun updateBlockingEnabled(on: Boolean) {
         blockingEnabled = on
         sp.edit().putBoolean("blockingEnabled", on).apply()
         // Strong-mode restrictions are updated and verified by the existing policy layer.
