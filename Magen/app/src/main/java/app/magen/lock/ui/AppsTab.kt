@@ -41,6 +41,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -328,21 +329,25 @@ private fun AppScheduleEditor(packageName: String) {
     val schedule = Store.scheduleFor(packageName)
     val context = LocalContext.current
     val initialUsageAccess = UsageTracker.hasAccess(context)
-    val hasUsageAccess by produceState(initialUsageAccess, packageName) {
-        value = initialUsageAccess
+    var hasUsageAccess by remember(packageName) { mutableStateOf(initialUsageAccess) }
+    LaunchedEffect(packageName) {
         while (true) {
+            hasUsageAccess = UsageTracker.hasAccess(context)
             delay(2_000)
-            value = UsageTracker.hasAccess(context)
         }
     }
     var usageMinutes by remember(packageName) {
         mutableStateOf(Store.usageLimitFor(packageName)?.toString().orEmpty())
     }
-    val usedMillis by produceState(0L, packageName, hasUsageAccess) {
-        value = if (hasUsageAccess) UsageTracker.todayUsageMillis(context, packageName, forceRefresh = true) else 0L
-        while (hasUsageAccess) {
+    var usedMillis by remember(packageName) { mutableStateOf(0L) }
+    LaunchedEffect(packageName, hasUsageAccess) {
+        if (!hasUsageAccess) {
+            usedMillis = 0L
+            return@LaunchedEffect
+        }
+        while (true) {
+            usedMillis = UsageTracker.todayUsageMillis(context, packageName, forceRefresh = true)
             delay(10_000)
-            value = UsageTracker.todayUsageMillis(context, packageName, forceRefresh = true)
         }
     }
     var day by remember(packageName) { mutableStateOf("1") }
