@@ -470,5 +470,14 @@
     <string name="schedule_clear">מחיקת כל התזמון</string>
     <string name="schedule_remove">הסרה</string>
     <string name="profile_default_name">ברירת מחדל</string>
+    <string name="app_tab_method">שיטת חסימה</string>
+    <string name="app_tab_more">הגדרות נוספות</string>
+    <string name="app_method_help">בחרו כיצד האפליקציה הזו תיחסם. השיטה תיכנס לתוקף רק לאחר שמירה מוצלחת.</string>
+    <string name="app_unblock">ביטול חסימה</string>
+    <string name="app_schedule_help">הגדירו מתי האפליקציה תהיה חסומה ומתי תותר זמנית. מספרי ימים: 1=יום שני, 7=יום ראשון. אפשר להגדיר גם טווח שחוצה את חצות.</string>
+    <string name="schedule_allow">מותר</string>
+    <string name="schedule_lock">חסום</string>
+    <string name="app_schedule_summary">יום %1$d · %2$s–%3$s · %4$s</string>
+    <string name="schedule_calendar_later">חריגים חודשיים וזמנים גמישים יתווספו במסגרת מימוש לוח השנה ומגבלות השימוש המלא.</string>
 </resources>
 
