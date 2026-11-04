@@ -179,6 +179,7 @@ object Store {
     // ---- app locking -------------------------------------------------------------------------
 
     fun setMode(pkg: String, mode: LockMode?) {
+        if (pkg == app.packageName) return
         locked = if (mode == null) locked - pkg else locked + (pkg to mode)
         if (mode != LockMode.MAIN) mainUnlocked = mainUnlocked - pkg
         sp.edit().putStringSet("locked", locked.map { "${it.key}:${it.value.name}" }.toSet()).apply()
