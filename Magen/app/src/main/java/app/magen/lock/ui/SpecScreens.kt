@@ -194,7 +194,9 @@ fun SpecRouteScreen(route: String, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
     Column(Modifier.fillMaxSize()) {
         TextButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp, top = 4.dp)) { Text("חזרה") }
-        when (route) { "log" -> SecurityLogScreen(); "backup" -> BackupScreen(); else -> AppSettingsScreen() }
+        Box(Modifier.weight(1f)) {
+            when (route) { "log" -> SecurityLogScreen(); "backup" -> BackupScreen(); else -> AppSettingsScreen() }
+        }
     }
 }
 @Composable
