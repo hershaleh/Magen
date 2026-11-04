@@ -450,6 +450,23 @@ private fun CustomRulesScreen() {
     }
 }
 @Composable
+fun NotificationsCenterScreen() {
+    SpecPage("התראות", "מרכז ההתראות והאירועים של מגן.") {
+        SpecCard("מצב הגנה") {
+            val running = app.magen.lock.GuardService.instance != null
+            Text(if (running) "שירות הנגישות של מגן פועל" else "שירות הנגישות של מגן אינו פועל")
+            Text("מצב השירות מוצג בנפרד מההרשאות ומהגדרות החסימה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        SpecCard("אירועים הדורשים טיפול") {
+            Text("יומן אירועים מתמשך עדיין אינו מחובר. כרגע מוצגים רק מצבי הגנה שניתן לבדוק בזמן אמת.", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        SpecCard("הגדרות התראות") {
+            Text("העדפות סוגי ההתראות, חומרה, צליל והתנהגות קריאה יופיעו בהגדרות > התראות.")
+        }
+    }
+}
+
+@Composable
 fun SpecRouteScreen(route: String, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
     Column(Modifier.fillMaxSize()) {
