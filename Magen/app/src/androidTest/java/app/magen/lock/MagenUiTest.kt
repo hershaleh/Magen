@@ -14,6 +14,7 @@ import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
@@ -332,19 +333,21 @@ class MagenUiTest {
         openMainScreenDirectly()
 
         goToTab(R.string.nav_blockings)
-        compose.await("חסימת חלקים בהגדרות").performClick()
+        compose.await("חסימות").assertIsDisplayed()
+        compose.onNodeWithTag("blocking_tab_1").performClick()
         compose.await("חסימת רכיבי הגדרות Android").assertIsDisplayed()
         compose.await("איך למצוא חלק מסוים בהגדרות?").assertIsDisplayed()
-        compose.await("חסימות נוספות").performClick()
+        compose.onNodeWithTag("blocking_tab_2").performClick()
         compose.await("VideoStop").assertIsDisplayed()
 
         goToTab(R.string.nav_times)
-        compose.await("כל המכשיר").performClick()
+        compose.await("זמנים").assertIsDisplayed()
+        compose.onNodeWithTag("times_tab_0").performClick()
         compose.await("לוח זמנים לכל המכשיר").assertIsDisplayed()
         compose.await("החלון חוצה חצות").assertIsDisplayed()
-        compose.await("קבוצות").performClick()
+        compose.onNodeWithTag("times_tab_1").performClick()
         compose.await("הקבוצות שלי").assertIsDisplayed()
-        compose.await("שבת וחגים").performClick()
+        compose.onNodeWithTag("times_tab_2").performClick()
         compose.await("יום טוב שני: פעיל").assertIsDisplayed()
 
         goToTab(R.string.nav_more)
