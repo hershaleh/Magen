@@ -478,5 +478,21 @@
     <string name="usage_limit_save">שמירת המכסה</string>
     <string name="usage_limit_remove">הסרת המכסה</string>
     <string name="usage_today_used">נוצלו היום: %1$d דקות</string>
+    <string name="stats_title">סטטיסטיקות</string>
+    <string name="stats_desc">צפייה בפעילות ההגנה ובאירועי אבטחה אחרונים.</string>
+    <string name="stats_open">פתיחת סטטיסטיקות ויומן פעילות</string>
+    <string name="activity_log_title">פעילות אחרונה</string>
+    <string name="activity_log_desc">עד 500 אירועים אחרונים נשמרים במכשיר בלבד. קודים ראשיים וקודי שחזור אינם נרשמים.</string>
+    <string name="activity_log_clear">מחיקת היומן</string>
+    <string name="activity_log_empty">עדיין לא נרשמו אירועים.</string>
+    <string name="event_pin_failed">הוזן קוד ראשי שגוי</string>
+    <string name="event_app_unlocked">האפליקציה נפתחה: %1$s</string>
+    <string name="event_app_locked">הופעלה חסימה: %1$s</string>
+    <string name="event_usage_limit">מכסת השימוש היומית נוצלה: %1$s</string>
+    <string name="event_block_method">שיטת החסימה שונתה: %1$s</string>
+    <string name="event_app_unblocked">החסימה הוסרה: %1$s</string>
+    <string name="event_schedule_changed">התזמון שונה: %1$s</string>
+    <string name="event_usage_limit_changed">מכסת השימוש שונתה: %1$s</string>
+    <string name="event_uninstall_approval">חלון אישור הסרה: %1$s</string>
 </resources>
 
