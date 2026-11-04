@@ -369,7 +369,7 @@ fun MainScaffold() {
             Triple(Tabs.TIMES, context.getString(R.string.nav_times), Icons.Filled.Schedule),
             Triple(Tabs.PROTECTION, context.getString(R.string.nav_protection), Icons.Filled.Shield),
             Triple(notificationsTab, notificationLabel, Icons.Filled.Notifications),
-            Triple(Tabs.SETTINGS, context.getString(R.string.nav_settings), SettingsIcon),
+            Triple(Tabs.SETTINGS, context.getString(R.string.nav_settings), OutlinedSettingsIcon),
         )
         BackHandler(enabled = drawerState.isOpen) {
             closeDrawer()
