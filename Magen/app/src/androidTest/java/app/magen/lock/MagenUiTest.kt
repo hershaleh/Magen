@@ -343,7 +343,7 @@ class MagenUiTest {
         compose.await("חסימת רשת ואינטרנט").assertIsDisplayed()
         compose.await("VPN").assertIsDisplayed()
         compose.onNodeWithText("סיום").performClick()
-        compose.onNodeWithText("חסימות", substring = true).performClick()
+        compose.onNodeWithTag("blocking_back").performClick()
         compose.onNodeWithTag("blocking_tab_2").performClick()
         compose.await("VideoStop").assertIsDisplayed()
 
