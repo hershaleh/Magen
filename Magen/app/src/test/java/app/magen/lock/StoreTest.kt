@@ -238,6 +238,7 @@ class StoreTest {
 
     @Test
     fun masterBlockingSwitchDoesNotChangeMagenSelfProtectionPreference() {
+        Store.setProtect(true)
         assertTrue(Store.protect)
         Store.updateBlockingEnabled(false)
         assertTrue(Store.protect)
