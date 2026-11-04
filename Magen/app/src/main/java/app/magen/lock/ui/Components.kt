@@ -403,6 +403,8 @@ fun CreatePinFlow(onCancel: (() -> Unit)? = null, onDone: (String) -> Unit) {
         subtitle = stringResource(R.string.pin_hint),
         error = error,
         onCancel = onCancel,
+        // The first entry defines the PIN length; confirmation submits automatically at that same length.
+        autoSubmitLength = first?.length?.takeIf { it in 4..8 },
     ) { pin ->
         val f = first
         if (f == null) {
