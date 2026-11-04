@@ -226,12 +226,12 @@ class StoreTest {
     @Test
     fun masterBlockingSwitchDefaultsOnAndPersistsItsState() {
         assertTrue(Store.blockingEnabled)
-        Store.setBlockingEnabled(false)
+        Store.updateBlockingEnabled(false)
         assertFalse(Store.blockingEnabled)
         assertFalse(prefs().getBoolean("blockingEnabled", true))
         Store.init(ctx)
         assertFalse(Store.blockingEnabled)
-        Store.setBlockingEnabled(true)
+        Store.updateBlockingEnabled(true)
         assertTrue(prefs().getBoolean("blockingEnabled", false))
         assertTrue(Store.blockingEnabled)
     }
@@ -239,7 +239,7 @@ class StoreTest {
     @Test
     fun masterBlockingSwitchDoesNotChangeMagenSelfProtectionPreference() {
         assertTrue(Store.protect)
-        Store.setBlockingEnabled(false)
+        Store.updateBlockingEnabled(false)
         assertTrue(Store.protect)
         assertTrue(prefs().getBoolean("protect", false))
     }
