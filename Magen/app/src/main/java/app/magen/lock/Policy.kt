@@ -74,7 +74,9 @@ object Policy {
      * success, or a short English reason. Call off the main thread. Does not work on every device or version.
      */
     fun releaseOwnerViaRoot(ctx: Context): String? = try {
-        if (!rootAvailable()) {
+        if (!isOwner(ctx)) {
+            "Magen is not the Device Owner. Root removal was refused so another app's Device Owner file cannot be touched."
+        } else if (!rootAvailable()) {
             "Root access is not available or was denied."
         } else {
             val file = listOf(OWNER_FILE_NEW, OWNER_FILE_OLD).firstOrNull { su("test -f $it").first == 0 }
@@ -88,15 +90,22 @@ object Policy {
                     val cleared = !isOwner(ctx) || clearOwnerRestrictions(dpm(ctx), admin(ctx), ctx)
                     if (!cleared) {
                         ownerRemovalPending = false
+                        if (isOwner(ctx)) apply()
                         lastUninstallError ?: "Could not clear Magen's uninstall block first. Nothing was changed."
                     } else {
                         // A unique name each time, so an older backup is never overwritten.
-                        val backup = "$file.magen-backup-${System.currentTimeMillis() / 1000}"
-                        val (code, out) = su("test -e $backup || mv $file $backup")
+                        val backup = "$file.magen-backup-${System.currentTimeMillis()}"
+                        // A pre-existing backup must be treated as a failure, not as success: the old
+                        // shell expression (test -e backup || mv source backup) returned 0 when the
+                        // backup already existed, even though the owner file had not been moved.
+                        val command = "if [ -e '$backup' ]; then echo 'Backup already exists'; exit 17; fi; " +
+                            "mv '$file' '$backup' && test ! -e '$file' && test -e '$backup'"
+                        val (code, out) = su(command)
                         if (code == 0) {
                             null
                         } else {
                             ownerRemovalPending = false
+                            if (isOwner(ctx)) apply()
                             "Moving the file failed (exit $code): $out"
                         }
                     }
@@ -104,6 +113,8 @@ object Policy {
             }
         }
     } catch (e: Throwable) {
+        ownerRemovalPending = false
+        if (isOwner(ctx)) runCatching { apply() }
         "${e.javaClass.name}: ${e.message ?: "no details"}"
     }
 
@@ -123,6 +134,7 @@ object Policy {
                 expectAdminLoss()
                 if (!clearOwnerRestrictions(d, admin(ctx), ctx)) {
                     ownerRemovalPending = false
+                    apply()
                     return lastUninstallError ?: "Could not clear Magen's uninstall block first. Nothing was changed."
                 }
                 val extras = PersistableBundle().apply { putString("from_package", ctx.packageName) }
@@ -132,6 +144,7 @@ object Policy {
             }
         } catch (e: Throwable) {
             ownerRemovalPending = false
+            if (isOwner(ctx)) runCatching { apply() }
             "${e.javaClass.name}: ${e.message ?: "no details"}\n${deviceInfo()}"
         }
     }
@@ -146,29 +159,89 @@ object Policy {
     }
 
     /** Re-applies every restriction from the current [Store] values. Safe to call often. */
+    /** Last Device Owner policy application result. Null means all attempted operations passed read-back. */
+    @Volatile
+    var lastApplyError: String? = null
+        private set
+
+    @Volatile
+    var lastApplyAt: Long = 0L
+        private set
+
+    /** Re-applies policy and records each failure instead of silently swallowing it. */
     fun apply() {
         val ctx = Store.app
         if (!isOwner(ctx) || ownerRemovalPending) return
         val d = dpm(ctx)
         val a = admin(ctx)
         val protectNow = Store.protect && !Store.uninstallAllowed()
-        runCatching { clearLegacyUninstallBlock(d, a, ctx) }
-        runCatching {
-            if (Build.VERSION.SDK_INT >= 30) {
-                d.setUserControlDisabledPackages(a, if (protectNow) listOf(ctx.packageName) else emptyList())
-            }
-            restrict(d, a, UserManager.DISALLOW_SAFE_BOOT, protectNow)
-            restrict(d, a, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES, Store.blockApk)
-            if (Build.VERSION.SDK_INT >= 29) {
-                restrict(d, a, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, Store.blockApk)
-            }
-            // Several pages can share one system restriction, so it is on if ANY of them is selected.
-            Catalog.settings.filter { it.restriction != null }.groupBy { it.restriction!! }.forEach { (key, cats) ->
-                restrict(d, a, key, cats.any { it.id in Store.blockedSettings })
+        val failures = mutableListOf<String>()
+
+        fun attempt(label: String, action: () -> Unit) {
+            try {
+                action()
+            } catch (e: Throwable) {
+                failures += "$label: ${e.javaClass.simpleName}: ${e.message ?: "failed"}"
             }
         }
-    }
 
+        attempt("Clear legacy uninstall block") { clearLegacyUninstallBlock(d, a, ctx) }
+        if (Build.VERSION.SDK_INT >= 30) {
+            attempt("Protect Magen from user control") {
+                d.setUserControlDisabledPackages(a, if (protectNow) listOf(ctx.packageName) else emptyList())
+            }
+        }
+        attempt("Safe boot restriction") { restrict(d, a, UserManager.DISALLOW_SAFE_BOOT, protectNow) }
+        attempt("Unknown-source install restriction") {
+            restrict(d, a, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES, Store.blockApk)
+        }
+        if (Build.VERSION.SDK_INT >= 29) {
+            attempt("Global unknown-source install restriction") {
+                restrict(d, a, UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, Store.blockApk)
+            }
+        }
+        // Several pages can share one system restriction, so it is on if ANY of them is selected.
+        PolicyRules.groupedRestrictionStates(
+            Catalog.settings.map { it.id to it.restriction },
+            Store.blockedSettings,
+        ).forEach { (key, enabled) ->
+            attempt("Settings restriction $key") { restrict(d, a, key, enabled) }
+        }
+
+        // Read back Android's recorded policy. A successful API call alone is not proof of enforcement.
+        if (Build.VERSION.SDK_INT >= 26) {
+            attempt("Verify Android restrictions") {
+                val actual = d.getUserRestrictions(a)
+                val expected = mutableMapOf(
+                    UserManager.DISALLOW_SAFE_BOOT to protectNow,
+                    UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES to Store.blockApk,
+                )
+                if (Build.VERSION.SDK_INT >= 29) {
+                    expected[UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY] = Store.blockApk
+                }
+                expected.putAll(
+                    PolicyRules.groupedRestrictionStates(
+                        Catalog.settings.map { it.id to it.restriction },
+                        Store.blockedSettings,
+                    ),
+                )
+                expected.forEach { (key, wanted) ->
+                    val found = actual.getBoolean(key, false)
+                    if (found != wanted) failures += "Verification $key: expected $wanted, Android reports $found"
+                }
+            }
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            attempt("Verify Magen user-control protection") {
+                val found = d.getUserControlDisabledPackages(a).orEmpty().contains(ctx.packageName)
+                if (found != protectNow) {
+                    failures += "Verification user-control protection: expected $protectNow, Android reports $found"
+                }
+            }
+        }
+        lastApplyAt = System.currentTimeMillis()
+        lastApplyError = failures.takeIf { it.isNotEmpty() }?.joinToString("\n")
+    }
     /**
      * Older Magen versions called setUninstallBlocked(true). Android stores that flag persistently (in
      * package-restrictions.xml) and it does NOT disappear when Device Owner ends, which left Magen impossible
@@ -192,27 +265,60 @@ object Policy {
      * removed the uninstall block; never drop Device Owner silently while that block may remain.
      */
     private fun clearOwnerRestrictions(d: DevicePolicyManager, a: ComponentName, ctx: Context): Boolean {
-        val keys = Catalog.settings.mapNotNull { it.restriction }.distinct() + listOf(
+        val keys = (Catalog.settings.mapNotNull { it.restriction } + listOf(
             UserManager.DISALLOW_SAFE_BOOT,
             UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES,
-            UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY,
-        )
-        keys.forEach { runCatching { d.clearUserRestriction(a, it) } }
-        if (Build.VERSION.SDK_INT >= 30) {
-            runCatching { d.setUserControlDisabledPackages(a, emptyList()) }
+        ) + if (Build.VERSION.SDK_INT >= 29) {
+            listOf(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY)
+        } else {
+            emptyList()
+        }).distinct()
+        val failures = mutableListOf<String>()
+        keys.forEach { key ->
+            try {
+                d.clearUserRestriction(a, key)
+            } catch (e: Exception) {
+                failures += "$key: ${e.javaClass.simpleName}: ${e.message ?: "clear failed"}"
+            }
         }
-        return try {
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                d.setUserControlDisabledPackages(a, emptyList())
+            } catch (e: Exception) {
+                failures += "user-control packages: ${e.javaClass.simpleName}: ${e.message ?: "clear failed"}"
+            }
+        }
+        try {
             d.setUninstallBlocked(a, ctx.packageName, false)
             if (d.isUninstallBlocked(a, ctx.packageName)) {
-                lastUninstallError = "Android still reports Magen as uninstall-blocked. Device Owner was kept active; try again or copy this diagnostic."
-                false
-            } else {
-                true
+                failures += "Android still reports Magen as uninstall-blocked"
             }
-        } catch (e: Throwable) {
-            lastUninstallError = "${e.javaClass.name}: ${e.message ?: "Android refused to clear the uninstall block"}"
-            false
+        } catch (e: Exception) {
+            failures += "uninstall block: ${e.javaClass.simpleName}: ${e.message ?: "clear failed"}"
         }
+
+        // Never surrender Device Owner while Android still reports any of our restrictions.
+        if (Build.VERSION.SDK_INT >= 26) {
+            try {
+                val remaining = d.getUserRestrictions(a)
+                keys.filter { remaining.getBoolean(it, false) }.forEach {
+                    failures += "Restriction remains enabled: $it"
+                }
+            } catch (e: Exception) {
+                failures += "Restriction read-back: ${e.javaClass.simpleName}: ${e.message ?: "verification failed"}"
+            }
+        }
+        if (Build.VERSION.SDK_INT >= 30) {
+            try {
+                if (ctx.packageName in d.getUserControlDisabledPackages(a).orEmpty()) {
+                    failures += "Magen remains in user-control disabled packages"
+                }
+            } catch (e: Exception) {
+                failures += "User-control read-back: ${e.javaClass.simpleName}: ${e.message ?: "verification failed"}"
+            }
+        }
+        lastUninstallError = failures.takeIf { it.isNotEmpty() }?.joinToString("\n")
+        return failures.isEmpty()
     }
 
     /**
@@ -227,6 +333,8 @@ object Policy {
         // Pause apply() only while a release is in flight. Afterwards it must run again: either Magen is still
         // the owner (protection must continue) or it is not, and a later re-provisioning must not be ignored.
         ownerRemovalPending = false
+        // If Android refuses release after restrictions were cleared, restore protection immediately.
+        if (!released && isOwner(ctx)) apply()
         return released
     }
 
@@ -281,6 +389,8 @@ object Policy {
         expectAdminLoss()
         val ready = releaseNow(ctx)
         ownerRemovalPending = false
+        // Do not leave an owned device unprotected after a failed uninstall preparation.
+        if (!ready && isOwner(ctx)) apply()
         return ready
     }
 
@@ -298,19 +408,27 @@ object Policy {
                     return false
                 }
             }
+            // Check for a legacy uninstall block before dropping regular device-admin status.
+            // Without Device Owner, Magen cannot clear this flag; preserve the remaining admin state
+            // and direct the user to the dedicated recovery flow instead.
+            if (staleUninstallBlock(ctx)) {
+                lastUninstallError =
+                    "Android still blocks uninstalling Magen (a leftover from an older Strong mode). " +
+                    "Magen's Device Owner status may already have been released, but its regular admin was kept. " +
+                    "See More, \"Leftover uninstall block\"."
+                return false
+            }
             if (d.isAdminActive(a)) {
                 d.removeActiveAdmin(a)
-                // Android may take a moment to drop the admin record; never open the uninstall screen before it is gone.
-                var tries = 0
-                while (d.isAdminActive(a) && tries++ < 10) Thread.sleep(200)
+                // Do not poll with Thread.sleep here: this method is called from the UI flow.
+                // Android may finish removing the admin asynchronously; the user can retry after it completes.
                 if (d.isAdminActive(a)) {
-                    lastUninstallError = "Android still lists Magen as an active device administrator, so it cannot be uninstalled yet."
+                    lastUninstallError =
+                        "Android has received the request to remove Magen as device administrator, but still reports it as active. " +
+                        "Device Owner has already been released if Magen was in Strong mode. " +
+                        "The uninstall screen was not opened. Wait a moment, then retry; no uninstall approval window was opened."
                     return false
                 }
-            }
-            if (staleUninstallBlock(ctx)) {
-                lastUninstallError = "Android still blocks uninstalling Magen (a leftover from an older Strong mode). See More, \"Leftover uninstall block\"."
-                return false
             }
             true
         } catch (e: Throwable) {

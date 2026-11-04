@@ -1,7 +1,12 @@
 package app.magen.lock.ui
 
+import android.content.BroadcastReceiver
 import android.content.Context
+import android.content.IntentFilter
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.content.Intent
+import android.provider.Settings
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -26,6 +31,11 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material3.Button
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
@@ -35,11 +45,14 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -55,31 +68,72 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.content.ContextCompat
+import app.magen.lock.AppSchedule
 import app.magen.lock.LockMode
+import app.magen.lock.ScheduleAction
+import app.magen.lock.WeeklyAppWindow
+import app.magen.lock.UsageTracker
 import app.magen.lock.R
 import app.magen.lock.Store
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 // ---- tab: apps -------------------------------------------------------------------------------
 
-private class AppItem(val pkg: String, val label: String, val icon: ImageBitmap)
+private class AppItem(
+    val pkg: String,
+    val label: String,
+    val icon: ImageBitmap,
+    val essentialSystemApp: Boolean,
+)
+
+/**
+ * Critical Android components remain visible for transparency but cannot be locked.
+ * The list is deliberately narrow: ordinary preinstalled apps remain manageable.
+ */
+private val ESSENTIAL_SYSTEM_PACKAGES = setOf(
+    "android",
+    "com.android.systemui",
+    "com.android.settings",
+    "com.android.phone",
+    "com.android.server.telecom",
+    "com.android.providers.telephony",
+    "com.android.providers.settings",
+    "com.android.permissioncontroller",
+    "com.google.android.permissioncontroller",
+    "com.android.packageinstaller",
+    "com.google.android.packageinstaller",
+    "com.android.shell",
+    "com.android.inputmethod.latin",
+    "com.google.android.inputmethod.latin",
+    "com.android.providers.downloads",
+    "com.android.providers.downloads.ui",
+)
 
 private fun loadApps(ctx: Context): List<AppItem> {
     val pm = ctx.packageManager
-    val launcher = Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_LAUNCHER)
-    return pm.queryIntentActivities(launcher, 0)
-        .filter { it.activityInfo.packageName != ctx.packageName }
-        .distinctBy { it.activityInfo.packageName }
-        .map {
-            AppItem(
-                it.activityInfo.packageName,
-                it.loadLabel(pm).toString(),
-                it.loadIcon(pm).toBitmap(96, 96).asImageBitmap(),
-            )
+    return pm.getInstalledApplications(PackageManager.GET_META_DATA)
+        .asSequence()
+        .filter { it.packageName != ctx.packageName }
+        .mapNotNull { info ->
+            runCatching {
+                AppItem(
+                    info.packageName,
+                    pm.getApplicationLabel(info).toString(),
+                    pm.getApplicationIcon(info).toBitmap(96, 96).asImageBitmap(),
+                    info.packageName in ESSENTIAL_SYSTEM_PACKAGES,
+                )
+            }.getOrNull()
         }
-        .sortedBy { it.label.lowercase() }
+        .sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.label }.thenBy { it.pkg })
+        .toList()
 }
+
+private fun normalizedSearch(value: String): String =
+    value.trim().lowercase().replace(Regex("\\s+"), " ")
 
 private const val FILTER_ALL = 0
 private const val FILTER_SELECTED = 1
@@ -89,19 +143,44 @@ private const val FILTER_UNSELECTED = 2
 @Composable
 fun AppsTab() {
     val ctx = LocalContext.current
-    // null while the list is still loading, so "no apps" is not shown by mistake.
-    val loaded by produceState<List<AppItem>?>(null) { value = withContext(Dispatchers.Default) { loadApps(ctx) } }
-    val apps = loaded
+    // Refresh on first display and whenever Android reports an install, removal or replacement.
+    var apps by remember { mutableStateOf<List<AppItem>?>(null) }
+    val scope = rememberCoroutineScope()
+    LaunchedEffect(ctx) {
+        apps = withContext(Dispatchers.IO) { loadApps(ctx) }
+    }
+    DisposableEffect(ctx) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                scope.launch { apps = withContext(Dispatchers.IO) { loadApps(ctx) } }
+            }
+        }
+        val filter = IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addAction(Intent.ACTION_PACKAGE_REPLACED)
+            addAction(Intent.ACTION_PACKAGE_CHANGED)
+            addDataScheme("package")
+        }
+        ContextCompat.registerReceiver(ctx, receiver, filter, ContextCompat.RECEIVER_EXPORTED)
+        onDispose { runCatching { ctx.unregisterReceiver(receiver) } }
+    }
     var q by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableIntStateOf(FILTER_ALL) }
     var bulk by remember { mutableStateOf<Int?>(null) } // 1 = select shown, 2 = deselect shown
+    var selectedApp by remember { mutableStateOf<AppItem?>(null) }
+
+    if (selectedApp != null) {
+        AppSettingsScreen(selectedApp!!, onBack = { selectedApp = null })
+        return
+    }
 
     // Search and filter only decide what is displayed; they never touch the saved lock list.
     val locked = Store.locked
-    val query = q.trim()
+    val query = normalizedSearch(q)
     val shown = remember(apps, query, filter, locked) {
         (apps ?: emptyList()).filter { a ->
-            (query.isEmpty() || a.label.contains(query, ignoreCase = true) || a.pkg.contains(query, ignoreCase = true)) &&
+            (query.isEmpty() || normalizedSearch(a.label).contains(query) || normalizedSearch(a.pkg).contains(query)) &&
                 when (filter) {
                     FILTER_SELECTED -> a.pkg in locked
                     FILTER_UNSELECTED -> a.pkg !in locked
@@ -111,7 +190,7 @@ fun AppsTab() {
     }
     val total = apps?.size ?: 0
     val selectedCount = apps?.count { it.pkg in locked } ?: 0
-    val toSelect = shown.filter { it.pkg !in locked }
+    val toSelect = shown.filter { it.pkg !in locked && !it.essentialSystemApp }
     val toDeselect = shown.filter { it.pkg in locked }
 
     Column(Modifier.fillMaxSize().padding(horizontal = Sp.l)) {
@@ -193,7 +272,7 @@ fun AppsTab() {
                 LazyColumn {
                     itemsIndexed(shown, key = { _, item -> item.pkg }) { i, item ->
                         Column {
-                            AppRow(item, showPkg = query.isNotEmpty())
+                            AppRow(item, showPkg = query.isNotEmpty(), onOpen = { selectedApp = item })
                             if (i < shown.lastIndex) RowDivider()
                         }
                     }
@@ -222,23 +301,14 @@ fun AppsTab() {
 }
 
 @Composable
-private fun AppRow(a: AppItem, showPkg: Boolean) {
+private fun AppRow(a: AppItem, showPkg: Boolean, onOpen: () -> Unit) {
     val mode = Store.locked[a.pkg]
     val released = a.pkg in Store.mainUnlocked
     // A selected app is tinted, so the list can be scanned at a glance.
     val tint = if (mode != null) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else Color.Transparent
     Row(
         Modifier.fillMaxWidth().background(tint)
-            .clickable {
-                Store.setMode(
-                    a.pkg,
-                    when (mode) {
-                        null -> LockMode.PIN
-                        LockMode.PIN -> LockMode.MAIN
-                        LockMode.MAIN -> null
-                    },
-                )
-            }
+            .clickable(onClick = onOpen)
             .heightIn(min = 56.dp)
             .padding(horizontal = Sp.m, vertical = Sp.s),
         verticalAlignment = Alignment.CenterVertically,
@@ -270,6 +340,212 @@ private fun AppRow(a: AppItem, showPkg: Boolean) {
         }
     }
 }
+
+
+@Composable
+private fun AppSettingsScreen(a: AppItem, onBack: () -> Unit) {
+    var tab by rememberSaveable(a.pkg) { mutableIntStateOf(0) }
+    val mode = Store.locked[a.pkg]
+    Column(Modifier.fillMaxSize().padding(horizontal = Sp.l)) {
+        Row(
+            Modifier.fillMaxWidth().padding(vertical = Sp.m),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Sp.m),
+        ) {
+            IconButton(onClick = onBack) { Icon(Icons.Filled.Close, stringResource(R.string.cancel)) }
+            Image(a.icon, null, Modifier.size(42.dp).clip(RoundedCornerShape(10.dp)))
+            Text(a.label, style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+        }
+        TabRow(selectedTabIndex = tab) {
+            Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(stringResource(R.string.app_tab_method)) })
+            Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(stringResource(R.string.app_tab_more)) })
+        }
+        if (a.essentialSystemApp) {
+            Column(Modifier.weight(1f).padding(vertical = Sp.m), verticalArrangement = Arrangement.spacedBy(Sp.m)) {
+                Text(stringResource(R.string.apps_system_essential), color = MaterialTheme.colorScheme.error)
+                OutlinedButton(
+                    onClick = {
+                        Store.setMode(a.pkg, null)
+                        Store.setSchedule(a.pkg, AppSchedule())
+                        Store.setUsageLimit(a.pkg, null)
+                    },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = mode != null || Store.scheduleFor(a.pkg) != AppSchedule() || Store.usageLimitFor(a.pkg) != null,
+                ) { Text(stringResource(R.string.app_unblock)) }
+            }
+        } else if (tab == 0) {
+            Column(Modifier.weight(1f).padding(vertical = Sp.m), verticalArrangement = Arrangement.spacedBy(Sp.m)) {
+                Text(stringResource(R.string.app_method_help), style = MaterialTheme.typography.bodyMedium)
+                listOf(LockMode.MAIN, LockMode.PIN).forEach { choice ->
+                    val selected = mode == choice
+                    Button(
+                        onClick = { Store.setMode(a.pkg, choice) },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !selected,
+                    ) {
+                        Text(stringResource(if (choice == LockMode.MAIN) R.string.mode_main else R.string.mode_pin) +
+                            if (selected) "  ✓" else "")
+                    }
+                }
+                OutlinedButton(
+                    onClick = { Store.setMode(a.pkg, null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = mode != null,
+                ) { Text(stringResource(R.string.app_unblock)) }
+            }
+        } else {
+            AppScheduleEditor(a.pkg)
+        }
+    }
+}
+
+@Composable
+private fun AppScheduleEditor(packageName: String) {
+    val schedule = Store.scheduleFor(packageName)
+    val context = LocalContext.current
+    val initialUsageAccess = UsageTracker.hasAccess(context)
+    var hasUsageAccess by remember(packageName) { mutableStateOf(initialUsageAccess) }
+    LaunchedEffect(packageName) {
+        while (true) {
+            hasUsageAccess = UsageTracker.hasAccess(context)
+            delay(2_000)
+        }
+    }
+    var usageMinutes by remember(packageName) {
+        mutableStateOf(Store.usageLimitFor(packageName)?.toString().orEmpty())
+    }
+    var usedMillis by remember(packageName) { mutableStateOf(0L) }
+    LaunchedEffect(packageName, hasUsageAccess) {
+        if (!hasUsageAccess) {
+            usedMillis = 0L
+            return@LaunchedEffect
+        }
+        while (true) {
+            usedMillis = UsageTracker.todayUsageMillis(context, packageName, forceRefresh = true)
+            delay(10_000)
+        }
+    }
+    var day by remember(packageName) { mutableStateOf("1") }
+    var start by remember(packageName) { mutableStateOf("08:00") }
+    var end by remember(packageName) { mutableStateOf("16:00") }
+    var action by remember(packageName) { mutableStateOf(ScheduleAction.ALLOW) }
+
+    Column(
+        Modifier.fillMaxSize().padding(vertical = Sp.m),
+        verticalArrangement = Arrangement.spacedBy(Sp.m),
+    ) {
+        Text(stringResource(R.string.app_schedule_help), style = MaterialTheme.typography.bodyMedium)
+        Row(horizontalArrangement = Arrangement.spacedBy(Sp.s)) {
+            OutlinedTextField(
+                value = day, onValueChange = { day = it.filter(Char::isDigit).take(1) },
+                label = { Text(stringResource(R.string.schedule_day)) }, modifier = Modifier.weight(1f),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = start, onValueChange = { start = it.take(5) },
+                label = { Text(stringResource(R.string.schedule_start)) }, modifier = Modifier.weight(1f),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = end, onValueChange = { end = it.take(5) },
+                label = { Text(stringResource(R.string.schedule_end)) }, modifier = Modifier.weight(1f),
+                singleLine = true,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(Sp.s)) {
+            FilterChip(
+                selected = action == ScheduleAction.ALLOW,
+                onClick = { action = ScheduleAction.ALLOW },
+                label = { Text(stringResource(R.string.schedule_allow)) },
+            )
+            FilterChip(
+                selected = action == ScheduleAction.LOCK,
+                onClick = { action = ScheduleAction.LOCK },
+                label = { Text(stringResource(R.string.schedule_lock)) },
+            )
+        }
+        val dayNumber = day.toIntOrNull()
+        val startMinute = parseScheduleMinute(start)
+        val endMinute = parseScheduleMinute(end)
+        Button(
+            onClick = {
+                val next = schedule.weekly + WeeklyAppWindow(
+                    java.util.UUID.randomUUID().toString(), packageName,
+                    dayNumber!!, startMinute!!, endMinute!!, action,
+                )
+                Store.setSchedule(packageName, schedule.copy(weekly = next))
+            },
+            enabled = dayNumber != null && dayNumber in 1..7 && startMinute != null &&
+                endMinute != null && startMinute != endMinute,
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text(stringResource(R.string.schedule_add)) }
+
+        if (schedule.weekly.isNotEmpty()) {
+            Text(stringResource(R.string.schedule_saved), style = MaterialTheme.typography.titleSmall)
+            schedule.weekly.forEach { rule ->
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Text(
+                        stringResource(
+                            R.string.app_schedule_summary,
+                            rule.dayOfWeek, formatScheduleMinute(rule.startMinute),
+                            formatScheduleMinute(rule.endMinute),
+                            if (rule.action == ScheduleAction.LOCK) stringResource(R.string.schedule_lock)
+                            else stringResource(R.string.schedule_allow),
+                        ),
+                        modifier = Modifier.weight(1f),
+                    )
+                    TextButton(onClick = {
+                        Store.setSchedule(packageName, schedule.copy(weekly = schedule.weekly.filterNot { it.id == rule.id }))
+                    }) { Text(stringResource(R.string.schedule_remove)) }
+                }
+            }
+        }
+        Text(stringResource(R.string.schedule_calendar_later), style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+        androidx.compose.material3.HorizontalDivider()
+        Text(stringResource(R.string.usage_limit_title), style = MaterialTheme.typography.titleSmall)
+        Text(stringResource(R.string.usage_limit_desc), style = MaterialTheme.typography.bodySmall)
+        if (!hasUsageAccess) {
+            Text(stringResource(R.string.usage_permission_needed), color = MaterialTheme.colorScheme.error)
+            OutlinedButton(
+                onClick = { context.startActivity(Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)) },
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.usage_open_settings)) }
+        } else {
+            Text(stringResource(R.string.usage_today_used, usedMillis / 60_000L))
+            OutlinedTextField(
+                value = usageMinutes,
+                onValueChange = { usageMinutes = it.filter(Char::isDigit).take(4) },
+                label = { Text(stringResource(R.string.usage_limit_minutes)) },
+                modifier = Modifier.fillMaxWidth(),
+                singleLine = true,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(Sp.s)) {
+                Button(
+                    onClick = { Store.setUsageLimit(packageName, usageMinutes.toIntOrNull()) },
+                    enabled = usageMinutes.toIntOrNull()?.let { it in 0..1440 } == true,
+                    modifier = Modifier.weight(1f),
+                ) { Text(stringResource(R.string.usage_limit_save)) }
+                TextButton(onClick = {
+                    Store.setUsageLimit(packageName, null)
+                    usageMinutes = ""
+                }) { Text(stringResource(R.string.app_unblock)) }
+            }
+        }
+    }
+}
+
+private fun parseScheduleMinute(value: String): Int? {
+    val parts = value.split(":")
+    if (parts.size != 2) return null
+    val hour = parts[0].toIntOrNull() ?: return null
+    val minute = parts[1].toIntOrNull() ?: return null
+    if (hour !in 0..23 || minute !in 0..59) return null
+    return hour * 60 + minute
+}
+
+private fun formatScheduleMinute(value: Int): String = "%02d:%02d".format(value / 60, value % 60)
 
 @Composable
 private fun ModePill(mode: LockMode?) {

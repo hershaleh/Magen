@@ -1,6 +1,5 @@
 package app.magen.lock.ui
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Schedule
@@ -15,12 +14,12 @@ import app.magen.lock.Store
 import kotlinx.coroutines.delay
 
 /**
- * Only behaviour that really exists and depends on time: when apps lock again, the short uninstall approval
- * window, and the pause after wrong codes. Nothing here promises schedules or limits.
+ * Shows the time-related controls currently implemented in Magen.
+ * Per-app schedules and usage limits are implemented in the individual app settings,
+ * not as global profiles.
  */
 @Composable
 fun TimesTab() {
-    // Re-read the clock so the state flips by itself when the approval window or a code pause ends.
     val now by produceState(System.currentTimeMillis()) {
         while (true) {
             value = System.currentTimeMillis()

@@ -7,7 +7,7 @@
     <string name="admin_disable_warning">ביטול הרשאת מנהל המכשיר מחליש את ההגנה. כדי להסיר את מגן, השתמשו ב״אישור הסרה״ בתוך האפליקציה.</string>
 
     <string name="nav_home">בית</string>
-    <string name="nav_apps">אפליקציות</string>
+    <string name="nav_apps">חסימות</string>
 
     <string name="welcome_title">ברוכים הבאים למגן</string>
     <string name="welcome_sub">נעילת אפליקציות, חסימת התקנות והגנה מהסרה – הכול במקום אחד.</string>
@@ -38,7 +38,7 @@
     <string name="copy_cmd">העתקת הפקודה</string>
     <string name="copied">הועתק</string>
 
-    <string name="apps_title">אפליקציות נעולות</string>
+    <string name="apps_title">חסימת אפליקציות</string>
     <string name="apps_count">%1$d אפליקציות נעולות</string>
     <string name="search_apps">חיפוש אפליקציה</string>
     <string name="mode_off">כבוי</string>
@@ -423,6 +423,7 @@
     <string name="pin_delete">מחיקת הספרה האחרונה</string>
     <string name="pin_confirm">אישור הקוד</string>
     <string name="nav_settings">הגדרות</string>
+    <string name="nav_more">עוד</string>
     <string name="home_attention">דורש טיפול</string>
     <string name="home_summary">תקציר</string>
     <string name="home_details">בדיקות והרשאות</string>
@@ -450,5 +451,49 @@
     <string name="times_wrong_title">אחרי קודים שגויים</string>
     <string name="times_wrong_body">אחרי 5 קודים שגויים לוח המקשים נעצר ל־30 שניות. כל קוד שגוי נוסף מכפיל את ההשהיה, עד 15 דקות.</string>
     <string name="times_wrong_now">מושהה: %1$d שניות</string>
+    <string name="policy_check_title">בדיקת מדיניות ההגנה</string>
+    <string name="policy_check_failed">נמצאו בעיות באכיפת מדיניות:\n%1$s</string>
+    <string name="policy_check_ok">לא דווחו כשלים בבדיקה האחרונה. זו בדיקת מצב המדיניות ש-Android מדווח, ולא הבטחה שכל יצרן אוכף אותה בפועל.</string>
+    <string name="policy_check_now">בדוק מדיניות עכשיו</string>
+    <string name="schedule_day">יום (1–7)</string>
+    <string name="schedule_start">התחלה (HH:mm)</string>
+    <string name="schedule_end">סיום (HH:mm)</string>
+    <string name="schedule_add">הוספת טווח זמן</string>
+    <string name="schedule_saved">טווחים שמורים</string>
+    <string name="schedule_remove">הסרה</string>
+    <string name="app_tab_method">שיטת חסימה</string>
+    <string name="app_tab_more">הגדרות נוספות</string>
+    <string name="app_method_help">בחרו כיצד האפליקציה הזו תיחסם. השיטה תיכנס לתוקף רק לאחר שמירה מוצלחת.</string>
+    <string name="app_unblock">ביטול חסימה</string>
+    <string name="app_schedule_help">הגדירו מתי האפליקציה תהיה חסומה ומתי תותר זמנית. מספרי ימים: 1=יום שני, 7=יום ראשון. אפשר להגדיר גם טווח שחוצה את חצות.</string>
+    <string name="schedule_allow">מותר</string>
+    <string name="schedule_lock">חסום</string>
+    <string name="app_schedule_summary">יום %1$d · %2$s–%3$s · %4$s</string>
+    <string name="schedule_calendar_later">חריגים חודשיים וזמנים גמישים יתווספו במסגרת מימוש לוח השנה ומגבלות השימוש המלא.</string>
+    <string name="usage_limit_title">מכסת שימוש יומית</string>
+    <string name="usage_limit_desc">הגדירו מספר דקות מרבי ליום עבור האפליקציה. אפס דקות פירושן חסימה לכל היום. נדרשת הרשאת גישה לנתוני שימוש; ייתכן עיכוב בעדכון הנתונים מצד Android.</string>
+    <string name="usage_permission_needed">הרשאת גישה לנתוני שימוש אינה מופעלת. האפליקציה תישאר חסומה עד להפעלת ההרשאה, כדי שלא לעקוף את המכסה.</string>
+    <string name="usage_open_settings">פתיחת הגדרות גישה לנתוני שימוש</string>
+    <string name="usage_limit_minutes">דקות ליום (0–1440; אפס = חסימה כל היום)</string>
+    <string name="usage_limit_save">שמירת המכסה</string>
+    <string name="usage_limit_remove">הסרת המכסה</string>
+    <string name="usage_today_used">נוצלו היום: %1$d דקות</string>
+    <string name="stats_title">סטטיסטיקות</string>
+    <string name="stats_desc">צפייה בפעילות ההגנה ובאירועי אבטחה אחרונים.</string>
+    <string name="stats_open">פתיחת סטטיסטיקות ויומן פעילות</string>
+    <string name="activity_log_title">פעילות אחרונה</string>
+    <string name="activity_log_desc">עד 500 אירועים אחרונים נשמרים במכשיר בלבד. קודים ראשיים וקודי שחזור אינם נרשמים.</string>
+    <string name="activity_log_clear">מחיקת היומן</string>
+    <string name="activity_log_empty">עדיין לא נרשמו אירועים.</string>
+    <string name="event_pin_failed">הוזן קוד ראשי שגוי</string>
+    <string name="event_app_unlocked">האפליקציה נפתחה: %1$s</string>
+    <string name="event_app_locked">הופעלה חסימה: %1$s</string>
+    <string name="event_usage_limit">מכסת השימוש היומית נוצלה: %1$s</string>
+    <string name="event_block_method">שיטת החסימה שונתה: %1$s</string>
+    <string name="event_app_unblocked">החסימה הוסרה: %1$s</string>
+    <string name="event_schedule_changed">התזמון שונה: %1$s</string>
+    <string name="event_usage_limit_changed">מכסת השימוש שונתה: %1$s</string>
+    <string name="event_uninstall_approval">חלון אישור הסרה: %1$s</string>
+    <string name="apps_system_essential">זהו רכיב מערכת חיוני. מגן מציגה אותו, אך אינה מאפשרת לנעול אותו כדי למנוע פגיעה בפעולת Android.</string>
 </resources>
 

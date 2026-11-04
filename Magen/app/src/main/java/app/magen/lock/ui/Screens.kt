@@ -313,9 +313,9 @@ fun MainScaffold() {
         val items = listOf(
             Triple(R.string.nav_home, Icons.Filled.Home, Icons.Outlined.OutlinedHomeIcon),
             Triple(R.string.nav_apps, Icons.Filled.Apps, Icons.Outlined.OutlinedAppsIcon),
-            Triple(R.string.nav_protection, Icons.Filled.Shield, Icons.Outlined.OutlinedShieldIcon),
             Triple(R.string.nav_times, Icons.Filled.Schedule, Icons.Outlined.OutlinedScheduleIcon),
-            Triple(R.string.nav_settings, Icons.Filled.SettingsIcon, Icons.Outlined.OutlinedSettingsIcon),
+            Triple(R.string.nav_protection, Icons.Filled.Shield, Icons.Outlined.OutlinedShieldIcon),
+            Triple(R.string.nav_more, Icons.Filled.SettingsIcon, Icons.Outlined.OutlinedSettingsIcon),
         )
         Scaffold(
             containerColor = MaterialTheme.colorScheme.background,
@@ -398,6 +398,12 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
     // Read again every time the person returns from Android settings.
     val p = rememberPerms()
     val running = GuardService.instance != null
+    var policyDiagnostic by remember { mutableStateOf(Policy.lastApplyError) }
+    // Refresh diagnostics both when this tab is opened and when Android returns to the app.
+    LaunchedEffect(Unit) { policyDiagnostic = Policy.lastApplyError }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        policyDiagnostic = Policy.lastApplyError
+    }
     val fix: (Fix) -> Unit = { openFix(ctx, it) {} }
 
     TabColumn {
@@ -448,6 +454,28 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
         SectionCard(stringResource(R.string.protection_adv_title), stringResource(R.string.protection_adv_desc)) {
             StatusLine(ownerLine(p), fix)
             StatusLine(adminLine(p), fix)
+            if (Policy.isOwner(ctx)) {
+                Text(
+                    stringResource(R.string.policy_check_title),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    modifier = Modifier.padding(top = 8.dp),
+                )
+                Text(
+                    policyDiagnostic?.let { stringResource(R.string.policy_check_failed, it) }
+                        ?: stringResource(R.string.policy_check_ok),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (policyDiagnostic == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
+                )
+                OutlinedButton(
+                    onClick = {
+                        Policy.apply()
+                        policyDiagnostic = Policy.lastApplyError
+                    },
+                    shape = RoundedCornerShape(16.dp),
+                    modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+                ) { Text(stringResource(R.string.policy_check_now)) }
+            }
             OutlinedButton(
                 onClick = { advanced = true },
                 shape = RoundedCornerShape(16.dp),
@@ -510,6 +538,12 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
     val removalPrefs = ctx.getSharedPreferences("magen", Context.MODE_PRIVATE)
     var normalBroken by remember { mutableStateOf(removalPrefs.getBoolean("normalRemovalBroken", false)) }
     val perms = rememberPerms()
+    var showStats by rememberSaveable { mutableStateOf(false) }
+    if (showStats) {
+        BackHandler { showStats = false }
+        ActivityLogScreen(onBack = { showStats = false })
+        return
+    }
 
     TabColumn {
         Text(stringResource(R.string.more_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
@@ -576,6 +610,14 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 6.dp),
             )
+        }
+
+        SectionCard(stringResource(R.string.stats_title), stringResource(R.string.stats_desc)) {
+            OutlinedButton(
+                onClick = { showStats = true },
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text(stringResource(R.string.stats_open)) }
         }
 
         SectionCard(stringResource(R.string.more_guides_title), stringResource(R.string.more_guides_desc)) {

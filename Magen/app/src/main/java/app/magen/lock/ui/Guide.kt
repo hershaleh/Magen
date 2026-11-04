@@ -484,7 +484,7 @@ fun GuideScreen(onClose: () -> Unit) {
                 androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                     listOf(
                         Tabs.HOME to R.string.nav_home, Tabs.APPS to R.string.nav_apps, Tabs.PROTECTION to R.string.nav_protection,
-                        Tabs.TIMES to R.string.nav_times, Tabs.SETTINGS to R.string.nav_settings,
+                        Tabs.TIMES to R.string.nav_times, Tabs.SETTINGS to R.string.nav_more,
                     ).forEach { (tab, label) ->
                         TextButton(onClick = {
                             Session.goTab = tab

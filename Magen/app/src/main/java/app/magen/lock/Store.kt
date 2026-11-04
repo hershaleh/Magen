@@ -3,6 +3,8 @@ package app.magen.lock
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
+import org.json.JSONArray
+import org.json.JSONObject
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -48,6 +50,10 @@ object Store {
         private set
     var hasRecovery by mutableStateOf(false)
         private set
+    var appSchedules by mutableStateOf<Map<String, AppSchedule>>(emptyMap())
+        private set
+    var usageLimits by mutableStateOf<Map<String, Int>>(emptyMap())
+        private set
 
     fun init(ctx: Context) {
         app = ctx.applicationContext
@@ -62,11 +68,17 @@ object Store {
         blockedSettings = sp.getStringSet("blockedSettings", emptySet()) ?: emptySet()
         protect = sp.getBoolean("protect", true)
         relockOnScreenOff = sp.getBoolean("relock", true)
-        allowedUntil = sp.getLong("allowedUntil", 0L)
+        // The uninstall approval window exists only while the system uninstall screen is in the
+        // foreground. It must never survive a process restart: otherwise a force-stop/process death
+        // while that screen is open could leave protection paused after the user cancels.
+        allowedUntil = 0L
+        sp.edit().remove("allowedUntil").apply()
         level = sp.getString("level", "regular") ?: "regular"
         customKeywords = sp.getStringSet("customKeywords", emptySet()) ?: emptySet()
         biometric = sp.getBoolean("bio", false)
         hasRecovery = sp.contains("rhash")
+        appSchedules = decodeSchedules(sp.getString("appSchedules", null))
+        usageLimits = decodeUsageLimits(sp.getString("usageLimits", null))
         Policy.apply()
     }
 
@@ -117,7 +129,9 @@ object Store {
         if (lockRemaining() > 0) return false
         val salt = Base64.decode(sp.getString("salt", "") ?: "", Base64.NO_WRAP)
         val want = sp.getString("hash", "") ?: ""
-        return registerAttempt(MessageDigest.isEqual(hash(pin, salt).toByteArray(), want.toByteArray()))
+        val ok = registerAttempt(MessageDigest.isEqual(hash(pin, salt).toByteArray(), want.toByteArray()))
+        if (!ok) ActivityLog.record("PIN_FAILED")
+        return ok
     }
 
     /** Counts a wrong attempt (PIN or recovery code) and starts the lockout delay after five misses. */
@@ -170,7 +184,9 @@ object Store {
     // ---- app locking -------------------------------------------------------------------------
 
     fun setMode(pkg: String, mode: LockMode?) {
+        if (pkg == app.packageName || locked[pkg] == mode) return
         locked = if (mode == null) locked - pkg else locked + (pkg to mode)
+        ActivityLog.record(if (mode == null) "APP_UNBLOCKED" else "APP_BLOCK_METHOD_SET", pkg)
         if (mode != LockMode.MAIN) mainUnlocked = mainUnlocked - pkg
         sp.edit().putStringSet("locked", locked.map { "${it.key}:${it.value.name}" }.toSet()).apply()
     }
@@ -216,11 +232,118 @@ object Store {
         sp.edit().putBoolean("relock", on).apply()
     }
 
+    // ---- per-app schedules -------------------------------------------------------------------
+
+    fun scheduleFor(packageName: String): AppSchedule =
+        if (packageName == app.packageName) AppSchedule() else appSchedules[packageName] ?: AppSchedule()
+
+    fun scheduleDecision(packageName: String, nowMillis: Long = System.currentTimeMillis()): ScheduleDecision {
+        if (packageName == app.packageName) return ScheduleDecision(false, ScheduleDecision.Reason.BASE_SETTING)
+        return ScheduleEngine.evaluate(
+            scheduleFor(packageName), packageName, packageName in locked, nowMillis,
+        )
+    }
+
+    fun setSchedule(packageName: String, schedule: AppSchedule) {
+        if (packageName == app.packageName || schedule == scheduleFor(packageName)) return
+        appSchedules = if (schedule.weekly.isEmpty() && schedule.dateOverrides.isEmpty()) {
+            appSchedules - packageName
+        } else {
+            appSchedules + (packageName to schedule)
+        }
+        val root = JSONArray()
+        appSchedules.forEach { (pkg, value) ->
+            val weekly = JSONArray()
+            value.weekly.forEach { rule ->
+                weekly.put(JSONObject()
+                    .put("id", rule.id).put("day", rule.dayOfWeek)
+                    .put("start", rule.startMinute).put("end", rule.endMinute)
+                    .put("action", rule.action.name).put("priority", rule.priority))
+            }
+            val dates = JSONArray()
+            value.dateOverrides.forEach { rule ->
+                dates.put(JSONObject()
+                    .put("id", rule.id).put("date", rule.epochDay)
+                    .put("start", rule.startMinute).put("end", rule.endMinute)
+                    .put("action", rule.action.name).put("priority", rule.priority))
+            }
+            root.put(JSONObject().put("package", pkg).put("weekly", weekly).put("dates", dates))
+        }
+        sp.edit().putString("appSchedules", root.toString()).apply()
+        ActivityLog.record("APP_SCHEDULE_CHANGED", packageName)
+    }
+
+    fun usageLimitFor(packageName: String): Int? =
+        if (packageName == app.packageName) null else usageLimits[packageName]
+
+    fun setUsageLimit(packageName: String, minutes: Int?) {
+        if (packageName == app.packageName || usageLimits[packageName] == minutes) return
+        usageLimits = if (minutes == null || minutes < 0) usageLimits - packageName
+        else usageLimits + (packageName to minutes.coerceAtMost(1440))
+        val json = JSONObject()
+        usageLimits.forEach { (pkg, limit) -> json.put(pkg, limit) }
+        sp.edit().putString("usageLimits", json.toString()).apply()
+        ActivityLog.record("APP_USAGE_LIMIT_CHANGED", packageName)
+    }
+
+    fun isUsageLimitReached(packageName: String): Boolean {
+        val limit = usageLimitFor(packageName) ?: return false
+        // Fail closed: a configured quota is not silently bypassed if Android revokes usage access.
+        if (!UsageTracker.hasAccess(app)) return true
+        return UsageTracker.isLimitReached(limit, UsageTracker.todayUsageMillis(app, packageName))
+    }
+
+    private fun decodeUsageLimits(raw: String?): Map<String, Int> = runCatching {
+        val json = JSONObject(raw ?: "{}")
+        buildMap {
+            val keys = json.keys()
+            while (keys.hasNext()) {
+                val pkg = keys.next()
+                val minutes = json.optInt(pkg, 0)
+                if (pkg != app.packageName && minutes in 0..1440) put(pkg, minutes)
+            }
+        }
+    }.getOrDefault(emptyMap())
+
+    private fun decodeSchedules(raw: String?): Map<String, AppSchedule> = runCatching {
+        val root = JSONArray(raw ?: "[]")
+        val result = mutableMapOf<String, AppSchedule>()
+        for (i in 0 until root.length()) {
+            val item = root.getJSONObject(i)
+            val pkg = item.getString("package")
+            if (pkg != app.packageName) {
+                val weeklyJson = item.optJSONArray("weekly") ?: JSONArray()
+                val weekly = (0 until weeklyJson.length()).mapNotNull { index ->
+                    runCatching {
+                        val w = weeklyJson.getJSONObject(index)
+                        WeeklyAppWindow(
+                            w.getString("id"), pkg, w.getInt("day"), w.getInt("start"), w.getInt("end"),
+                            ScheduleAction.valueOf(w.getString("action")), w.optInt("priority", 0),
+                        )
+                    }.getOrNull()
+                }
+                val datesJson = item.optJSONArray("dates") ?: JSONArray()
+                val dates = (0 until datesJson.length()).mapNotNull { index ->
+                    runCatching {
+                        val d = datesJson.getJSONObject(index)
+                        DateAppOverride(
+                            d.getString("id"), pkg, d.getLong("date"), d.getInt("start"), d.getInt("end"),
+                            ScheduleAction.valueOf(d.getString("action")), d.optInt("priority", 0),
+                        )
+                    }.getOrNull()
+                }
+                result[pkg] = AppSchedule(weekly, dates)
+            }
+        }
+        result
+    }.getOrDefault(emptyMap())
+
     // ---- uninstall approval ------------------------------------------------------------------
 
     fun uninstallAllowed() = System.currentTimeMillis() < allowedUntil
 
     fun allowUninstall(minutes: Int) {
+        ActivityLog.record("UNINSTALL_APPROVAL_WINDOW", "$minutes minutes")
         allowedUntil = System.currentTimeMillis() + minutes * 60_000L
         sp.edit().putLong("allowedUntil", allowedUntil).apply()
         Policy.apply()

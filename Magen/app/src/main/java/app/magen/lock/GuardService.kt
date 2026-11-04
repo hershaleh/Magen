@@ -64,7 +64,7 @@ class GuardService : AccessibilityService() {
     private val recheck = Runnable {
         val p = recheckPkg ?: return@Runnable
         recheckPkg = null
-        if (Store.hasPin && Store.locked.containsKey(p) && activeIs(p)) enforceLock(p)
+        if (Store.hasPin && isManagedPackage(p) && activeIs(p)) enforceLock(p)
     }
 
     private var currentApp = ""
@@ -73,6 +73,8 @@ class GuardService : AccessibilityService() {
     private var lastScan = 0L
     private var lastBlock = 0L
     private var lastMaint = 0L
+    private var lastLoggedPkg = ""
+    private var lastLoggedAt = 0L
     private var imePkgs: Set<String> = emptySet()
     private var imeAt = 0L
 
@@ -109,6 +111,7 @@ class GuardService : AccessibilityService() {
 
     fun markUnlocked(pkg: String) {
         tempUnlocked.add(pkg)
+        ActivityLog.record("APP_UNLOCKED", pkg)
         hideCoverSoon()
     }
 
@@ -117,9 +120,11 @@ class GuardService : AccessibilityService() {
     private fun notifyServiceOff() {
         runCatching {
             val nm = getSystemService(NotificationManager::class.java)
-            nm.createNotificationChannel(
-                NotificationChannel(CHANNEL, getString(R.string.notif_channel), NotificationManager.IMPORTANCE_HIGH),
-            )
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                nm.createNotificationChannel(
+                    NotificationChannel(CHANNEL, getString(R.string.notif_channel), NotificationManager.IMPORTANCE_HIGH),
+                )
+            }
             val open = PendingIntent.getActivity(
                 this, 0,
                 Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
@@ -333,7 +338,7 @@ class GuardService : AccessibilityService() {
         if (state) onForeground(pkg, e.className?.toString())
         maintain()
 
-        if (Store.hasPin && Store.locked.containsKey(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
+        if (Store.hasPin && isManagedPackage(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
         updateCapture(pkg, state)
 
         val now = SystemClock.uptimeMillis()
@@ -393,10 +398,21 @@ class GuardService : AccessibilityService() {
 
     private fun activeIs(pkg: String) = rootInActiveWindow?.packageName?.toString() == pkg
 
+    /** Includes apps governed only by a schedule or usage quota, even without a permanent lock mode. */
+    private fun isManagedPackage(pkg: String): Boolean =
+        pkg in Store.locked || pkg in Store.appSchedules || pkg in Store.usageLimits
+
     private fun enforceLock(pkg: String) {
-        val mode = Store.locked[pkg] ?: return
-        if (pkg in tempUnlocked) return
-        if (mode == LockMode.MAIN && pkg in Store.mainUnlocked) return
+        // Magen must never lock itself, regardless of imported or persisted rules.
+        if (pkg == packageName) return
+        val mode = Store.locked[pkg]
+        val decision = Store.scheduleDecision(pkg)
+        val quotaReached = Store.isUsageLimitReached(pkg)
+        if (!decision.locked && !quotaReached) return
+        // Scheduled lock windows and exhausted daily quotas take precedence over temporary unlocks.
+        if (decision.reason == ScheduleDecision.Reason.BASE_SETTING && !quotaReached && pkg in tempUnlocked) return
+        if (decision.reason == ScheduleDecision.Reason.BASE_SETTING && !quotaReached &&
+            mode == LockMode.MAIN && pkg in Store.mainUnlocked) return
         val now = SystemClock.uptimeMillis()
         if (now - lastLaunch < 600) {
             // The event arrived too soon after the previous lock screen. It may be the only one this app
@@ -407,6 +423,14 @@ class GuardService : AccessibilityService() {
             return
         }
         lastLaunch = now
+        if (lastLoggedPkg != pkg || now - lastLoggedAt > 30_000L) {
+            ActivityLog.record(
+                if (quotaReached) "APP_USAGE_LIMIT_REACHED" else "APP_LOCK_ENFORCED",
+                pkg,
+            )
+            lastLoggedPkg = pkg
+            lastLoggedAt = now
+        }
         showCover()
         startActivity(
             Intent(this, LockActivity::class.java)

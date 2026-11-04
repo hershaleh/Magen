@@ -7,7 +7,7 @@
     <string name="admin_disable_warning">Disabling Magen\'s device-admin permission weakens protection. To remove Magen, use “Approve uninstall” inside the app.</string>
 
     <string name="nav_home">Home</string>
-    <string name="nav_apps">Apps</string>
+    <string name="nav_apps">Blocks</string>
 
     <string name="welcome_title">Welcome to Magen</string>
     <string name="welcome_sub">App locking, install blocking and removal protection, all in one place.</string>
@@ -38,7 +38,7 @@
     <string name="copy_cmd">Copy command</string>
     <string name="copied">Copied</string>
 
-    <string name="apps_title">Locked apps</string>
+    <string name="apps_title">App blocking</string>
     <string name="apps_count">%1$d apps locked</string>
     <string name="search_apps">Search apps</string>
     <string name="mode_off">Off</string>
@@ -339,7 +339,7 @@
     <string name="bulk_confirm_title">Apply to the shown apps?</string>
     <string name="bulk_select_msg">%1$d shown apps will be locked with the code. Apps that are already locked keep their mode, and apps that are not shown are not changed.</string>
     <string name="bulk_deselect_msg">The lock will be removed from %1$d shown apps. Apps that are not shown are not changed.</string>
-    <string name="apps_none">No launchable apps were found on this device.</string>
+    <string name="apps_none">No installed apps were found.</string>
     <string name="apps_no_results">No apps match your search or filter.</string>
     <string name="apps_clear_search">Clear search and filter</string>
     <string name="times_pause_active">Active until %1$s. Protection is paused until then.</string>
@@ -423,6 +423,7 @@
     <string name="pin_delete">Delete last digit</string>
     <string name="pin_confirm">Confirm code</string>
     <string name="nav_settings">Settings</string>
+    <string name="nav_more">More</string>
     <string name="home_attention">Needs attention</string>
     <string name="home_summary">Summary</string>
     <string name="home_details">Checks and permissions</string>
@@ -450,5 +451,49 @@
     <string name="times_wrong_title">After wrong codes</string>
     <string name="times_wrong_body">After 5 wrong codes the keypad pauses for 30 seconds. Each further wrong code doubles the pause, up to 15 minutes.</string>
     <string name="times_wrong_now">Paused: %1$d s</string>
+    <string name="policy_check_title">Protection policy check</string>
+    <string name="policy_check_failed">Policy enforcement problems were found:\n%1$s</string>
+    <string name="policy_check_ok">No failures were reported in the last check. This reflects the policy state reported by Android; it does not guarantee that every device manufacturer enforces it in practice.</string>
+    <string name="policy_check_now">Check policy now</string>
+    <string name="schedule_day">Day (1–7)</string>
+    <string name="schedule_start">Start (HH:mm)</string>
+    <string name="schedule_end">End (HH:mm)</string>
+    <string name="schedule_add">Add time window</string>
+    <string name="schedule_saved">Saved windows</string>
+    <string name="schedule_remove">Remove</string>
+    <string name="app_tab_method">Blocking method</string>
+    <string name="app_tab_more">Additional settings</string>
+    <string name="app_method_help">Choose how this app should be blocked. The selected method applies only after it is saved successfully.</string>
+    <string name="app_unblock">Remove blocking</string>
+    <string name="app_schedule_help">Set the times when this app is blocked or temporarily allowed. Day numbers: 1=Monday, 7=Sunday. Overnight windows are supported.</string>
+    <string name="schedule_allow">Allowed</string>
+    <string name="schedule_lock">Blocked</string>
+    <string name="app_schedule_summary">Day %1$d · %2$s–%3$s · %4$s</string>
+    <string name="schedule_calendar_later">Monthly calendar exceptions and flexible-time allowances will be added with the full calendar and usage-limit implementation.</string>
+    <string name="usage_limit_title">Daily usage limit</string>
+    <string name="usage_limit_desc">Set a maximum number of minutes per day for this app. Zero minutes blocks it all day. Android Usage Access is required; usage data may be delayed by the device.</string>
+    <string name="usage_permission_needed">Usage Access permission is missing. This app stays blocked until permission is enabled, so the limit cannot be bypassed.</string>
+    <string name="usage_open_settings">Open Usage Access settings</string>
+    <string name="usage_limit_minutes">Minutes per day (0–1440; zero = block all day)</string>
+    <string name="usage_limit_save">Save limit</string>
+    <string name="usage_limit_remove">Remove limit</string>
+    <string name="usage_today_used">Used today: %1$d minutes</string>
+    <string name="stats_title">Statistics</string>
+    <string name="stats_desc">Review recent protection activity and security events.</string>
+    <string name="stats_open">Open statistics and activity log</string>
+    <string name="activity_log_title">Recent activity</string>
+    <string name="activity_log_desc">Up to 500 recent events are stored locally. PINs and recovery codes are never recorded.</string>
+    <string name="activity_log_clear">Clear log</string>
+    <string name="activity_log_empty">No events have been recorded yet.</string>
+    <string name="event_pin_failed">Incorrect master code entered</string>
+    <string name="event_app_unlocked">App unlocked: %1$s</string>
+    <string name="event_app_locked">App lock enforced: %1$s</string>
+    <string name="event_usage_limit">Daily usage limit reached: %1$s</string>
+    <string name="event_block_method">Blocking method changed: %1$s</string>
+    <string name="event_app_unblocked">App blocking removed: %1$s</string>
+    <string name="event_schedule_changed">App schedule changed: %1$s</string>
+    <string name="event_usage_limit_changed">Usage limit changed: %1$s</string>
+    <string name="event_uninstall_approval">Uninstall approval window: %1$s</string>
+    <string name="apps_system_essential">This is an essential system component. Magen shows it for transparency but does not allow locking it, to avoid disrupting Android.</string>
 </resources>
 
