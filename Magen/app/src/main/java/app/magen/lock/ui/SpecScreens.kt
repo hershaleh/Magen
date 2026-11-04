@@ -15,6 +15,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -44,8 +46,6 @@ import androidx.compose.ui.platform.testTag
 import android.content.Context
 import android.provider.Settings
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-
 private val gap = 12.dp
 
 /** Presentation preference; enforcement settings are deliberately kept elsewhere. */
