@@ -1,6 +1,7 @@
 package app.magen.lock.ui
 
 import android.content.Context
+import android.content.pm.ApplicationInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -70,7 +71,7 @@ import kotlinx.coroutines.withContext
 
 // ---- tab: apps -------------------------------------------------------------------------------
 
-private class AppItem(val pkg: String, val label: String, val icon: ImageBitmap, val manageable: Boolean)
+private class AppItem(val pkg: String, val label: String, val icon: ImageBitmap, val manageable: Boolean, val isSystem: Boolean)
 
 private val ESSENTIAL_PACKAGES = setOf(
     "android", "com.android.systemui", "com.android.settings",
@@ -93,6 +94,7 @@ private fun loadApps(ctx: Context): List<AppItem> {
                     info.loadLabel(pm).toString(),
                     pm.getApplicationIcon(info).toBitmap(96, 96).asImageBitmap(),
                     info.packageName !in ESSENTIAL_PACKAGES,
+                    (info.flags and ApplicationInfo.FLAG_SYSTEM) != 0,
                 )
             }.getOrNull()
         }
@@ -102,6 +104,8 @@ private fun loadApps(ctx: Context): List<AppItem> {
 private const val FILTER_ALL = 0
 private const val FILTER_SELECTED = 1
 private const val FILTER_UNSELECTED = 2
+private const val FILTER_SYSTEM = 3
+private const val FILTER_USER = 4
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
@@ -126,6 +130,8 @@ fun AppsTab() {
                 when (filter) {
                     FILTER_SELECTED -> a.pkg in locked
                     FILTER_UNSELECTED -> a.pkg !in locked
+                    FILTER_SYSTEM -> a.isSystem
+                    FILTER_USER -> !a.isSystem
                     else -> true
                 }
         }
@@ -179,6 +185,8 @@ fun AppsTab() {
                 FILTER_ALL to R.string.filter_all,
                 FILTER_SELECTED to R.string.filter_selected,
                 FILTER_UNSELECTED to R.string.filter_unselected,
+                FILTER_SYSTEM to R.string.filter_system,
+                FILTER_USER to R.string.filter_user,
             ).forEach { (id, label) ->
                 FilterChip(selected = filter == id, onClick = { filter = id }, label = { Text(stringResource(label)) })
             }
@@ -268,9 +276,11 @@ private fun AppRow(a: AppItem, showPkg: Boolean, onOpenDetails: () -> Unit) {
         Image(a.icon, null, Modifier.size(40.dp).clip(RoundedCornerShape(10.dp)))
         Column(Modifier.weight(1f)) {
             Text(a.label, maxLines = 1, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyLarge)
-            if (!a.manageable) {
-                Text("רכיב מערכת חיוני — לא ניתן לנעילה", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
-            }
+            Text(
+                if (!a.manageable) "רכיב מערכת חיוני — לא ניתן לנעילה" else if (a.isSystem) "אפליקציית מערכת" else "אפליקציית משתמש",
+                style = MaterialTheme.typography.labelSmall,
+                color = if (!a.manageable) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             if (showPkg) {
                 Text(
                     a.pkg,
