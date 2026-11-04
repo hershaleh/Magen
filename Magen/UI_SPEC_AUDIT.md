@@ -230,3 +230,29 @@ The following visual work has now been added to `feature/ui-spec-v1`:
 - [ ] Build and tests must be checked on the latest commit. The pre-existing unit-test import failure around `hasAnyRule` is being addressed separately; a successful debug APK build alone does not mean tests pass.
 
 These additions are a first implementation pass, not a claim that all 283+ archived decisions have been implemented. Continue reconciling the original archive against every screen before presenting the preview APK as the full UI concept.
+
+## UI revision after user review — 2026-11-04 (not yet build-validated)
+
+Implemented in the current branch:
+- [x] Replaced Home's multiple tiles/details with exactly three text counts: blocked apps, other blocking rules, and blocked Settings components.
+- [x] Home's attention notice is hidden when the current health check has no warning/error items.
+- [x] Added a first-class Notifications destination in the main navigation.
+- [x] Replaced the persistent side rail with a wide modal navigation drawer; the header includes the hamburger and shield, drawer rows include icons and labels, and selection closes the drawer.
+- [x] The top navigation uses the same Material navigation-bar treatment as the bottom navigation.
+- [x] Blocking hub now has three full-width destinations: apps, Settings components, and additional blocks.
+- [x] Moved the Settings-component discovery guidance into the Settings-components screen.
+- [x] Times hub no longer exposes per-app quotas or per-app schedules; it now separates whole-device scheduling, groups, and Shabbat/holidays.
+- [x] Added a first-pass group-management UI and whole-device schedule UI. These are still preview/local state, not persistent enforcement configuration.
+- [x] Added a persisted app-wide animation preference and made the navigation drawer honor both that preference and Android animation scales.
+
+Still not complete:
+- [ ] A true global protection on/off control. The current code has no global master switch: `Store.protect` only protects Magen itself, while app rules are enforced separately. The Home UI intentionally does not misuse that setting or claim that it toggles all protection.
+- [ ] Complete animation coverage across the app, including the blocked-app screen's agreed enter/exit effects, subtle control feedback, splash/other transitions, and reduced-motion handling everywhere.
+- [ ] PIN auto-submit immediately after the final correct digit.
+- [ ] Persisted group data and real group schedules; move app-specific quotas and schedules into the corresponding app/rule configuration screens.
+- [ ] Persistent notification/event center and real event actions.
+- [ ] Compact Protection sub-navigation and full visual/functional review.
+- [ ] Full English/RTL parity, accessibility, and device-size QA.
+- [ ] CI build, unit tests, and APK artifact verification for this revision.
+
+This revision is a partial implementation. Do not install it on the BF88 or treat it as complete until the build and remaining UI/logic gates are addressed.
