@@ -3,6 +3,8 @@ package app.magen.lock
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Base64
+import org.json.JSONArray
+import org.json.JSONObject
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -47,6 +49,8 @@ object Store {
     var biometric by mutableStateOf(false)
         private set
     var hasRecovery by mutableStateOf(false)
+    var appSchedules by mutableStateOf<Map<String, AppSchedule>>(emptyMap())
+        private set
         private set
 
     fun init(ctx: Context) {
@@ -71,6 +75,7 @@ object Store {
         customKeywords = sp.getStringSet("customKeywords", emptySet()) ?: emptySet()
         biometric = sp.getBoolean("bio", false)
         hasRecovery = sp.contains("rhash")
+        appSchedules = decodeSchedules(sp.getString("appSchedules", null))
         Policy.apply()
     }
 
@@ -219,6 +224,78 @@ object Store {
         relockOnScreenOff = on
         sp.edit().putBoolean("relock", on).apply()
     }
+
+    // ---- per-app schedules -------------------------------------------------------------------
+
+    fun scheduleFor(packageName: String): AppSchedule =
+        if (packageName == app.packageName) AppSchedule() else appSchedules[packageName] ?: AppSchedule()
+
+    fun scheduleDecision(packageName: String, nowMillis: Long = System.currentTimeMillis()): ScheduleDecision {
+        if (packageName == app.packageName) return ScheduleDecision(false, ScheduleDecision.Reason.BASE_SETTING)
+        return ScheduleEngine.evaluate(
+            scheduleFor(packageName), packageName, packageName in locked, nowMillis,
+        )
+    }
+
+    fun setSchedule(packageName: String, schedule: AppSchedule) {
+        if (packageName == app.packageName) return
+        appSchedules = if (schedule.weekly.isEmpty() && schedule.dateOverrides.isEmpty()) {
+            appSchedules - packageName
+        } else {
+            appSchedules + (packageName to schedule)
+        }
+        val root = JSONArray()
+        appSchedules.forEach { (pkg, value) ->
+            val weekly = JSONArray()
+            value.weekly.forEach { rule ->
+                weekly.put(JSONObject()
+                    .put("id", rule.id).put("day", rule.dayOfWeek)
+                    .put("start", rule.startMinute).put("end", rule.endMinute)
+                    .put("action", rule.action.name).put("priority", rule.priority))
+            }
+            val dates = JSONArray()
+            value.dateOverrides.forEach { rule ->
+                dates.put(JSONObject()
+                    .put("id", rule.id).put("date", rule.epochDay)
+                    .put("start", rule.startMinute).put("end", rule.endMinute)
+                    .put("action", rule.action.name).put("priority", rule.priority))
+            }
+            root.put(JSONObject().put("package", pkg).put("weekly", weekly).put("dates", dates))
+        }
+        sp.edit().putString("appSchedules", root.toString()).apply()
+    }
+
+    private fun decodeSchedules(raw: String?): Map<String, AppSchedule> = runCatching {
+        val root = JSONArray(raw ?: "[]")
+        buildMap {
+            for (i in 0 until root.length()) {
+                val item = root.getJSONObject(i)
+                val pkg = item.getString("package")
+                if (pkg == app.packageName) continue
+                val weeklyJson = item.optJSONArray("weekly") ?: JSONArray()
+                val weekly = (0 until weeklyJson.length()).mapNotNull { index ->
+                    runCatching {
+                        val w = weeklyJson.getJSONObject(index)
+                        WeeklyAppWindow(
+                            w.getString("id"), pkg, w.getInt("day"), w.getInt("start"), w.getInt("end"),
+                            ScheduleAction.valueOf(w.getString("action")), w.optInt("priority", 0),
+                        )
+                    }.getOrNull()
+                }
+                val datesJson = item.optJSONArray("dates") ?: JSONArray()
+                val dates = (0 until datesJson.length()).mapNotNull { index ->
+                    runCatching {
+                        val d = datesJson.getJSONObject(index)
+                        DateAppOverride(
+                            d.getString("id"), pkg, d.getLong("date"), d.getInt("start"), d.getInt("end"),
+                            ScheduleAction.valueOf(d.getString("action")), d.optInt("priority", 0),
+                        )
+                    }.getOrNull()
+                }
+                put(pkg, AppSchedule(weekly, dates))
+            }
+        }
+    }.getOrDefault(emptyMap())
 
     // ---- uninstall approval ------------------------------------------------------------------
 
