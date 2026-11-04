@@ -111,9 +111,11 @@ class MagenUiTest {
         compose.onAllNodes(hasClickAction() and hasText(key))[0].performClick()
     }
 
-    /** Types the PIN; the keypad submits automatically when the saved PIN length is reached. */
+    /** Types a PIN. The first setup entry still uses confirm to choose its length; confirmations and existing PINs auto-submit. */
     private fun enterPin(pin: String) {
         pin.forEach { pressKey(it.toString()) }
+        val confirm = compose.onAllNodes(hasClickAction() and hasContentDescription(str(R.string.pin_confirm)))
+        if (confirm.fetchSemanticsNodes().isNotEmpty()) confirm[0].performClick()
     }
 
     private fun setCodeAndSkipSetup(pin: String = "2468") {
