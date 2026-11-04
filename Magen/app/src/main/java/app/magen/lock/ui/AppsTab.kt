@@ -56,6 +56,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import app.magen.lock.LockMode
+import app.magen.lock.ProfileStore
 import app.magen.lock.R
 import app.magen.lock.Store
 import kotlinx.coroutines.Dispatchers
@@ -97,7 +98,7 @@ fun AppsTab() {
     var bulk by remember { mutableStateOf<Int?>(null) } // 1 = select shown, 2 = deselect shown
 
     // Search and filter only decide what is displayed; they never touch the saved lock list.
-    val locked = Store.locked
+    val locked = ProfileStore.current()?.apps ?: Store.locked
     val query = q.trim()
     val shown = remember(apps, query, filter, locked) {
         (apps ?: emptyList()).filter { a ->
@@ -223,7 +224,7 @@ fun AppsTab() {
 
 @Composable
 private fun AppRow(a: AppItem, showPkg: Boolean) {
-    val mode = Store.locked[a.pkg]
+    val mode = (ProfileStore.current()?.apps ?: Store.locked)[a.pkg]
     val released = a.pkg in Store.mainUnlocked
     // A selected app is tinted, so the list can be scanned at a glance.
     val tint = if (mode != null) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else Color.Transparent
