@@ -224,6 +224,27 @@ class StoreTest {
     // ---- active-rule status and app-initiated trips ---------------------------------------------
 
     @Test
+    fun masterBlockingSwitchDefaultsOnAndPersistsItsState() {
+        assertTrue(Store.blockingEnabled)
+        Store.setBlockingEnabled(false)
+        assertFalse(Store.blockingEnabled)
+        assertFalse(prefs().getBoolean("blockingEnabled", true))
+        Store.init(ctx)
+        assertFalse(Store.blockingEnabled)
+        Store.setBlockingEnabled(true)
+        assertTrue(prefs().getBoolean("blockingEnabled", false))
+        assertTrue(Store.blockingEnabled)
+    }
+
+    @Test
+    fun masterBlockingSwitchDoesNotChangeMagenSelfProtectionPreference() {
+        assertTrue(Store.protect)
+        Store.setBlockingEnabled(false)
+        assertTrue(Store.protect)
+        assertTrue(prefs().getBoolean("protect", false))
+    }
+
+    @Test
     fun noConfiguredRulesMeansThereIsNothingToEnforce() {
         assertFalse(Store.hasAnyRule())
     }
