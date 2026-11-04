@@ -457,7 +457,7 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
                     modifier = Modifier.padding(top = 8.dp),
                 )
                 Text(
-                    policyDiagnostic?.let { "נמצאו בעיות באכיפת מדיניות:\\n$it" }
+                    policyDiagnostic?.let { "נמצאו בעיות באכיפת מדיניות:\n$it" }
                         ?: "לא דווחו כשלים בבדיקה האחרונה. זו בדיקת מצב המדיניות ש-Android מדווח, ולא הבטחה שכל יצרן אוכף אותה בפועל.",
                     style = MaterialTheme.typography.bodySmall,
                     color = if (policyDiagnostic == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
