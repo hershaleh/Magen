@@ -41,6 +41,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -114,11 +115,12 @@ fun AppsTab() {
     var refreshKey by rememberSaveable { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refreshKey++ }
     // null while the list is still loading, so "no apps" is not shown by mistake.
-    val loaded by produceState<List<AppItem>?>(null, refreshKey) {
-        val refreshedApps = withContext(Dispatchers.Default) { loadApps(ctx) }
-        value = refreshedApps
+    val loaded = remember { mutableStateOf<List<AppItem>?>(null) }
+    LaunchedEffect(refreshKey) {
+        loaded.value = null
+        loaded.value = withContext(Dispatchers.Default) { loadApps(ctx) }
     }
-    val apps = loaded
+    val apps = loaded.value
     var q by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableIntStateOf(FILTER_ALL) }
     var bulk by remember { mutableStateOf<Int?>(null) } // 1 = select shown, 2 = deselect shown
