@@ -28,6 +28,7 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
@@ -62,6 +63,8 @@ import androidx.core.graphics.drawable.toBitmap
 import app.magen.lock.LockMode
 import app.magen.lock.R
 import app.magen.lock.Store
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -104,8 +107,10 @@ private const val FILTER_UNSELECTED = 2
 @Composable
 fun AppsTab() {
     val ctx = LocalContext.current
+    var refreshKey by rememberSaveable { mutableIntStateOf(0) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refreshKey++ }
     // null while the list is still loading, so "no apps" is not shown by mistake.
-    val loaded by produceState<List<AppItem>?>(null) { value = withContext(Dispatchers.Default) { loadApps(ctx) } }
+    val loaded by produceState<List<AppItem>?>(refreshKey) { value = withContext(Dispatchers.Default) { loadApps(ctx) } }
     val apps = loaded
     var q by rememberSaveable { mutableStateOf("") }
     var filter by rememberSaveable { mutableIntStateOf(FILTER_ALL) }
@@ -138,7 +143,10 @@ fun AppsTab() {
 
     Column(Modifier.fillMaxSize().padding(horizontal = Sp.l)) {
         Spacer(Modifier.height(Sp.l))
-        Text(stringResource(R.string.apps_title), style = MaterialTheme.typography.titleLarge)
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            Text(stringResource(R.string.apps_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.weight(1f))
+            IconButton(onClick = { refreshKey++ }) { Icon(Icons.Filled.Refresh, contentDescription = "רענון רשימת האפליקציות") }
+        }
         Text(
             stringResource(R.string.apps_summary, selectedCount, total),
             style = MaterialTheme.typography.bodyMedium,
