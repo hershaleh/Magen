@@ -287,9 +287,13 @@ private fun BackupScreen() {
 private fun AppSettingsScreen() {
     SpecPage("הגדרות", "התאמת התצוגה, השפה והתנהגות האפליקציה.") {
         SpecCard("שפה") {
-            SpecToggle("עברית (ימין לשמאל)", initial = true)
-            SpecToggle("English (left to right)")
-            Text("החלפת השפה אמורה להתבצע מיד.")
+            var language by rememberSaveable { mutableStateOf(Lang.current()) }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilterChip(selected = language.startsWith("he"), onClick = { language = "he"; Lang.set("he") }, label = { Text("עברית") })
+                FilterChip(selected = language.startsWith("en"), onClick = { language = "en"; Lang.set("en") }, label = { Text("English") })
+                FilterChip(selected = language.isBlank(), onClick = { language = ""; Lang.set("") }, label = { Text("שפת המכשיר") })
+            }
+            Text("החלפת השפה משנה את שפת הממשק ואת כיוון הכתיבה.")
         }
         SpecCard("מראה") {
             SpecToggle("ערכת נושא בהירה")
