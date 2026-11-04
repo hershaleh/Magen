@@ -450,5 +450,15 @@
     <string name="times_wrong_title">אחרי קודים שגויים</string>
     <string name="times_wrong_body">אחרי 5 קודים שגויים לוח המקשים נעצר ל־30 שניות. כל קוד שגוי נוסף מכפיל את ההשהיה, עד 15 דקות.</string>
     <string name="times_wrong_now">מושהה: %1$d שניות</string>
+    <string name="blocked_schedule">האפליקציה חסומה לפי לוח הזמנים שלה.</string>
+    <string name="blocked_quota">הזמן היומי של האפליקציה הסתיים.</string>
+    <string name="blocked_group_quota">הזמן היומי המשותף של קבוצת האפליקציות הסתיים.</string>
+    <string name="blocked_shabbat">חסום לכבוד שבת או חג.</string>
+    <string name="blocked_rule">האפליקציה חסומה לפי כלל.</string>
+    <string name="notif_rules_channel">מגבלות זמן ושבת</string>
+    <string name="notif_quota_title">הזמן היומי עומד להסתיים</string>
+    <string name="notif_quota_text">נותרו כ‑%1$d דקות.</string>
+    <string name="notif_shabbat_title">שבת או חג עומדים להתחיל</string>
+    <string name="notif_shabbat_text">האפליקציות ייחסמו בעוד כ‑%1$d דקות.</string>
 </resources>
 

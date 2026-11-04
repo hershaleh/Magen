@@ -33,6 +33,8 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import app.magen.lock.core.BlockSource
+import app.magen.lock.core.Decision
 import app.magen.lock.core.InstallerScreen
 
 /**
@@ -49,6 +51,7 @@ class GuardService : AccessibilityService() {
         var instance: GuardService? = null
         private const val CHANNEL = "magen_guard"
         private const val NOTIF_OFF = 41
+        private const val RULE_TICK_MS = 5_000L
         private const val CAPTURE_WINDOW_MS = 10 * 60_000L
         private val GENERIC_TITLES = setOf(
             "settings", "search settings", "navigate up", "back", "more options", "search",
@@ -78,6 +81,14 @@ class GuardService : AccessibilityService() {
     private var imePkgs: Set<String> = emptySet()
     private var imeAt = 0L
 
+    /** Counts foreground time and applies quotas, schedules and Shabbat blocking (see [RuleRuntime]). */
+    private val ruleTick = object : Runnable {
+        override fun run() {
+            tickRules()
+            handler.postDelayed(this, RULE_TICK_MS)
+        }
+    }
+
     private val screenOff = object : BroadcastReceiver() {
         override fun onReceive(c: Context?, i: Intent?) {
             currentApp = ""
@@ -95,10 +106,14 @@ class GuardService : AccessibilityService() {
         ContextCompat.registerReceiver(
             this, screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF), ContextCompat.RECEIVER_NOT_EXPORTED,
         )
+        handler.removeCallbacks(ruleTick)
+        handler.post(ruleTick)
     }
 
     override fun onDestroy() {
         instance = null
+        handler.removeCallbacks(ruleTick)
+        RuleRuntime.flush()
         removeCover()
         removeCapture()
         // Warn when protection is switched off (by hand, by the system or by a crash of the service).
@@ -335,6 +350,7 @@ class GuardService : AccessibilityService() {
         val pkg = e.packageName?.toString() ?: return
         val state = e.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
         if (state) onForeground(pkg, e.className?.toString())
+        if (state) tickRules()
         maintain()
 
         if (Store.hasPin && Store.locked.containsKey(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
@@ -356,6 +372,49 @@ class GuardService : AccessibilityService() {
                 scanInstaller()
             }
         }
+    }
+
+    /** Apps that are never blocked by quotas, schedules or Shabbat: Magen, the launcher, calls, the system and the installer. */
+    private fun isEssential(pkg: String): Boolean {
+        if (pkg == packageName || pkg in Catalog.SETTINGS || pkg in Catalog.INSTALLERS || isTransient(pkg)) return true
+        if (pkg == "com.android.systemui" || pkg == "com.android.emergency" || pkg == launcherPackage() || pkg == dialerPackage()) return true
+        return false
+    }
+
+    private var launcherPkg: String? = null
+    private fun launcherPackage(): String? {
+        if (launcherPkg == null) {
+            launcherPkg = runCatching {
+                packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
+                    ?.activityInfo?.packageName
+            }.getOrNull()
+        }
+        return launcherPkg
+    }
+
+    private fun dialerPackage(): String? =
+        runCatching { getSystemService(android.telecom.TelecomManager::class.java)?.defaultDialerPackage }.getOrNull()
+
+    private fun tickRules() {
+        runCatching {
+            val pkg = currentApp.takeIf { it.isNotEmpty() }
+            val essential = pkg == null || isEssential(pkg)
+            val step = RuleRuntime.step(this, pkg, essential)
+            RuleRuntime.notify(this, step.warnings)
+            if (pkg != null && !essential && step.decision.blocked) enforceBlock(step.decision)
+        }
+    }
+
+    private fun enforceBlock(d: Decision) {
+        val reason = when (d.primary) {
+            BlockSource.SHABBAT -> R.string.blocked_shabbat
+            BlockSource.SCHEDULE -> R.string.blocked_schedule
+            BlockSource.PERSONAL_QUOTA -> R.string.blocked_quota
+            BlockSource.GROUP_QUOTA -> R.string.blocked_group_quota
+            else -> R.string.blocked_rule
+        }
+        performGlobalAction(GLOBAL_ACTION_HOME)
+        block(reason)
     }
 
     private fun maintain() {

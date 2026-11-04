@@ -450,5 +450,15 @@
     <string name="times_wrong_title">After wrong codes</string>
     <string name="times_wrong_body">After 5 wrong codes the keypad pauses for 30 seconds. Each further wrong code doubles the pause, up to 15 minutes.</string>
     <string name="times_wrong_now">Paused: %1$d s</string>
+    <string name="blocked_schedule">This app is blocked by its schedule.</string>
+    <string name="blocked_quota">The daily time for this app is used up.</string>
+    <string name="blocked_group_quota">The shared daily time for this group of apps is used up.</string>
+    <string name="blocked_shabbat">Blocked for Shabbat or a holiday.</string>
+    <string name="blocked_rule">This app is blocked by a rule.</string>
+    <string name="notif_rules_channel">Time limits and Shabbat</string>
+    <string name="notif_quota_title">Daily time is almost over</string>
+    <string name="notif_quota_text">About %1$d minutes left.</string>
+    <string name="notif_shabbat_title">Shabbat or a holiday is about to begin</string>
+    <string name="notif_shabbat_text">Apps will be blocked in about %1$d minutes.</string>
 </resources>
 
