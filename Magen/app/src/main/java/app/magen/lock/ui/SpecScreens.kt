@@ -39,6 +39,11 @@ import androidx.compose.ui.unit.dp
 
 private val gap = 12.dp
 
+/** Presentation preference; enforcement settings are deliberately kept elsewhere. */
+object SpecUiPreferences {
+    var navigationMode by mutableIntStateOf(1) // 0 = side rail, 1 = bottom, 2 = top
+}
+
 @Composable
 private fun SpecPage(title: String, subtitle: String? = null, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(gap)) {
@@ -293,9 +298,10 @@ private fun AppSettingsScreen() {
             SpecToggle("כיבוי אנימציות")
         }
         SpecCard("ניווט") {
-            var nav by rememberSaveable { mutableIntStateOf(0) }
-            listOf("תפריט צד", "סרגל תחתון", "סרגל עליון").forEachIndexed { i, label -> FilterChip(selected = nav == i, onClick = { nav = i }, label = { Text(label) }) }
-            Text("בחירת מיקום הניווט תתחבר בהמשך.")
+            listOf("תפריט צד", "סרגל תחתון", "סרגל עליון").forEachIndexed { i, label ->
+                FilterChip(selected = SpecUiPreferences.navigationMode == i, onClick = { SpecUiPreferences.navigationMode = i }, label = { Text(label) })
+            }
+            Text("בחירת מיקום הניווט משנה מיד את מבנה הניווט.")
         }
         SpecCard("פרטיות ואבחון") {
             SpecToggle("הצגת מידע על שימוש במשאבים")
