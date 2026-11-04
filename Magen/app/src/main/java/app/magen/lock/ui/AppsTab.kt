@@ -313,6 +313,7 @@ private fun AppRow(a: AppItem, showPkg: Boolean, onOpenDetails: () -> Unit) {
 }
 
 @Composable
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 private fun AppDetailsScreen(a: AppItem, onBack: () -> Unit) {
     BackHandler(onBack = onBack)
     var selectedTab by rememberSaveable { mutableIntStateOf(0) }
