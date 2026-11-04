@@ -1006,31 +1006,38 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
 
     Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         if (mode == LockMode.MAIN) {
-            Column(
-                Modifier.fillMaxSize().systemBarsPadding().padding(28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                AppBadge(icon, 96.dp)
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    stringResource(R.string.blocked_message),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    stringResource(R.string.lock_main_desc, label),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(28.dp))
-                Button(
-                    onClick = onOpenMain,
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier.fillMaxWidth().height(54.dp),
-                ) { Text(stringResource(R.string.open_magen)) }
-                TextButton(onClick = onBack) { Text(stringResource(R.string.go_back)) }
+            Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    IconButton(onClick = onBack) {
+                        Icon(Icons.Filled.Home, contentDescription = "חזרה למסך הבית")
+                    }
+                }
+                Column(
+                    Modifier.weight(1f).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    AppBadge(icon, 96.dp)
+                    Spacer(Modifier.height(24.dp))
+                    Text(
+                        stringResource(R.string.blocked_message),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        stringResource(R.string.lock_main_desc, label),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(Modifier.height(28.dp))
+                    Button(
+                        onClick = onOpenMain,
+                        shape = RoundedCornerShape(18.dp),
+                        modifier = Modifier.fillMaxWidth().height(54.dp),
+                    ) { Text(stringResource(R.string.open_magen)) }
+                }
             }
         } else {
             PinGate(
