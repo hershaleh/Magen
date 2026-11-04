@@ -353,8 +353,15 @@ private fun AppSettingsScreen() {
             }
             Text("בחירת מיקום הניווט משנה מיד את מבנה הניווט.")
         }
-        SpecCard("פרטיות ואבחון") {
-            SpecToggle("הצגת מידע על שימוש במשאבים")
+        SpecCard("אבחון משאבים") {
+            val runtime = Runtime.getRuntime()
+            val usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
+            val totalMb = runtime.totalMemory() / (1024 * 1024)
+            Text("זיכרון JVM בשימוש: $usedMb MB מתוך $totalMb MB")
+            Text("Android ${android.os.Build.VERSION.RELEASE} · API ${android.os.Build.VERSION.SDK_INT}")
+            Text("אלה מדדי תהליך בסיסיים בלבד; ניטור CPU, סוללה ושירותים יתחבר בהמשך.")
+        }
+        SpecCard("פרטיות") {
             SpecToggle("בקשת אישור לפני שיתוף דוח אבחון")
             Text("מגן פועלת מקומית. לא נדרש חשבון ענן או שירות בתשלום.")
         }
