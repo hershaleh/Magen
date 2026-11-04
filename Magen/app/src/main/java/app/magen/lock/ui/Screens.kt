@@ -474,6 +474,14 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             StatusLine(selfLine(p, running), fix)
         }
 
+        SectionCard("ניטור והתאוששות", "בדיקת הרשאות, שירות הנגישות, ניהול המכשיר ומצב האכיפה בפועל.") {
+            OutlinedButton(
+                onClick = onOpenHome,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("פתיחת בדיקת ההגנה") }
+        }
+
         SectionCard(stringResource(R.string.protection_adv_title), stringResource(R.string.protection_adv_desc)) {
             StatusLine(ownerLine(p), fix)
             StatusLine(adminLine(p), fix)
