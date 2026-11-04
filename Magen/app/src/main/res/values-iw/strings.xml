@@ -452,7 +452,6 @@
     <string name="times_wrong_now">מושהה: %1$d שניות</string>
     <string name="nav_blockings">חסימות</string>
     <string name="nav_more">עוד</string>
-    <string name="nav_settings">הגדרות</string>
     <string name="filter_system">אפליקציות מערכת</string>
     <string name="filter_user">אפליקציות משתמש</string>
 </resources>
