@@ -6,5 +6,6 @@ class MagenApp : Application() {
     override fun onCreate() {
         super.onCreate()
         Store.init(this)
+        ProfileStore.init(this)
     }
 }
