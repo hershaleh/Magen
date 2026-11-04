@@ -253,6 +253,20 @@ class MagenUiTest {
             compose.onAllNodes(hasClickAction() and hasText(navLabel(label)))[0].assertIsDisplayed()
         }
     }
+    @Test
+    fun homeMasterSwitchTogglesBlockingAndNoEmptyAttentionNoticeIsShown() {
+        openMainScreenDirectly()
+        compose.await("החסימות מופעלות").assertIsDisplayed()
+        assertTrue(Store.blockingEnabled)
+        assertTrue(compose.onAllNodesWithText("פריטים דורשים טיפול").fetchSemanticsNodes().isEmpty())
+        compose.onAllNodes(hasClickAction() and hasText("החסימות מופעלות"))[0].performClick()
+        compose.await("החסימות כבויות").assertIsDisplayed()
+        assertFalse(Store.blockingEnabled)
+        compose.onAllNodes(hasClickAction() and hasText("החסימות כבויות"))[0].performClick()
+        compose.await("החסימות מופעלות").assertIsDisplayed()
+        assertTrue(Store.blockingEnabled)
+    }
+
 
     @Test
     fun everyNavigationAreaOpensItsScreenWithoutCrashing() {
