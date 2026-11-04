@@ -455,5 +455,18 @@
     <string name="policy_check_failed">נמצאו בעיות באכיפת מדיניות:\n%1$s</string>
     <string name="policy_check_ok">לא דווחו כשלים בבדיקה האחרונה. זו בדיקת מצב המדיניות ש-Android מדווח, ולא הבטחה שכל יצרן אוכף אותה בפועל.</string>
     <string name="policy_check_now">בדוק מדיניות עכשיו</string>
+    <string name="profiles_title">פרופילים</string>
+    <string name="profiles_active">הפרופיל הפעיל: %1$s</string>
+    <string name="profile_new_name">שם לפרופיל חדש</string>
+    <string name="profile_add">הוספת פרופיל</string>
+    <string name="schedule_title">תזמון שבועי</string>
+    <string name="schedule_help">בחרו יום בשבוע (1=יום שני, 7=יום ראשון), שעת התחלה וסיום ואת הפרופיל שיופעל. אפשר להגדיר גם טווח שחוצה את חצות.</string>
+    <string name="schedule_day">יום (1–7)</string>
+    <string name="schedule_start">התחלה (HH:mm)</string>
+    <string name="schedule_end">סיום (HH:mm)</string>
+    <string name="schedule_add">הוספת טווח זמן</string>
+    <string name="schedule_saved">טווחים שמורים</string>
+    <string name="schedule_window_summary">יום %1$d · %2$s–%3$s · %4$s</string>
+    <string name="schedule_clear">מחיקת כל התזמון</string>
 </resources>
 
