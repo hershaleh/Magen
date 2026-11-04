@@ -399,6 +399,11 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
     val p = rememberPerms()
     val running = GuardService.instance != null
     var policyDiagnostic by remember { mutableStateOf(Policy.lastApplyError) }
+    // Refresh diagnostics both when this tab is opened and when Android returns to the app.
+    LaunchedEffect(Unit) { policyDiagnostic = Policy.lastApplyError }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        policyDiagnostic = Policy.lastApplyError
+    }
     val fix: (Fix) -> Unit = { openFix(ctx, it) {} }
 
     TabColumn {
@@ -451,14 +456,14 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             StatusLine(adminLine(p), fix)
             if (Policy.isOwner(ctx)) {
                 Text(
-                    "בדיקת מדיניות ההגנה",
+                    stringResource(R.string.policy_check_title),
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(top = 8.dp),
                 )
                 Text(
-                    policyDiagnostic?.let { "נמצאו בעיות באכיפת מדיניות:\n$it" }
-                        ?: "לא דווחו כשלים בבדיקה האחרונה. זו בדיקת מצב המדיניות ש-Android מדווח, ולא הבטחה שכל יצרן אוכף אותה בפועל.",
+                    policyDiagnostic?.let { stringResource(R.string.policy_check_failed, it) }
+                        ?: stringResource(R.string.policy_check_ok),
                     style = MaterialTheme.typography.bodySmall,
                     color = if (policyDiagnostic == null) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error,
                 )
@@ -469,7 +474,7 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
                     },
                     shape = RoundedCornerShape(16.dp),
                     modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-                ) { Text("בדוק מדיניות עכשיו") }
+                ) { Text(stringResource(R.string.policy_check_now)) }
             }
             OutlinedButton(
                 onClick = { advanced = true },
