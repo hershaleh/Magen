@@ -289,120 +289,89 @@ fun HomeTab(onNavigate: (Int) -> Unit) {
     val p = rememberPerms()
     var tick by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { tick++ }
-    var checkedAt by remember { mutableStateOf<Long?>(null) }
-    var detailsOpen by rememberSaveable { mutableStateOf(false) }
     val locked = Store.locked
-    val level = Store.level
-    val health = remember(tick, p, locked, level) { computeHealth(ctx) }
-    val policyError = Policy.lastApplyError
-    val idle = health.overall == Sev.OK && !hasAnyRule()
+    val health = remember(tick, p, locked) { computeHealth(ctx) }
     val problems = health.checks.filter { it.sev == Sev.WARN || it.sev == Sev.BAD }
-    val fix: (Fix) -> Unit = { openFix(ctx, it, onNavigate) }
-    val verifiedActive = health.overall == Sev.OK && hasAnyRule() && Store.protect
+    val serviceRunning = GuardService.instance != null
+    val ruleCount = (if (Store.blockPlay) 1 else 0) +
+        (if (Store.blockApk) 1 else 0) + Store.customKeywords.size
 
     MagenScreen {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
-            ShieldBadge(34.dp)
+        Row(
+            Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(Sp.m),
+        ) {
+            ShieldBadge(36.dp)
             Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
         }
 
-        // The round control is a visual shortcut to protection settings; it never changes enforcement
-        // state merely because the user tapped the Home screen.
-        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // The repository currently has no global enforcement master switch. Do not reuse
+        // Store.protect here: that preference protects Magen itself, not all blocking rules.
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = CircleShape,
+            color = if (serviceRunning) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+            border = androidx.compose.foundation.BorderStroke(
+                2.dp,
+                if (serviceRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+            ),
+        ) {
+            Column(
+                Modifier.fillMaxWidth().padding(vertical = 22.dp, horizontal = 16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Icon(
+                    Icons.Filled.Shield,
+                    contentDescription = null,
+                    modifier = Modifier.size(42.dp),
+                    tint = if (serviceRunning) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    if (serviceRunning) "שירות ההגנה פועל" else "שירות ההגנה אינו פועל",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                Text(
+                    "הפעלה וכיבוי מרכזיים יתווספו לאחר חיבור בטוח למנגנון האכיפה",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                )
+            }
+        }
+
+        if (problems.isNotEmpty()) {
             Surface(
                 onClick = { onNavigate(Tabs.PROTECTION) },
-                modifier = Modifier.size(148.dp),
-                shape = CircleShape,
-                color = if (verifiedActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
-                border = androidx.compose.foundation.BorderStroke(2.dp, if (verifiedActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant),
-                tonalElevation = 2.dp,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.errorContainer,
             ) {
-                Column(Modifier.fillMaxSize().padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    Icon(Icons.Filled.Shield, contentDescription = null, modifier = Modifier.size(42.dp), tint = if (verifiedActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                    Text(if (verifiedActive) "מוגן" else if (idle) "מוכן להגדרה" else "נדרשת בדיקה", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
-                    Text(if (verifiedActive) "ההגנה אומתה" else "לחץ לפרטי ההגנה", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                }
-            }
-            Text(
-                when {
-                    verifiedActive -> stringResource(R.string.status_full)
-                    idle -> stringResource(R.string.status_idle)
-                    health.overall == Sev.WARN -> stringResource(R.string.status_partial)
-                    else -> stringResource(R.string.status_none)
-                },
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-            )
-            TonalButton(
-                stringResource(R.string.check_button),
-                onClick = {
-                    tick++
-                    checkedAt = System.currentTimeMillis()
-                    detailsOpen = true
-                },
-                icon = Icons.Filled.FactCheck,
-            )
-        }
-
-        // Fixed-height attention card: its size does not jump as the event count changes.
-        Surface(
-            onClick = { onNavigate(Tabs.MORE) },
-            modifier = Modifier.fillMaxWidth().height(104.dp),
-            shape = RoundedCornerShape(18.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
-        ) {
-            Row(Modifier.fillMaxSize().padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Icon(Icons.Filled.Notifications, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(28.dp))
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    Text("התראות ומרכז תשומת לב", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                Row(
+                    Modifier.fillMaxWidth().padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
                     Text(
-                        if (problems.isEmpty()) "אין כרגע בעיות שזוהו בבדיקת ההגנה" else "${problems.size} פריטים דורשים תשומת לב",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
+                        "${problems.size} פריטים דורשים טיפול — לפתיחת הפרטים",
+                        modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium,
                     )
                 }
-                Text(if (problems.isEmpty()) "›" else problems.size.toString(), style = MaterialTheme.typography.titleLarge, color = if (problems.isEmpty()) MaterialTheme.colorScheme.onSurfaceVariant else MaterialTheme.colorScheme.error)
             }
         }
 
-        if (policyError != null && Policy.isOwner(ctx)) {
-            Text("תקלה בהחלת הגנת המערכת: " + policyError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyMedium)
-        }
-
-        SectionHeader(stringResource(R.string.home_summary))
-        val installBlocks = (if (Store.blockPlay) 1 else 0) + (if (Store.blockApk) 1 else 0)
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
-            SummaryTile("${Store.locked.size}", stringResource(R.string.tile_apps), { onNavigate(Tabs.APPS) }, Modifier.weight(1f).fillMaxHeight())
-            SummaryTile("$installBlocks/2", stringResource(R.string.tile_installs), { onNavigate(Tabs.PROTECTION) }, Modifier.weight(1f).fillMaxHeight())
-        }
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
-            SummaryTile("${Store.blockedSettings.size + Store.customKeywords.size}", stringResource(R.string.tile_settings), { onNavigate(Tabs.PROTECTION) }, Modifier.weight(1f).fillMaxHeight())
-            SummaryTile(
-                stringResource(if (level == "strong") R.string.level_strong else R.string.level_regular),
-                stringResource(R.string.tile_level),
-                { onNavigate(Tabs.PROTECTION) },
-                Modifier.weight(1f).fillMaxHeight(),
-                caption = if (level == "strong") stringResource(if (p.owner) R.string.tile_owner_on else R.string.tile_owner_off) else stringResource(if (p.admin) R.string.tile_admin_on else R.string.tile_admin_off),
-            )
-        }
-
-        GroupCard {
-            ExpandRow(
-                title = stringResource(R.string.home_details),
-                supporting = checkedAt?.let { stringResource(R.string.check_time, java.text.DateFormat.getTimeInstance(java.text.DateFormat.MEDIUM).format(java.util.Date(it))) } ?: stringResource(R.string.home_details_sub),
-                expanded = detailsOpen,
-                onToggle = { detailsOpen = !detailsOpen },
-            )
-            if (detailsOpen) health.checks.forEach { c ->
-                RowDivider()
-                CheckRow(c, fix)
-            }
-        }
-        if (detailsOpen) {
-            SectionHeader(stringResource(R.string.home_permissions))
-            PermissionCards(p, showOwner = true)
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text("אפליקציות חסומות: ${Store.locked.size}", style = MaterialTheme.typography.bodyLarge)
+            Text("כללי חסימה: $ruleCount", style = MaterialTheme.typography.bodyLarge)
+            Text("חלקים חסומים בהגדרות: ${Store.blockedSettings.size}", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }
