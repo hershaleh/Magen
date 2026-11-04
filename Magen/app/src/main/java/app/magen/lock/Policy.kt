@@ -219,9 +219,12 @@ object Policy {
                 if (Build.VERSION.SDK_INT >= 29) {
                     expected[UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY] = Store.blockApk
                 }
-                Catalog.settings.filter { it.restriction != null }.groupBy { it.restriction!! }.forEach { (key, cats) ->
-                    expected[key] = cats.any { it.id in Store.blockedSettings }
-                }
+                expected.putAll(
+                    PolicyRules.groupedRestrictionStates(
+                        Catalog.settings.map { it.id to it.restriction },
+                        Store.blockedSettings,
+                    ),
+                )
                 expected.forEach { (key, wanted) ->
                     val found = actual.getBoolean(key, false)
                     if (found != wanted) failures += "Verification $key: expected $wanted, Android reports $found"
