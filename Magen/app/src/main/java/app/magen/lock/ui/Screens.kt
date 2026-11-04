@@ -380,7 +380,7 @@ fun MainScaffold() {
             drawerContent = {
                 ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.86f)) {
                     Column(
-                        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(vertical = 14.dp),
+                        Modifier.fillMaxSize().padding(vertical = 14.dp),
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                     ) {
                         Row(
