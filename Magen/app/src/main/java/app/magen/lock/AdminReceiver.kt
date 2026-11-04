@@ -37,9 +37,11 @@ class AdminReceiver : DeviceAdminReceiver() {
         if (expected || !sp.contains("hash") || !sp.getBoolean("protect", true)) return
         runCatching {
             val nm = context.getSystemService(NotificationManager::class.java)
-            nm.createNotificationChannel(
-                NotificationChannel("magen_guard", context.getString(R.string.notif_channel), NotificationManager.IMPORTANCE_HIGH),
-            )
+            if (android.os.Build.VERSION.SDK_INT >= 26) {
+                nm.createNotificationChannel(
+                    NotificationChannel("magen_guard", context.getString(R.string.notif_channel), NotificationManager.IMPORTANCE_HIGH),
+                )
+            }
             val open = PendingIntent.getActivity(
                 context, 1, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
