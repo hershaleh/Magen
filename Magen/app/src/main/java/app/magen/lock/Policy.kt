@@ -201,8 +201,10 @@ object Policy {
             }
         }
         // Several pages can share one system restriction, so it is on if ANY of them is selected.
-        Catalog.settings.filter { it.restriction != null }.groupBy { it.restriction!! }.forEach { (key, cats) ->
-            val enabled = cats.any { it.id in Store.blockedSettings }
+        PolicyRules.groupedRestrictionStates(
+            Catalog.settings.map { it.id to it.restriction },
+            Store.blockedSettings,
+        ).forEach { (key, enabled) ->
             attempt("Settings restriction $key") { restrict(d, a, key, enabled) }
         }
 
