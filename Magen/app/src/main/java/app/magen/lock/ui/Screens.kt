@@ -300,6 +300,7 @@ fun MainScaffold() {
     var changingPin by remember { mutableStateOf(false) }
     var recoveryMode by remember { mutableStateOf(false) }
     var specRoute by rememberSaveable { mutableStateOf<String?>(null) }
+    var legacyMore by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     val navigationMode = SpecUiPreferences.navigationMode
     LaunchedEffect(Unit) { SpecUiPreferences.load(context) }
@@ -315,6 +316,15 @@ fun MainScaffold() {
         ChangePin { changingPin = false }
     } else if (recoveryMode) {
         NewRecovery { recoveryMode = false }
+    } else if (legacyMore) {
+        BackHandler(onBack = { legacyMore = false })
+        MoreTab(
+            onChangePin = { changingPin = true },
+            onRecovery = { recoveryMode = true },
+            onOpenHome = { legacyMore = false; tab = Tabs.HOME },
+            onOpenProtection = { legacyMore = false; tab = Tabs.PROTECTION },
+            onNavigate = { specRoute = it; legacyMore = false },
+        )
     } else if (specRoute != null) {
         SpecRouteScreen(route = specRoute!!, onBack = { specRoute = null })
     } else {
@@ -375,12 +385,13 @@ fun MainScaffold() {
                         Tabs.BLOCKINGS -> BlockingsHub()
                         Tabs.TIMES -> TimesHub()
                         Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
-                        else -> MoreTab(
+                        else -> SettingsHub(
                             onChangePin = { changingPin = true },
                             onRecovery = { recoveryMode = true },
                             onOpenHome = { tab = Tabs.HOME },
                             onOpenProtection = { tab = Tabs.PROTECTION },
                             onNavigate = { specRoute = it },
+                            onOpenLegacy = { legacyMore = true },
                         )
                     }
                 }
