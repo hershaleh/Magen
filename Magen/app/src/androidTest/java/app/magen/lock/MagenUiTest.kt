@@ -14,6 +14,8 @@ import androidx.compose.ui.test.junit4.ComposeTestRule
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithTag
+import androidx.compose.ui.test.onNodeWithTag
+import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
@@ -54,6 +56,7 @@ class MagenUiTest {
         ctx = instrumentation.targetContext
         // A clean install: no code, no saved settings, no leftover session state from a previous test.
         ctx.getSharedPreferences("magen", Context.MODE_PRIVATE).edit().clear().commit()
+        ctx.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).edit().clear().commit()
         instrumentation.runOnMainSync {
             Store.init(ctx)
             Session.authed = false
@@ -110,10 +113,11 @@ class MagenUiTest {
         compose.onAllNodes(hasClickAction() and hasText(key))[0].performClick()
     }
 
-    /** Types [pin] on the keypad and presses the confirm key. */
+    /** Types a PIN. The first setup entry still uses confirm to choose its length; confirmations and existing PINs auto-submit. */
     private fun enterPin(pin: String) {
         pin.forEach { pressKey(it.toString()) }
-        compose.onAllNodes(hasClickAction() and hasContentDescription(str(R.string.pin_confirm)))[0].performClick()
+        val confirm = compose.onAllNodes(hasClickAction() and hasContentDescription(str(R.string.pin_confirm)))
+        if (confirm.fetchSemanticsNodes().isNotEmpty()) confirm[0].performClick()
     }
 
     private fun setCodeAndSkipSetup(pin: String = "2468") {
@@ -144,16 +148,17 @@ class MagenUiTest {
     private fun navLabel(@StringRes id: Int) = str(id)
 
     private fun goToTab(@StringRes navLabel: Int) {
-        compose.onAllNodes(hasClickAction() and hasText(navLabel(navLabel)))[0].performClick()
+        val label = if (navLabel == R.string.nav_more) navLabel(R.string.nav_settings) else navLabel(navLabel)
+        compose.onAllNodes(hasClickAction() and hasText(label))[0].performClick()
     }
 
     /** The five areas of the bottom navigation, each with a string that only that screen shows. */
     private val areas: List<Pair<Int, Int>> = listOf(
         R.string.nav_home to R.string.app_name,
-        R.string.nav_apps to R.string.apps_title,
+        R.string.nav_blockings to R.string.apps_title,
+        R.string.nav_times to R.string.nav_times,
         R.string.nav_protection to R.string.protection_title,
-        R.string.nav_times to R.string.times_lock_title,
-        R.string.nav_settings to R.string.more_title,
+        R.string.nav_more to R.string.nav_settings,
     )
 
     // ---- installation and launch ---------------------------------------------------------------
@@ -253,6 +258,26 @@ class MagenUiTest {
             compose.onAllNodes(hasClickAction() and hasText(navLabel(label)))[0].assertIsDisplayed()
         }
     }
+    @Test
+    fun homeMasterSwitchTogglesBlockingAndNoEmptyAttentionNoticeIsShown() {
+        openMainScreenDirectly()
+        compose.await("החסימות מופעלות").assertIsDisplayed()
+        assertTrue(Store.blockingEnabled)
+        assertTrue(compose.onAllNodesWithText("פריטים דורשים טיפול").fetchSemanticsNodes().isEmpty())
+
+        Store.setBlockPlay(true)
+        compose.onAllNodesWithText("פריטים דורשים טיפול", substring = true)[0].assertIsDisplayed()
+        compose.onAllNodes(hasClickAction() and hasText("החסימות מופעלות"))[0].performClick()
+        compose.await("החסימות כבויות").assertIsDisplayed()
+        assertFalse(Store.blockingEnabled)
+        assertTrue(compose.onAllNodesWithText("פריטים דורשים טיפול").fetchSemanticsNodes().isEmpty())
+
+        compose.onAllNodes(hasClickAction() and hasText("החסימות כבויות"))[0].performClick()
+        compose.await("החסימות מופעלות").assertIsDisplayed()
+        assertTrue(Store.blockingEnabled)
+        compose.await("פריטים דורשים טיפול").assertIsDisplayed()
+    }
+
 
     @Test
     fun everyNavigationAreaOpensItsScreenWithoutCrashing() {
@@ -293,16 +318,55 @@ class MagenUiTest {
     fun selectedAreaSurvivesRecreationOfTheActivity() {
         openMainScreenDirectly()
         goToTab(R.string.nav_times)
-        compose.await(str(R.string.times_lock_title))
+        compose.await(str(R.string.nav_times))
         scenario!!.recreate()
-        compose.await(str(R.string.times_lock_title)).assertIsDisplayed()
+        compose.await(str(R.string.nav_times)).assertIsDisplayed()
     }
 
     @Test
     fun appsScreenListsInstalledAppsWithoutCrashing() {
         openMainScreenDirectly()
-        goToTab(R.string.nav_apps)
+        goToTab(R.string.nav_blockings)
+        compose.onNodeWithTag("blocking_tab_0").performClick()
         compose.await(str(R.string.apps_title)).assertIsDisplayed()
+    }
+
+    @Test
+    fun newSpecificationSectionsAreReachable() {
+        openMainScreenDirectly()
+
+        goToTab(R.string.nav_blockings)
+        compose.await("חסימות").assertIsDisplayed()
+        compose.onNodeWithTag("blocking_tab_1").performClick()
+        compose.await("חסימת חלקי הגדרות").assertIsDisplayed()
+        compose.await("איך למצוא חלק מסוים בהגדרות?").assertIsDisplayed()
+        compose.onNodeWithText("רשת ואינטרנט").performClick()
+        compose.await("חסימת רשת ואינטרנט").assertIsDisplayed()
+        compose.await("VPN").assertIsDisplayed()
+        compose.onNodeWithText("סיום").performClick()
+        compose.onNodeWithTag("blocking_back").performClick()
+        compose.onNodeWithTag("blocking_tab_2").performClick()
+        compose.await("VideoStop").assertIsDisplayed()
+
+        goToTab(R.string.nav_times)
+        compose.await("זמנים").assertIsDisplayed()
+        compose.onNodeWithTag("times_tab_0").performClick()
+        compose.await("לוח זמנים לכל המכשיר").assertIsDisplayed()
+        compose.await("החלון חוצה חצות").assertIsDisplayed()
+        compose.onNodeWithTag("times_tab_1").performClick()
+        compose.await("הקבוצות שלי").assertIsDisplayed()
+        compose.onNodeWithTag("times_tab_2").performClick()
+        compose.await("יום טוב שני: פעיל").assertIsDisplayed()
+
+        goToTab(R.string.nav_more)
+        compose.await("אבחון ויומן אירועים").performClick()
+        compose.await("יומן אירועים").performClick()
+        compose.await("אין עדיין אירועים שמורים בממשק החדש.").assertIsDisplayed()
+        compose.await("חזרה").performClick()
+        compose.onAllNodes(hasClickAction() and hasText("הגדרות", substring = true))[0].performClick()
+        compose.await("גיבוי ושחזור").performClick()
+        compose.await("פתיחת גיבוי ושחזור").performClick()
+        compose.await("בחירת קובץ לשחזור (טרם חובר)").assertIsDisplayed()
     }
 
     /**

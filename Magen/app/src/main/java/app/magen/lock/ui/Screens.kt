@@ -1,11 +1,9 @@
 package app.magen.lock.ui
 
-import androidx.compose.material.icons.outlined.Settings as OutlinedSettingsIcon
 import androidx.compose.material.icons.outlined.Schedule as OutlinedScheduleIcon
 import androidx.compose.material.icons.outlined.Shield as OutlinedShieldIcon
 import androidx.compose.material.icons.outlined.Apps as OutlinedAppsIcon
 import androidx.compose.material.icons.outlined.Home as OutlinedHomeIcon
-import androidx.compose.material.icons.filled.Settings as SettingsIcon
 import androidx.activity.compose.BackHandler
 import android.app.admin.DevicePolicyManager
 import android.content.Context
@@ -15,6 +13,16 @@ import android.provider.Settings
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.Image
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.togetherWith
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,6 +56,8 @@ import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.MoreHoriz
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Security
@@ -68,6 +78,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.NavigationDrawerItem
+import androidx.compose.material3.ModalNavigationDrawer
+import androidx.compose.material3.ModalDrawerSheet
+import androidx.compose.material3.DrawerValue
+import androidx.compose.material3.NavigationRail
+import androidx.compose.material3.NavigationRailItem
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -114,6 +131,7 @@ import app.magen.lock.Policy
 import app.magen.lock.R
 import app.magen.lock.Store
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -294,12 +312,33 @@ fun LanguagePicker(modifier: Modifier = Modifier) {
 
 @Composable
 fun MainScaffold() {
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    var tab by rememberSaveable { mutableIntStateOf(Tabs.HOME) }
     var changingPin by remember { mutableStateOf(false) }
     var recoveryMode by remember { mutableStateOf(false) }
+    var specRoute by rememberSaveable { mutableStateOf<String?>(null) }
+    var legacyMore by rememberSaveable { mutableStateOf(false) }
+    val context = LocalContext.current
+    val navigationMode = SpecUiPreferences.navigationMode
+    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
+    val scope = rememberCoroutineScope()
+    val openDrawer: () -> Unit = {
+        scope.launch {
+            if (SpecUiPreferences.shouldAnimate(context)) drawerState.open()
+            else drawerState.snapTo(DrawerValue.Open)
+        }
+    }
+    val closeDrawer: () -> Unit = {
+        scope.launch {
+            if (SpecUiPreferences.shouldAnimate(context)) drawerState.close()
+            else drawerState.snapTo(DrawerValue.Closed)
+        }
+    }
+    val notificationsTab = 5
+    LaunchedEffect(Unit) { SpecUiPreferences.load(context) }
     LaunchedEffect(Session.goTab) {
         Session.goTab?.let {
             tab = it
+            specRoute = null
             Session.goTab = null
         }
     }
@@ -308,42 +347,167 @@ fun MainScaffold() {
         ChangePin { changingPin = false }
     } else if (recoveryMode) {
         NewRecovery { recoveryMode = false }
-    } else {
-        // Order follows [Tabs]. Selected tabs use the filled icon, the others the outlined one.
-        val items = listOf(
-            Triple(R.string.nav_home, Icons.Filled.Home, Icons.Outlined.OutlinedHomeIcon),
-            Triple(R.string.nav_apps, Icons.Filled.Apps, Icons.Outlined.OutlinedAppsIcon),
-            Triple(R.string.nav_protection, Icons.Filled.Shield, Icons.Outlined.OutlinedShieldIcon),
-            Triple(R.string.nav_times, Icons.Filled.Schedule, Icons.Outlined.OutlinedScheduleIcon),
-            Triple(R.string.nav_settings, Icons.Filled.SettingsIcon, Icons.Outlined.OutlinedSettingsIcon),
+    } else if (legacyMore) {
+        BackHandler(onBack = { legacyMore = false })
+        MoreTab(
+            releaseOnly = true,
+            onChangePin = { changingPin = true },
+            onRecovery = { recoveryMode = true },
+            onOpenHome = { legacyMore = false; tab = Tabs.HOME },
+            onOpenProtection = { legacyMore = false; tab = Tabs.PROTECTION },
+            onNavigate = { specRoute = it; legacyMore = false },
         )
-        Scaffold(
-            containerColor = MaterialTheme.colorScheme.background,
-            bottomBar = {
-                NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
-                    items.forEachIndexed { i, (label, filled, outlined) ->
-                        NavigationBarItem(
-                            selected = tab == i,
-                            onClick = { tab = i },
-                            icon = { Icon(if (tab == i) filled else outlined, null) },
-                            label = { Text(stringResource(label), maxLines = 1, overflow = TextOverflow.Ellipsis) },
+    } else if (specRoute != null) {
+        SpecRouteScreen(route = specRoute!!, onBack = { specRoute = null })
+    } else {
+        val notificationLabel = if (Lang.current().startsWith("en")) "Notifications" else "התראות"
+        val navItems = listOf(
+            Triple(Tabs.HOME, context.getString(R.string.nav_home), Icons.Filled.Home),
+            Triple(Tabs.BLOCKINGS, context.getString(R.string.nav_blockings), Icons.Filled.Apps),
+            Triple(Tabs.TIMES, context.getString(R.string.nav_times), Icons.Filled.Schedule),
+            Triple(Tabs.PROTECTION, context.getString(R.string.nav_protection), Icons.Filled.Shield),
+            Triple(notificationsTab, notificationLabel, Icons.Filled.Notifications),
+            Triple(Tabs.SETTINGS, context.getString(R.string.nav_settings), Icons.Filled.Tune),
+        )
+        BackHandler(enabled = drawerState.isOpen) {
+            closeDrawer()
+        }
+        ModalNavigationDrawer(
+            drawerState = drawerState,
+            gesturesEnabled = true,
+            drawerContent = {
+                ModalDrawerSheet(modifier = Modifier.fillMaxWidth(0.86f)) {
+                    Column(
+                        Modifier.fillMaxSize().padding(vertical = 14.dp),
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Row(
+                            Modifier.fillMaxWidth().padding(horizontal = 18.dp, vertical = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                        ) {
+                            ShieldBadge(38.dp)
+                            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
+                        }
+                        navItems.filter { it.first != Tabs.SETTINGS }.forEach { (target, label, icon) ->
+                            NavigationDrawerItem(
+                                label = { Text(label) },
+                                icon = { Icon(icon, contentDescription = null) },
+                                selected = tab == target,
+                                onClick = {
+                                    tab = target
+                                    closeDrawer()
+                                },
+                                modifier = Modifier.padding(horizontal = 10.dp),
+                            )
+                        }
+                        Spacer(Modifier.weight(1f))
+                        androidx.compose.material3.HorizontalDivider(Modifier.padding(horizontal = 16.dp, vertical = 8.dp))
+                        val settingsItem = navItems.first { it.first == Tabs.SETTINGS }
+                        NavigationDrawerItem(
+                            label = { Text(settingsItem.second) },
+                            icon = { Icon(settingsItem.third, contentDescription = null) },
+                            selected = tab == Tabs.SETTINGS,
+                            onClick = { tab = Tabs.SETTINGS; closeDrawer() },
+                            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
                         )
                     }
                 }
             },
-        ) { inner ->
-            Box(Modifier.padding(inner).statusBarsPadding()) {
-                when (tab) {
-                    Tabs.HOME -> HomeTab(onNavigate = { tab = it })
-                    Tabs.APPS -> AppsTab()
-                    Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
-                    Tabs.TIMES -> TimesTab()
-                    else -> MoreTab(
-                        onChangePin = { changingPin = true },
-                        onRecovery = { recoveryMode = true },
-                        onOpenHome = { tab = Tabs.HOME },
-                        onOpenProtection = { tab = Tabs.PROTECTION },
-                    )
+        ) {
+            Scaffold(
+                containerColor = MaterialTheme.colorScheme.background,
+                topBar = {
+                    Column(Modifier.fillMaxWidth().statusBarsPadding()) {
+                        Surface(color = MaterialTheme.colorScheme.surface) {
+                            Row(
+                                Modifier.fillMaxWidth().height(58.dp).padding(horizontal = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                if (Lang.current().startsWith("en")) {
+                                    IconButton(onClick = openDrawer) {
+                                        Icon(Icons.Filled.Menu, contentDescription = "Open menu")
+                                    }
+                                    ShieldBadge(32.dp)
+                                    Text(
+                                        stringResource(R.string.app_name),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                } else {
+                                    Text(
+                                        stringResource(R.string.app_name),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.End,
+                                    )
+                                    ShieldBadge(32.dp)
+                                    IconButton(onClick = openDrawer) {
+                                        Icon(Icons.Filled.Menu, contentDescription = "פתיחת תפריט")
+                                    }
+                                }
+                            }
+                        }
+                        if (navigationMode == 2) {
+                            NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                                navItems.forEach { (target, label, icon) ->
+                                    NavigationBarItem(
+                                        selected = tab == target,
+                                        onClick = { tab = target },
+                                        icon = { Icon(icon, contentDescription = null) },
+                                        label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                },
+                bottomBar = {
+                    if (navigationMode == 1) {
+                        NavigationBar(containerColor = MaterialTheme.colorScheme.surface) {
+                            navItems.forEach { (target, label, icon) ->
+                                NavigationBarItem(
+                                    selected = tab == target,
+                                    onClick = { tab = target },
+                                    icon = { Icon(icon, contentDescription = null) },
+                                    label = { Text(label, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                                )
+                            }
+                        }
+                    }
+                },
+            ) { inner ->
+                Box(Modifier.fillMaxSize().padding(inner)) {
+                    AnimatedContent(
+                        targetState = tab,
+                        transitionSpec = {
+                            if (SpecUiPreferences.shouldAnimate(context)) {
+                                fadeIn(tween(170)) togetherWith fadeOut(tween(130))
+                            } else {
+                                EnterTransition.None togetherWith ExitTransition.None
+                            }
+                        },
+                        label = "main-screen-transition",
+                    ) { destination ->
+                        when (destination) {
+                            Tabs.HOME -> HomeTab(onNavigate = { tab = it })
+                            Tabs.BLOCKINGS -> BlockingsHub()
+                            Tabs.TIMES -> TimesHub()
+                            Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
+                            notificationsTab -> NotificationsCenterScreen()
+                            else -> SettingsHub(
+                                onChangePin = { changingPin = true },
+                                onRecovery = { recoveryMode = true },
+                                onOpenHome = { tab = Tabs.HOME },
+                                onOpenProtection = { tab = Tabs.PROTECTION },
+                                onNavigate = { specRoute = it },
+                                onOpenLegacy = { legacyMore = true },
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -403,7 +567,7 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
     TabColumn {
         Text(stringResource(R.string.protection_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
-        SectionCard(stringResource(R.string.grp_play), stringResource(R.string.grp_play_desc)) {
+        CompactProtectionCard(stringResource(R.string.grp_play), stringResource(R.string.grp_play_desc)) {
             SwitchRow(
                 Icons.Filled.Storefront,
                 stringResource(R.string.rule_play),
@@ -413,7 +577,7 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             StatusLine(playLine(running), fix)
         }
 
-        SectionCard(stringResource(R.string.grp_apk), stringResource(R.string.grp_apk_desc)) {
+        CompactProtectionCard(stringResource(R.string.grp_apk), stringResource(R.string.grp_apk_desc)) {
             SwitchRow(
                 Icons.Filled.Android,
                 stringResource(R.string.rule_apk),
@@ -423,19 +587,8 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             StatusLine(apkLine(ctx, p, running), fix)
         }
 
-        SectionCard(stringResource(R.string.grp_settings), stringResource(R.string.grp_settings_desc)) {
-            StatusLine(settingsLine(running), fix)
-        }
 
-        SettingsGroups()
-
-        PickFromScreenCard()
-
-        CustomKeywordsCard()
-
-        HowToCard()
-
-        SectionCard(stringResource(R.string.grp_self), stringResource(R.string.grp_self_desc)) {
+        CompactProtectionCard(stringResource(R.string.grp_self), stringResource(R.string.grp_self_desc)) {
             SwitchRow(
                 Icons.Filled.Security,
                 stringResource(R.string.protect_title),
@@ -445,7 +598,20 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
             StatusLine(selfLine(p, running), fix)
         }
 
-        SectionCard(stringResource(R.string.protection_adv_title), stringResource(R.string.protection_adv_desc)) {
+        CompactProtectionCard("הגנה מפני שינוי שעה ותאריך", "זיהוי ותיעוד שינויי זמן יתחברו בשלב הלוגיקה.") {
+            Text("מניעה מלאה של שינוי שעה דורשת Device Owner. שינוי שעה קדימה מעבר לאתחול אינו ניתן לאימות מלא ללא הרשאת ניהול מתאימה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            StatusLine(ownerLine(p), fix)
+        }
+
+        CompactProtectionCard("ניטור והתאוששות", "בדיקת הרשאות, שירות הנגישות, ניהול המכשיר ומצב האכיפה בפועל.") {
+            OutlinedButton(
+                onClick = onOpenHome,
+                shape = RoundedCornerShape(16.dp),
+                modifier = Modifier.fillMaxWidth(),
+            ) { Text("פתיחת בדיקת ההגנה") }
+        }
+
+        CompactProtectionCard(stringResource(R.string.protection_adv_title), stringResource(R.string.protection_adv_desc)) {
             StatusLine(ownerLine(p), fix)
             StatusLine(adminLine(p), fix)
             OutlinedButton(
@@ -457,6 +623,29 @@ fun ProtectionTab(onOpenHome: () -> Unit) {
                 onClick = { Session.showGuide = true },
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.guide_open)) }
+        }
+    }
+}
+
+@Composable
+private fun CompactProtectionCard(
+    title: String,
+    subtitle: String? = null,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Card(
+        shape = RoundedCornerShape(18.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Column(Modifier.padding(horizontal = 14.dp, vertical = 10.dp)) {
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
+            if (subtitle != null) {
+                Text(subtitle, style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+            Spacer(Modifier.height(4.dp))
+            content()
         }
     }
 }
@@ -492,7 +681,7 @@ private fun AdvancedProtection(onBack: () -> Unit, onOpenHome: () -> Unit) {
 // ---- tab: more -------------------------------------------------------------------------------
 
 @Composable
-fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit, onOpenProtection: () -> Unit) {
+fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit, onOpenProtection: () -> Unit, onNavigate: (String) -> Unit, releaseOnly: Boolean = false) {
     val ctx = LocalContext.current
     var confirm by remember { mutableStateOf(false) }
     var confirmOwner by remember { mutableStateOf(false) }
@@ -512,6 +701,7 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
     val perms = rememberPerms()
 
     TabColumn {
+        if (!releaseOnly) {
         Text(stringResource(R.string.more_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
 
         SectionCard(stringResource(R.string.more_code_title)) {
@@ -584,6 +774,14 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
                 shape = RoundedCornerShape(16.dp),
                 modifier = Modifier.fillMaxWidth(),
             ) { Text(stringResource(R.string.help_open)) }
+        }
+
+        SectionCard("כלים ומידע", "יומן אבטחה, גיבוי והגדרות תצוגה.") {
+            OutlinedButton(onClick = { onNavigate("log") }, modifier = Modifier.fillMaxWidth()) { Text("יומן אבטחה") }
+            OutlinedButton(onClick = { onNavigate("backup") }, modifier = Modifier.fillMaxWidth()) { Text("גיבוי ושחזור") }
+            OutlinedButton(onClick = { onNavigate("settings") }, modifier = Modifier.fillMaxWidth()) { Text("הגדרות תצוגה ופרטיות") }
+        }
+
         }
 
         Text(
@@ -949,6 +1147,7 @@ private fun approveUninstall(ctx: Context, onError: (String) -> Unit) {
 @Composable
 fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onBack: () -> Unit) {
     val ctx = LocalContext.current
+    val animate = SpecUiPreferences.shouldAnimate(ctx)
     val mode = Store.locked[pkg]
     val label = remember(pkg) {
         runCatching {
@@ -958,46 +1157,81 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
     val icon = remember(pkg) {
         runCatching { ctx.packageManager.getApplicationIcon(pkg).toBitmap(160, 160).asImageBitmap() }.getOrNull()
     }
+    var visible by remember { mutableStateOf(false) }
+    var closing by remember { mutableStateOf(false) }
+    var exitAction by remember { mutableStateOf<(() -> Unit)?>(null) }
 
-    androidx.compose.runtime.LaunchedEffect(mode) { if (mode == null) onUnlocked() }
-
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        if (mode == LockMode.MAIN) {
-            Column(
-                Modifier.fillMaxSize().systemBarsPadding().padding(28.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-            ) {
-                AppBadge(icon, 96.dp)
-                Spacer(Modifier.height(24.dp))
-                Text(
-                    stringResource(R.string.lock_pin_title),
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Spacer(Modifier.height(8.dp))
-                Text(
-                    stringResource(R.string.lock_main_desc, label),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
-                Spacer(Modifier.height(28.dp))
-                Button(
-                    onClick = onOpenMain,
-                    shape = RoundedCornerShape(18.dp),
-                    modifier = Modifier.fillMaxWidth().height(54.dp),
-                ) { Text(stringResource(R.string.open_magen)) }
-                TextButton(onClick = onBack) { Text(stringResource(R.string.go_back)) }
-            }
+    fun leave(action: () -> Unit) {
+        if (closing) return
+        if (animate) {
+            exitAction = action
+            closing = true
         } else {
-            PinGate(
-                title = stringResource(R.string.lock_pin_title),
-                subtitle = stringResource(R.string.lock_pin_sub, label),
-                icon = { AppBadge(icon) },
-                onCancel = onBack,
-                allowAlt = true,
-                onSuccess = onUnlocked,
-            )
+            action()
+        }
+    }
+
+    LaunchedEffect(Unit) { visible = true }
+    LaunchedEffect(closing) {
+        if (closing) {
+            delay(190)
+            exitAction?.invoke()
+        }
+    }
+    LaunchedEffect(mode, Store.blockingEnabled) {
+        if (mode == null || !Store.blockingEnabled) leave(onUnlocked)
+    }
+
+    AnimatedVisibility(
+        visible = visible && !closing,
+        enter = if (animate) fadeIn(tween(190)) + slideInVertically(tween(190)) { it / 24 } else EnterTransition.None,
+        exit = if (animate) fadeOut(tween(170)) + slideOutVertically(tween(170)) { it / 30 } else ExitTransition.None,
+    ) {
+        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            if (mode == LockMode.MAIN) {
+                Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)) {
+                    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                        IconButton(onClick = { leave(onBack) }) {
+                            Icon(Icons.Filled.Home, contentDescription = "חזרה למסך הבית")
+                        }
+                    }
+                    Column(
+                        Modifier.weight(1f).fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        AppBadge(icon, 96.dp)
+                        Spacer(Modifier.height(24.dp))
+                        Text(
+                            stringResource(R.string.blocked_message),
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold,
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(
+                            stringResource(R.string.lock_main_desc, label),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
+                        )
+                        Spacer(Modifier.height(28.dp))
+                        Button(
+                            onClick = { leave(onOpenMain) },
+                            shape = RoundedCornerShape(18.dp),
+                            modifier = Modifier.fillMaxWidth().height(54.dp),
+                        ) { Text(stringResource(R.string.open_magen)) }
+                    }
+                }
+            } else {
+                PinGate(
+                    title = stringResource(R.string.lock_pin_title),
+                    subtitle = stringResource(R.string.lock_pin_sub, label),
+                    icon = { AppBadge(icon) },
+                    onCancel = { leave(onBack) },
+                    allowAlt = true,
+                    onSuccess = { leave(onUnlocked) },
+                )
+            }
         }
     }
 }
@@ -1005,35 +1239,57 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
 @Composable
 fun BlockContent(@StringRes reason: Int, onClose: () -> Unit) {
     val ctx = LocalContext.current
+    val animate = SpecUiPreferences.shouldAnimate(ctx)
     val reasonText = remember(reason) { runCatching { ctx.getString(reason) }.getOrNull() }
-    Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            Modifier.fillMaxSize().systemBarsPadding().padding(28.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            ShieldBadge(104.dp)
-            Spacer(Modifier.height(24.dp))
-            Text(
-                stringResource(R.string.blocked_message),
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-            )
-            if (reasonText != null) {
-                Spacer(Modifier.height(10.dp))
-                Text(
-                    reasonText,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    textAlign = TextAlign.Center,
-                )
+    var visible by remember { mutableStateOf(false) }
+    var closing by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { visible = true }
+    LaunchedEffect(closing) {
+        if (closing) {
+            if (animate) delay(190)
+            onClose()
+        }
+    }
+    BackHandler(enabled = true) { /* The blocked screen cannot be dismissed with Back. */ }
+    AnimatedVisibility(
+        visible = visible && !closing,
+        enter = if (animate) fadeIn(tween(190)) + slideInVertically(tween(190)) { it / 24 } else EnterTransition.None,
+        exit = if (animate) fadeOut(tween(170)) + slideOutVertically(tween(170)) { it / 30 } else ExitTransition.None,
+    ) {
+        Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            Column(Modifier.fillMaxSize().systemBarsPadding().padding(horizontal = 24.dp, vertical = 12.dp)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+                    IconButton(onClick = {
+                        if (animate) closing = true else onClose()
+                    }) {
+                        Icon(Icons.Filled.Home, contentDescription = "חזרה למסך הבית")
+                    }
+                }
+                Column(
+                    Modifier.weight(1f).fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    ShieldBadge(104.dp)
+                    Spacer(Modifier.height(24.dp))
+                    Text(
+                        stringResource(R.string.blocked_message),
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                    )
+                    if (reasonText != null) {
+                        Spacer(Modifier.height(10.dp))
+                        Text(reasonText, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)
+                    }
+                    Spacer(Modifier.height(14.dp))
+                    Text(
+                        "מוגן באמצעות ${stringResource(R.string.app_name)}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.tertiary,
+                    )
+                }
             }
-            Spacer(Modifier.height(28.dp))
-            Button(
-                onClick = onClose,
-                shape = RoundedCornerShape(18.dp),
-                modifier = Modifier.fillMaxWidth().height(54.dp),
-            ) { Text(stringResource(R.string.ok)) }
         }
     }
 }

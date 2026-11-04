@@ -201,12 +201,12 @@ object Policy {
                 }
             }
             applyAndVerify(UserManager.DISALLOW_SAFE_BOOT, protectNow)
-            applyAndVerify(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES, Store.blockApk)
+            applyAndVerify(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES, Store.blockingEnabled && Store.blockApk)
             if (Build.VERSION.SDK_INT >= 29) {
-                applyAndVerify(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, Store.blockApk)
+                applyAndVerify(UserManager.DISALLOW_INSTALL_UNKNOWN_SOURCES_GLOBALLY, Store.blockingEnabled && Store.blockApk)
             }
             Catalog.settings.filter { it.restriction != null }.groupBy { it.restriction!! }.forEach { (key, cats) ->
-                applyAndVerify(key, cats.any { it.id in Store.blockedSettings })
+                applyAndVerify(key, Store.blockingEnabled && cats.any { it.id in Store.blockedSettings })
             }
             lastApplyError = null
         } catch (e: Throwable) {
