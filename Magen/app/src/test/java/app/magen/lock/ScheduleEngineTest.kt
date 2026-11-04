@@ -12,23 +12,46 @@ class ScheduleEngineTest {
         set(Calendar.MILLISECOND, 0)
     }.timeInMillis
 
-    @Test fun weeklyWindowSelectsProfile() {
-        val schedule = ProfileSchedule(weekly = listOf(WeeklyProfileWindow("tue", 2, 480, 960, "work")))
-        assertEquals("work", ScheduleEngine.resolve(schedule, "default", at(3, 9), utc).profileId)
-        assertEquals("default", ScheduleEngine.resolve(schedule, "default", at(3, 17), utc).profileId)
+    @Test fun weeklyWindowAppliesOnlyToItsApp() {
+        val schedule = AppSchedule(weekly = listOf(
+            WeeklyAppWindow("work", "com.example.work", 2, 480, 960, ScheduleAction.LOCK),
+        ))
+        assertEquals(true, ScheduleEngine.evaluate(schedule, "com.example.work", false, at(3, 9), utc).locked)
+        assertEquals(false, ScheduleEngine.evaluate(schedule, "com.example.other", false, at(3, 9), utc).locked)
+        assertEquals(false, ScheduleEngine.evaluate(schedule, "com.example.work", false, at(3, 17), utc).locked)
     }
 
     @Test fun overnightWindowContinuesIntoNextDay() {
-        val schedule = ProfileSchedule(weekly = listOf(WeeklyProfileWindow("night", 1, 1320, 360, "night")))
-        assertEquals("night", ScheduleEngine.resolve(schedule, "default", at(3, 2), utc).profileId)
-        assertEquals("default", ScheduleEngine.resolve(schedule, "default", at(3, 7), utc).profileId)
+        val schedule = AppSchedule(weekly = listOf(
+            WeeklyAppWindow("night", "com.example.app", 1, 1320, 360, ScheduleAction.LOCK),
+        ))
+        assertEquals(true, ScheduleEngine.evaluate(schedule, "com.example.app", false, at(3, 2), utc).locked)
+        assertEquals(false, ScheduleEngine.evaluate(schedule, "com.example.app", false, at(3, 7), utc).locked)
     }
 
-    @Test fun higherPriorityWinsOverlap() {
-        val schedule = ProfileSchedule(weekly = listOf(
-            WeeklyProfileWindow("normal", 2, 480, 1200, "normal"),
-            WeeklyProfileWindow("focus", 2, 720, 1080, "focus", 5),
+    @Test fun dateOverrideTakesPrecedenceOverWeeklyWindow() {
+        val date = at(3, 12)
+        val epochDay = Math.floorDiv(date, 86400000L)
+        val schedule = AppSchedule(
+            weekly = listOf(WeeklyAppWindow("weekly", "com.example.app", 2, 0, 1439, ScheduleAction.LOCK)),
+            dateOverrides = listOf(DateAppOverride("holiday", "com.example.app", epochDay, 0, 1439, ScheduleAction.ALLOW)),
+        )
+        val result = ScheduleEngine.evaluate(schedule, "com.example.app", true, date, utc)
+        assertEquals(false, result.locked)
+        assertEquals(ScheduleDecision.Reason.DATE_OVERRIDE, result.reason)
+    }
+
+    @Test fun higherPriorityWinsOverlappingWeeklyWindows() {
+        val schedule = AppSchedule(weekly = listOf(
+            WeeklyAppWindow("normal", "com.example.app", 2, 480, 1200, ScheduleAction.ALLOW),
+            WeeklyAppWindow("locked", "com.example.app", 2, 720, 1080, ScheduleAction.LOCK, 5),
         ))
-        assertEquals("focus", ScheduleEngine.resolve(schedule, "default", at(3, 14), utc).profileId)
+        assertEquals(true, ScheduleEngine.evaluate(schedule, "com.example.app", false, at(3, 14), utc).locked)
+    }
+
+    @Test fun fallsBackToBaseSettingOutsideWindows() {
+        val schedule = AppSchedule()
+        assertEquals(true, ScheduleEngine.evaluate(schedule, "com.example.app", true, at(3, 12), utc).locked)
+        assertEquals(false, ScheduleEngine.evaluate(schedule, "com.example.app", false, at(3, 12), utc).locked)
     }
 }
