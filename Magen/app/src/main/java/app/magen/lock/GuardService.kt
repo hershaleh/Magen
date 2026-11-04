@@ -400,10 +400,11 @@ class GuardService : AccessibilityService() {
         if (pkg == packageName) return
         val mode = Store.locked[pkg] ?: return
         val decision = Store.scheduleDecision(pkg)
-        if (!decision.locked) return
-        // A scheduled locked window takes precedence over temporary unlocks.
-        if (decision.reason == ScheduleDecision.Reason.BASE_SETTING && pkg in tempUnlocked) return
-        if (decision.reason == ScheduleDecision.Reason.BASE_SETTING &&
+        val quotaReached = Store.isUsageLimitReached(pkg)
+        if (!decision.locked && !quotaReached) return
+        // Scheduled lock windows and exhausted daily quotas take precedence over temporary unlocks.
+        if (decision.reason == ScheduleDecision.Reason.BASE_SETTING && !quotaReached && pkg in tempUnlocked) return
+        if (decision.reason == ScheduleDecision.Reason.BASE_SETTING && !quotaReached &&
             mode == LockMode.MAIN && pkg in Store.mainUnlocked) return
         val now = SystemClock.uptimeMillis()
         if (now - lastLaunch < 600) {
