@@ -353,19 +353,94 @@ private fun AppDetailsScreen(a: AppItem, onBack: () -> Unit) {
                 }
             }
         } else {
+            var quota by rememberSaveable(a.pkg) { mutableStateOf(false) }
+            var quotaMinutes by rememberSaveable(a.pkg) { mutableIntStateOf(60) }
+            var pausePersonal by rememberSaveable(a.pkg) { mutableStateOf(false) }
+            var schedule by rememberSaveable(a.pkg) { mutableStateOf(false) }
+            var group by rememberSaveable(a.pkg) { mutableStateOf(false) }
+            var groupName by rememberSaveable(a.pkg) { mutableIntStateOf(0) }
+            var days by rememberSaveable(a.pkg) { mutableStateOf(setOf("א׳", "ב׳", "ג׳", "ד׳", "ה׳")) }
+            Text("הגדרות נוספות", style = MaterialTheme.typography.titleMedium)
+            Text("תצוגת אפיון: הערכים כאן עדיין אינם מחוברים למנועי המכסות ולוחות הזמנים.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
+
             Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
-                Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                    Text("הגדרות נוספות", style = MaterialTheme.typography.titleMedium)
-                    Text("האפשרויות הבאות מוצגות לתכנון הממשק; החיבור למנועי המכסות והלוחות יבוצע בשלב הבא.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.tertiary)
-                    var quota by rememberSaveable(a.pkg) { mutableStateOf(false) }
-                    var schedule by rememberSaveable(a.pkg) { mutableStateOf(false) }
-                    var group by rememberSaveable(a.pkg) { mutableStateOf(false) }
-                    androidx.compose.material3.Switch(checked = quota, onCheckedChange = { quota = it })
-                    Text("מכסה אישית")
-                    androidx.compose.material3.Switch(checked = schedule, onCheckedChange = { schedule = it })
-                    Text("לוח זמנים אישי")
-                    androidx.compose.material3.Switch(checked = group, onCheckedChange = { group = it })
-                    Text("שיוך לקבוצת מכסה")
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("מכסה אישית", style = MaterialTheme.typography.titleSmall)
+                            Text("זמן שימוש יומי באפליקציה זו", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        androidx.compose.material3.Switch(checked = quota, onCheckedChange = { quota = it })
+                    }
+                    if (quota) {
+                        Text(if (quotaMinutes == 0) "0 דקות — חסימה לכל היום" else "מכסה: $quotaMinutes דקות ביום")
+                        androidx.compose.material3.Slider(value = quotaMinutes.toFloat(), onValueChange = { quotaMinutes = it.toInt() }, valueRange = 0f..360f, steps = 35)
+                        Text("שימוש היום: 42 דקות · איפוס בחצות המקומית", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        androidx.compose.material3.Switch(checked = pausePersonal, onCheckedChange = { pausePersonal = it })
+                        Text("השהיית המכסה האישית")
+                        Text("התרעה ברירת מחדל: 5 דקות לפני סיום. כשהמכסה נגמרת — האפליקציה נחסמת מיד.", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("מכסה קבוצתית", style = MaterialTheme.typography.titleSmall)
+                            Text("שיתוף מכסה עם אפליקציות נוספות", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        androidx.compose.material3.Switch(checked = group, onCheckedChange = { group = it })
+                    }
+                    if (group) {
+                        listOf("רשתות חברתיות", "וידאו", "משחקים").forEachIndexed { i, label ->
+                            Row(Modifier.fillMaxWidth().clickable { groupName = i }, verticalAlignment = Alignment.CenterVertically) {
+                                androidx.compose.material3.RadioButton(selected = groupName == i, onClick = { groupName = i })
+                                Text(label)
+                            }
+                        }
+                        Text("אפליקציה יכולה להשתייך לקבוצה אחת בלבד. מכסה אישית וקבוצתית יכולות לפעול יחד; סיום אחת מהן חוסם.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text("לוח זמנים אישי", style = MaterialTheme.typography.titleSmall)
+                            Text("חלונות שבהם האפליקציה מותרת", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        androidx.compose.material3.Switch(checked = schedule, onCheckedChange = { schedule = it })
+                    }
+                    if (schedule) {
+                        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                            listOf("א׳", "ב׳", "ג׳", "ד׳", "ה׳", "ו׳", "ש׳").forEach { day ->
+                                FilterChip(selected = day in days, onClick = { days = if (day in days) days - day else days + day }, label = { Text(day) })
+                            }
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Column(Modifier.weight(1f)) {
+                                OutlinedTextField(value = "08:00", onValueChange = {}, label = { Text("משעה") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                            }
+                            Column(Modifier.weight(1f)) {
+                                OutlinedTextField(value = "20:00", onValueChange = {}, label = { Text("עד שעה") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                            }
+                        }
+                        TextButton(onClick = {}) { Text("הוספת חלון זמן נוסף") }
+                        androidx.compose.material3.Switch(checked = false, onCheckedChange = {})
+                        Text("חלון זה חוצה חצות", style = MaterialTheme.typography.bodySmall)
+                    }
+                }
+            }
+
+            Surface(Modifier.fillMaxWidth(), shape = RoundedCornerShape(16.dp), color = MaterialTheme.colorScheme.surface) {
+                Column(Modifier.padding(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("הפסקות וחריגים", style = MaterialTheme.typography.titleSmall)
+                    OutlinedTextField(value = "13:00", onValueChange = {}, label = { Text("תחילת הפסקה") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = "14:00", onValueChange = {}, label = { Text("סיום הפסקה") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    OutlinedTextField(value = "", onValueChange = {}, label = { Text("תאריך חריג") }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                    Text("הפסקה משהה ספירת מכסה בלבד. כאשר חריגים מתנגשים — החסימה גוברת.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }
             }
         }
