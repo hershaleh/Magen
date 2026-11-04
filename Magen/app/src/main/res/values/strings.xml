@@ -470,5 +470,14 @@
     <string name="schedule_clear">Clear schedule</string>
     <string name="schedule_remove">Remove</string>
     <string name="profile_default_name">Default</string>
+    <string name="app_tab_method">Blocking method</string>
+    <string name="app_tab_more">Additional settings</string>
+    <string name="app_method_help">Choose how this app should be blocked. The selected method applies only after it is saved successfully.</string>
+    <string name="app_unblock">Remove blocking</string>
+    <string name="app_schedule_help">Set the times when this app is blocked or temporarily allowed. Day numbers: 1=Monday, 7=Sunday. Overnight windows are supported.</string>
+    <string name="schedule_allow">Allowed</string>
+    <string name="schedule_lock">Blocked</string>
+    <string name="app_schedule_summary">Day %1$d · %2$s–%3$s · %4$s</string>
+    <string name="schedule_calendar_later">Monthly calendar exceptions and flexible-time allowances will be added with the full calendar and usage-limit implementation.</string>
 </resources>
 
