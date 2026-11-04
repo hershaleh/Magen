@@ -43,6 +43,9 @@ object Store {
         private set
     var protect by mutableStateOf(true)
         private set
+    /** Master switch for user-configured blocking rules; self-protection and uninstall safety remain separate. */
+    var blockingEnabled by mutableStateOf(true)
+        private set
     var relockOnScreenOff by mutableStateOf(true)
         private set
     /** Wall-clock end of the uninstall approval window, for display only. Decisions use [uninstallDeadline]. */
@@ -74,6 +77,7 @@ object Store {
         blockApk = sp.getBoolean("blockApk", false)
         blockedSettings = sp.getStringSet("blockedSettings", emptySet()) ?: emptySet()
         protect = sp.getBoolean("protect", true)
+        blockingEnabled = sp.getBoolean("blockingEnabled", true)
         relockOnScreenOff = sp.getBoolean("relock", true)
         allowedUntil = sp.getLong("allowedUntil", 0L)
         uninstallDeadline = loadDeadline("allowedUntil", "allowed", UNINSTALL_LEGACY_CAP_MS)
@@ -238,6 +242,13 @@ object Store {
     fun setBlockedSetting(id: String, on: Boolean) {
         blockedSettings = if (on) blockedSettings + id else blockedSettings - id
         sp.edit().putStringSet("blockedSettings", blockedSettings).apply()
+        Policy.apply()
+    }
+
+    fun setBlockingEnabled(on: Boolean) {
+        blockingEnabled = on
+        sp.edit().putBoolean("blockingEnabled", on).apply()
+        // Strong-mode restrictions are updated and verified by the existing policy layer.
         Policy.apply()
     }
 
