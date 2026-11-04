@@ -91,33 +91,150 @@ private fun SpecField(label: String, initial: String = "") {
 @Composable
 fun BlockingsHub() {
     var selected by rememberSaveable { mutableIntStateOf(0) }
+    val labels = listOf("חסימת אפליקציות", "חסימת חלקים בהגדרות", "חסימות נוספות")
     Column(Modifier.fillMaxSize()) {
-        Text("חסימות", Modifier.padding(start = 16.dp, top = 12.dp), style = MaterialTheme.typography.headlineSmall)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            listOf("אפליקציות", "הגדרות מערכת", "כללים מותאמים").forEachIndexed { i, label ->
-                FilterChip(selected = selected == i, onClick = { selected = i }, label = { Text(label) })
+        Text("חסימות", Modifier.padding(start = 16.dp, top = 12.dp, bottom = 8.dp), style = MaterialTheme.typography.headlineSmall)
+        androidx.compose.material3.NavigationBar(
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            labels.forEachIndexed { i, label ->
+                androidx.compose.material3.NavigationBarItem(
+                    selected = selected == i,
+                    onClick = { selected = i },
+                    icon = {},
+                    label = { Text(label, maxLines = 2, style = MaterialTheme.typography.labelMedium) },
+                )
             }
         }
         Box(Modifier.weight(1f)) {
-            when (selected) { 0 -> AppsTab(); 1 -> SystemComponentsScreen(); else -> CustomRulesScreen() }
+            when (selected) {
+                0 -> AppsTab()
+                1 -> SystemComponentsScreen()
+                else -> CustomRulesScreen()
+            }
         }
     }
 }
+
 @Composable
 fun TimesHub() {
     var selected by rememberSaveable { mutableIntStateOf(0) }
+    val labels = listOf("כל המכשיר", "קבוצות", "שבת וחגים")
     Column(Modifier.fillMaxSize()) {
-        Text("זמנים", Modifier.padding(start = 16.dp, top = 12.dp), style = MaterialTheme.typography.headlineSmall)
-        Row(Modifier.fillMaxWidth().padding(horizontal = 12.dp), horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            listOf("מכסות", "לוחות זמנים", "שבת וחגים", "נעילה").forEachIndexed { i, label ->
-                FilterChip(selected = selected == i, onClick = { selected = i }, label = { Text(label) })
+        Text("זמנים", Modifier.padding(start = 16.dp, top = 12.dp, bottom = 8.dp), style = MaterialTheme.typography.headlineSmall)
+        androidx.compose.material3.NavigationBar(
+            modifier = Modifier.fillMaxWidth(),
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
+            labels.forEachIndexed { i, label ->
+                androidx.compose.material3.NavigationBarItem(
+                    selected = selected == i,
+                    onClick = { selected = i },
+                    icon = {},
+                    label = { Text(label, maxLines = 1, style = MaterialTheme.typography.labelMedium) },
+                )
             }
         }
         Box(Modifier.weight(1f)) {
-            when (selected) { 0 -> QuotasScreen(); 1 -> SchedulesScreen(); 2 -> ShabbatScreen(); else -> TimesTab() }
+            when (selected) {
+                0 -> WholeDeviceScheduleScreen()
+                1 -> GroupsManagementScreen()
+                else -> ShabbatScreen()
+            }
         }
     }
 }
+
+@Composable
+private fun WholeDeviceScheduleScreen() {
+    var enabled by rememberSaveable { mutableStateOf(false) }
+    var windowCount by rememberSaveable { mutableIntStateOf(1) }
+    var days by rememberSaveable { mutableStateOf(setOf("ראשון", "שני", "שלישי", "רביעי", "חמישי")) }
+    val allDays = listOf("ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת")
+    SpecPage("לוח זמנים לכל המכשיר", "כאן מוגדרים חלונות החסימה הכלליים בלבד. לוחות זמנים לאפליקציה או לכלל מסוים נמצאים בתוך הגדרות החסימה המתאימות.") {
+        SpecCard("הפעלת לוח הזמנים") {
+            SpecToggle("הפעלת חסימה לפי לוח זמנים", initial = enabled)
+            androidx.compose.foundation.layout.FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(5.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                allDays.forEach { day ->
+                    FilterChip(
+                        selected = day in days,
+                        onClick = { days = if (day in days) days - day else days + day },
+                        label = { Text(day) },
+                    )
+                }
+            }
+        }
+        repeat(windowCount) { index ->
+            SpecCard("חלון חסימה ${index + 1}") {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(Modifier.weight(1f)) { SpecField("משעה", if (index == 0) "22:00" else "08:00") }
+                    Column(Modifier.weight(1f)) { SpecField("עד שעה", if (index == 0) "07:00" else "09:00") }
+                }
+                SpecToggle("החלון חוצה חצות")
+            }
+        }
+        SpecCard("ניהול חלונות") {
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = { windowCount = (windowCount + 1).coerceAtMost(5) }, enabled = windowCount < 5) { Text("הוספת חלון") }
+                TextButton(onClick = { windowCount = (windowCount - 1).coerceAtLeast(1) }, enabled = windowCount > 1) { Text("הסרת חלון") }
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupsManagementScreen() {
+    var groups by rememberSaveable { mutableStateOf(listOf("קבוצה חדשה")) }
+    var selected by rememberSaveable { mutableIntStateOf(0) }
+    var newName by rememberSaveable { mutableStateOf("") }
+    SpecPage("קבוצות", "קבוצות מאפשרות להגדיר לוח זמנים משותף לאפליקציות המשויכות אליהן. מכסות אישיות וקבוצתיות מוגדרות בתוך הגדרות האפליקציות.") {
+        SpecCard("הקבוצות שלי") {
+            groups.forEachIndexed { index, name ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    androidx.compose.material3.RadioButton(selected = selected == index, onClick = { selected = index })
+                    Text(name, Modifier.weight(1f))
+                    TextButton(onClick = {
+                        if (groups.size > 1) {
+                            groups = groups.filterIndexed { i, _ -> i != index }
+                            selected = 0
+                        }
+                    }, enabled = groups.size > 1) { Text("הסרה") }
+                }
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                OutlinedTextField(
+                    value = newName,
+                    onValueChange = { newName = it },
+                    label = { Text("שם קבוצה חדשה") },
+                    singleLine = true,
+                    modifier = Modifier.weight(1f),
+                )
+                TextButton(
+                    onClick = {
+                        groups = groups + newName.trim()
+                        selected = groups.lastIndex
+                        newName = ""
+                    },
+                    enabled = newName.isNotBlank(),
+                ) { Text("הוספה") }
+            }
+        }
+        SpecCard("לוח הזמנים של ${groups.getOrElse(selected) { "הקבוצה" }}") {
+            SpecToggle("הפעלת לוח זמנים לקבוצה")
+            Text("בחירת ימים וחלונות זמן תוגדר כאן. אפליקציה יכולה להשתייך לקבוצה אחת בלבד; מעבר קבוצה אינו מוחק שימוש קודם.")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Column(Modifier.weight(1f)) { SpecField("משעה", "16:00") }
+                Column(Modifier.weight(1f)) { SpecField("עד שעה", "20:00") }
+            }
+            SpecToggle("החלון חוצה חצות")
+        }
+    }
+}
+
 @Composable
 private fun QuotasScreen() {
     var selectedApp by rememberSaveable { mutableIntStateOf(0) }
@@ -283,6 +400,10 @@ private fun SystemComponentsScreen() {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         Text("חסימת רכיבי הגדרות Android", style = MaterialTheme.typography.titleLarge)
         Text("58 קטגוריות מתוך קטלוג ההגדרות הקיים. רמת האכיפה תלויה במכשיר ובגרסת Android.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        SpecCard("איך למצוא חלק מסוים בהגדרות?") {
+            Text("פתח את אפליקציית ההגדרות במכשיר, נווט למסך או לתת־המסך המבוקש, וחזור למגן. אפשר גם להשתמש בחיפוש למטה לפי שם ההגדרה או מילת מפתח.")
+            Text("במכשירים נתמכים אפשר להפעיל את כלי הבחירה מתוך שירות הנגישות כדי לזהות את המסך הפתוח.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("חיפוש בהגדרות") }, singleLine = true, modifier = Modifier.fillMaxWidth())
         groups.forEach { (group, categories) ->
             SpecCard(stringResource(group.title)) {
