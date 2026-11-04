@@ -355,7 +355,7 @@ class MagenUiTest {
         compose.await("יומן אירועים").performClick()
         compose.await("אין עדיין אירועים שמורים בממשק החדש.").assertIsDisplayed()
         compose.await("חזרה").performClick()
-        compose.await("חזרה").performClick()
+        compose.await("‹  הגדרות").performClick()
         compose.await("גיבוי ושחזור").performClick()
         compose.await("פתיחת גיבוי ושחזור").performClick()
         compose.await("בחירת קובץ לשחזור (טרם חובר)").assertIsDisplayed()
