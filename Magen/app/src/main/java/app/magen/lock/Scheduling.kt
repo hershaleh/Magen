@@ -3,100 +3,111 @@ package app.magen.lock
 import java.util.Calendar
 import java.util.TimeZone
 
-/**
- * Pure schedule model. Days use ISO numbering: Monday=1 ... Sunday=7.
- * A window whose end is earlier than its start continues into the following day.
- */
-data class WeeklyProfileWindow(
+enum class ScheduleAction { LOCK, ALLOW }
+
+data class WeeklyAppWindow(
     val id: String,
+    val packageName: String,
     val dayOfWeek: Int,
     val startMinute: Int,
     val endMinute: Int,
-    val profileId: String,
+    val action: ScheduleAction,
     val priority: Int = 0,
 ) {
     init {
-        require(dayOfWeek in 1..7) { "dayOfWeek must be 1..7" }
-        require(startMinute in 0..1439) { "startMinute must be 0..1439" }
-        require(endMinute in 0..1439) { "endMinute must be 0..1439" }
-        require(startMinute != endMinute) { "A schedule window cannot have zero or 24-hour length" }
-        require(profileId.isNotBlank()) { "profileId cannot be blank" }
+        require(id.isNotBlank())
+        require(packageName.isNotBlank())
+        require(dayOfWeek in 1..7)
+        require(startMinute in 0..1439)
+        require(endMinute in 0..1439)
+        require(startMinute != endMinute)
     }
 }
 
-data class DateProfileOverride(
-    /** Local calendar date represented as a UTC-independent epoch day. */
+data class DateAppOverride(
+    val id: String,
+    val packageName: String,
+    /** Local calendar date encoded as a UTC epoch day. */
     val epochDay: Long,
-    /** null means use the manually selected default profile for this date. */
-    val profileId: String?,
-)
-
-data class ProfileSchedule(
-    val weekly: List<WeeklyProfileWindow> = emptyList(),
-    val dateOverrides: List<DateProfileOverride> = emptyList(),
-)
-
-data class ScheduleResolution(
-    val profileId: String?,
-    val source: Source,
-    val matchedWindowId: String? = null,
+    val startMinute: Int,
+    val endMinute: Int,
+    val action: ScheduleAction,
+    val priority: Int = 0,
 ) {
-    enum class Source { DATE_OVERRIDE, WEEKLY, DEFAULT }
+    init {
+        require(id.isNotBlank())
+        require(packageName.isNotBlank())
+        require(startMinute in 0..1439)
+        require(endMinute in 0..1439)
+        require(startMinute != endMinute)
+    }
 }
 
+data class AppSchedule(
+    val weekly: List<WeeklyAppWindow> = emptyList(),
+    val dateOverrides: List<DateAppOverride> = emptyList(),
+)
+
+data class ScheduleDecision(
+    val locked: Boolean,
+    val reason: Reason,
+    val ruleId: String? = null,
+) {
+    enum class Reason { BASE_SETTING, WEEKLY_WINDOW, DATE_OVERRIDE }
+}
+
+/** Pure per-app schedule evaluation. Exact-date overrides beat weekly windows. */
 object ScheduleEngine {
-    /**
-     * Resolves the profile for a local wall-clock instant.
-     * Exact-date exceptions override weekly windows. For overlapping weekly windows,
-     * higher priority wins, then the most recently started window, then stable ID order.
-     */
-    fun resolve(
-        schedule: ProfileSchedule,
-        defaultProfileId: String?,
+    fun evaluate(
+        schedule: AppSchedule,
+        packageName: String,
+        baseLocked: Boolean,
         nowMillis: Long,
         timeZone: TimeZone = TimeZone.getDefault(),
-    ): ScheduleResolution {
+    ): ScheduleDecision {
         val now = Calendar.getInstance(timeZone).apply { timeInMillis = nowMillis }
-        val todayEpochDay = epochDay(now)
-
-        schedule.dateOverrides.lastOrNull { it.epochDay == todayEpochDay }?.let {
-            return ScheduleResolution(it.profileId, ScheduleResolution.Source.DATE_OVERRIDE)
-        }
-
-        val minute = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
         val today = isoDay(now.get(Calendar.DAY_OF_WEEK))
-        val yesterday = if (today == 1) 7 else today - 1
+        val minute = now.get(Calendar.HOUR_OF_DAY) * 60 + now.get(Calendar.MINUTE)
+        val epochDay = localEpochDay(now)
 
-        val active = schedule.weekly.mapNotNull { window ->
-            val isActive = if (window.endMinute > window.startMinute) {
-                window.dayOfWeek == today && minute >= window.startMinute && minute < window.endMinute
-            } else {
-                (window.dayOfWeek == today && minute >= window.startMinute) ||
-                    (window.dayOfWeek == yesterday && minute < window.endMinute)
-            }
-            if (isActive) window else null
-        }.sortedWith(
-            compareByDescending<WeeklyProfileWindow> { it.priority }
-                .thenByDescending { it.startMinute }
-                .thenBy { it.id },
-        ).firstOrNull()
-
-        return if (active != null) {
-            ScheduleResolution(active.profileId, ScheduleResolution.Source.WEEKLY, active.id)
-        } else {
-            ScheduleResolution(defaultProfileId, ScheduleResolution.Source.DEFAULT)
+        val dateRule = schedule.dateOverrides.asSequence()
+            .filter { it.packageName == packageName && it.epochDay == epochDay && containsMinute(it.startMinute, it.endMinute, minute) }
+            .sortedWith(compareByDescending<DateAppOverride> { it.priority }.thenBy { it.id })
+            .firstOrNull()
+        if (dateRule != null) {
+            return ScheduleDecision(dateRule.action == ScheduleAction.LOCK, ScheduleDecision.Reason.DATE_OVERRIDE, dateRule.id)
         }
+
+        val yesterday = if (today == 1) 7 else today - 1
+        val weeklyRule = schedule.weekly.asSequence()
+            .filter { it.packageName == packageName && isActive(it, today, yesterday, minute) }
+            .sortedWith(compareByDescending<WeeklyAppWindow> { it.priority }.thenBy { it.id })
+            .firstOrNull()
+        if (weeklyRule != null) {
+            return ScheduleDecision(weeklyRule.action == ScheduleAction.LOCK, ScheduleDecision.Reason.WEEKLY_WINDOW, weeklyRule.id)
+        }
+        return ScheduleDecision(baseLocked, ScheduleDecision.Reason.BASE_SETTING)
     }
+
+    private fun isActive(rule: WeeklyAppWindow, today: Int, yesterday: Int, minute: Int): Boolean =
+        if (rule.endMinute > rule.startMinute) {
+            rule.dayOfWeek == today && minute >= rule.startMinute && minute < rule.endMinute
+        } else {
+            (rule.dayOfWeek == today && minute >= rule.startMinute) ||
+                (rule.dayOfWeek == yesterday && minute < rule.endMinute)
+        }
+
+    private fun containsMinute(start: Int, end: Int, minute: Int): Boolean =
+        if (end > start) minute >= start && minute < end else minute >= start || minute < end
 
     private fun isoDay(calendarDay: Int): Int =
         if (calendarDay == Calendar.SUNDAY) 7 else calendarDay - 1
 
-    private fun epochDay(calendar: Calendar): Long {
-        val copy = calendar.clone() as Calendar
-        copy.set(Calendar.HOUR_OF_DAY, 0)
-        copy.set(Calendar.MINUTE, 0)
-        copy.set(Calendar.SECOND, 0)
-        copy.set(Calendar.MILLISECOND, 0)
-        return Math.floorDiv(copy.timeInMillis, 86_400_000L)
+    private fun localEpochDay(calendar: Calendar): Long {
+        val utcDate = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
+            clear()
+            set(calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH))
+        }
+        return Math.floorDiv(utcDate.timeInMillis, 86_400_000L)
     }
 }
