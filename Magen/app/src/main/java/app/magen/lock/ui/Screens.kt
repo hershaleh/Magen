@@ -417,16 +417,30 @@ fun MainScaffold() {
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                IconButton(onClick = openDrawer) {
-                                    Icon(Icons.Filled.Menu, contentDescription = if (Lang.current().startsWith("en")) "Open menu" else "פתיחת תפריט")
+                                if (Lang.current().startsWith("en")) {
+                                    IconButton(onClick = openDrawer) {
+                                        Icon(Icons.Filled.Menu, contentDescription = "Open menu")
+                                    }
+                                    ShieldBadge(32.dp)
+                                    Text(
+                                        stringResource(R.string.app_name),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.weight(1f),
+                                    )
+                                } else {
+                                    Text(
+                                        stringResource(R.string.app_name),
+                                        style = MaterialTheme.typography.titleLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        modifier = Modifier.weight(1f),
+                                        textAlign = TextAlign.End,
+                                    )
+                                    ShieldBadge(32.dp)
+                                    IconButton(onClick = openDrawer) {
+                                        Icon(Icons.Filled.Menu, contentDescription = "פתיחת תפריט")
+                                    }
                                 }
-                                ShieldBadge(32.dp)
-                                Text(
-                                    stringResource(R.string.app_name),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.weight(1f),
-                                )
                             }
                         }
                         if (navigationMode == 2) {
