@@ -13,6 +13,7 @@ class BackupFormatTest {
         "blockApk" to BackupValue.Flag(false),
         "level" to BackupValue.Text("strong"),
         "quota" to BackupValue.Number(45),
+        "count" to BackupValue.Int32(-7),
         "locked" to BackupValue.Items(setOf("com.a", "com.b")),
         "customKeywords" to BackupValue.Items(setOf("Network & internet", "a|b\tc")),
         "note" to BackupValue.Text("line1\nline2 \\ | end"),
@@ -88,6 +89,7 @@ class BackupFormatTest {
         assertEquals(Reason.DAMAGED, reason(withBody("onlytwo|F")))
         assertEquals(Reason.DAMAGED, reason(withBody("k|F|2")))
         assertEquals(Reason.DAMAGED, reason(withBody("k|N|notanumber")))
+        assertEquals(Reason.DAMAGED, reason(withBody("k|I|99999999999")))
         assertEquals(Reason.DAMAGED, reason(withBody("k|X|1")))
         assertEquals(Reason.DAMAGED, reason(withBody("k|T|bad\\q")))
         assertEquals(Reason.DAMAGED, reason(withBody("k|F|1\nk|F|0")))

@@ -55,6 +55,7 @@ object RuleRuntime {
         val elapsed = SystemClock.elapsedRealtime()
         val s = r.step(wall, elapsed, bootCount(ctx), TimeZone.getDefault().getOffset(wall).toLong(), pkg, essential)
 
+        runCatching { Backups.autoIfDue(ctx, Math.floorDiv(s.trustedMs + TimeZone.getDefault().getOffset(wall), 86_400_000L)) }
         shabbatActive = s.shabbat.active
         shabbatUnverified = r.config.shabbat.enabled && !s.shabbat.verified
         if (RuleStore.readOnly != s.shabbat.active) RuleStore.readOnly = s.shabbat.active

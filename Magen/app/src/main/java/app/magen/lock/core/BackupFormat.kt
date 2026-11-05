@@ -6,6 +6,8 @@ import java.security.MessageDigest
 sealed class BackupValue {
     data class Flag(val on: Boolean) : BackupValue()
     data class Number(val n: Long) : BackupValue()
+    /** A 32-bit integer setting: kept apart from [Number] so a restore writes it back with the same type. */
+    data class Int32(val n: Int) : BackupValue()
     data class Text(val s: String) : BackupValue()
     data class Items(val items: Set<String>) : BackupValue()
 }
@@ -17,7 +19,7 @@ sealed class BackupValue {
  * The security log and usage counters are not part of a backup, so restoring cannot reset them.
  *
  * Format: line 1 "MAGEN-BACKUP", line 2 "version=N", line 3 "sha256=hex" of the lines after it, then one setting
- * per line as "key|F|1", "key|N|42", "key|T|text" or "key|S|item<TAB>item", with `\`, tab, newline and `|`
+ * per line as "key|F|1", "key|N|42" (64-bit), "key|I|7" (32-bit), "key|T|text" or "key|S|item<TAB>item", with `\`, tab, newline and `|`
  * escaped. Pure logic, no Android dependency.
  */
 object BackupFormat {
@@ -69,6 +71,7 @@ object BackupFormat {
     private fun line(key: String, v: BackupValue): String = when (v) {
         is BackupValue.Flag -> "${esc(key)}|F|${if (v.on) 1 else 0}"
         is BackupValue.Number -> "${esc(key)}|N|${v.n}"
+        is BackupValue.Int32 -> "${esc(key)}|I|${v.n}"
         is BackupValue.Text -> "${esc(key)}|T|${esc(v.s)}"
         is BackupValue.Items -> "${esc(key)}|S|${v.items.sorted().joinToString("\t") { esc(it) }}"
     }
@@ -105,6 +108,7 @@ object BackupFormat {
             val v: BackupValue = when (parts[1]) {
                 "F" -> when (parts[2]) { "1" -> BackupValue.Flag(true); "0" -> BackupValue.Flag(false); else -> return Decoded.Failed(Reason.DAMAGED) }
                 "N" -> BackupValue.Number(parts[2].toLongOrNull() ?: return Decoded.Failed(Reason.DAMAGED))
+                "I" -> BackupValue.Int32(parts[2].toIntOrNull() ?: return Decoded.Failed(Reason.DAMAGED))
                 "T" -> BackupValue.Text(unesc(parts[2]) ?: return Decoded.Failed(Reason.DAMAGED))
                 "S" -> BackupValue.Items(
                     if (parts[2].isEmpty()) emptySet()

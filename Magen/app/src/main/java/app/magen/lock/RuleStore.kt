@@ -78,6 +78,11 @@ object RuleStore {
         events = next
     }
 
+    /** How many days the log is kept; null keeps it for ever. */
+    var retentionDays: Int?
+        get() = sp.getInt("logRetentionDays", -1).takeIf { it > 0 }
+        set(v) { sp.edit().putInt("logRetentionDays", v ?: -1).apply() }
+
     // ---- counters and clock: saved by the runtime, restored at start -----------------------------
 
     fun loadLedger(): UsageLedger = StateCodec.decodeLedger(sp.getString("ledger", "") ?: "") ?: UsageLedger()

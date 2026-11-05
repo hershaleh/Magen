@@ -297,6 +297,7 @@ fun MainScaffold() {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     var changingPin by remember { mutableStateOf(false) }
     var recoveryMode by remember { mutableStateOf(false) }
+    var rulesOpen by remember { mutableStateOf(false) }
     LaunchedEffect(Session.goTab) {
         Session.goTab?.let {
             tab = it
@@ -308,6 +309,8 @@ fun MainScaffold() {
         ChangePin { changingPin = false }
     } else if (recoveryMode) {
         NewRecovery { recoveryMode = false }
+    } else if (rulesOpen) {
+        RulesScreen { rulesOpen = false }
     } else {
         // Order follows [Tabs]. Selected tabs use the filled icon, the others the outlined one.
         val items = listOf(
@@ -343,6 +346,7 @@ fun MainScaffold() {
                         onRecovery = { recoveryMode = true },
                         onOpenHome = { tab = Tabs.HOME },
                         onOpenProtection = { tab = Tabs.PROTECTION },
+                        onOpenRules = { rulesOpen = true },
                     )
                 }
             }
@@ -492,7 +496,7 @@ private fun AdvancedProtection(onBack: () -> Unit, onOpenHome: () -> Unit) {
 // ---- tab: more -------------------------------------------------------------------------------
 
 @Composable
-fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit, onOpenProtection: () -> Unit) {
+fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> Unit, onOpenProtection: () -> Unit, onOpenRules: () -> Unit = {}) {
     val ctx = LocalContext.current
     var confirm by remember { mutableStateOf(false) }
     var confirmOwner by remember { mutableStateOf(false) }
@@ -513,6 +517,10 @@ fun MoreTab(onChangePin: () -> Unit, onRecovery: () -> Unit, onOpenHome: () -> U
 
     TabColumn {
         Text(stringResource(R.string.more_title), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+
+        SectionCard(stringResource(R.string.rules_title)) {
+            OutlinedButton(onClick = onOpenRules, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.rules_open)) }
+        }
 
         SectionCard(stringResource(R.string.more_code_title)) {
             if (Bio.available(ctx)) {
