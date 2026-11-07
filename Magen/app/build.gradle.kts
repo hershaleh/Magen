@@ -78,4 +78,6 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
+    // Compose UI testing calls forceEnableAppTracing(), added in this tracing release.
+    androidTestImplementation("androidx.tracing:tracing:1.2.0")
 }
