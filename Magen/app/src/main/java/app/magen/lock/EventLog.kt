@@ -201,25 +201,28 @@ object EventLog {
     }
 
     private fun persist() {
-        app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)
-            ?.edit()?.putString("events", JSONArray().apply {
-                events.forEach { event ->
-                    put(JSONObject().apply {
-                        put("id", event.id)
-                        put("type", event.type)
-                        put("title", event.title)
-                        put("message", event.message)
-                        put("technical", event.technical)
-                        put("severity", event.severity.name)
-                        put("state", event.state.name)
-                        put("createdAt", event.createdAt)
-                        put("updatedAt", event.updatedAt)
-                        put("occurrences", event.occurrences)
-                        put("read", event.read)
-                        put("history", JSONArray(event.history))
-                    })
-                }
-            }.toString())?.apply()
+        // Logging must never interfere with a protection or settings operation.
+        runCatching {
+            app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)
+                ?.edit()?.putString("events", JSONArray().apply {
+                    events.forEach { event ->
+                        put(JSONObject().apply {
+                            put("id", event.id)
+                            put("type", event.type)
+                            put("title", event.title)
+                            put("message", event.message)
+                            put("technical", event.technical)
+                            put("severity", event.severity.name)
+                            put("state", event.state.name)
+                            put("createdAt", event.createdAt)
+                            put("updatedAt", event.updatedAt)
+                            put("occurrences", event.occurrences)
+                            put("read", event.read)
+                            put("history", JSONArray(event.history))
+                        })
+                    }
+                }.toString())?.apply()
+        }
     }
 
     private fun load(): List<MagenEvent> {
