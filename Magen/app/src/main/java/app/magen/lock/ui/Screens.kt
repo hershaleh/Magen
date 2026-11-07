@@ -360,7 +360,7 @@ fun MainScaffold() {
     } else if (specRoute != null) {
         SpecRouteScreen(route = specRoute!!, onBack = { specRoute = null })
     } else {
-        val notificationLabel = if (Lang.current().startsWith("en")) "Notifications" else "התראות"
+        val notificationLabel = context.getString(R.string.nav_notifications)
         val navItems = listOf(
             Triple(Tabs.HOME, context.getString(R.string.nav_home), Icons.Filled.Home),
             Triple(Tabs.BLOCKINGS, context.getString(R.string.nav_blockings), Icons.Filled.Apps),
