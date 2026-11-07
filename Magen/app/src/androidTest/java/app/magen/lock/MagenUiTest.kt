@@ -59,7 +59,6 @@ class MagenUiTest {
         instrumentation.runOnMainSync {
             Store.init(ctx)
             app.magen.lock.ui.SpecUiPreferences.load(ctx)
-            app.magen.lock.ui.Lang.set("he")
             Session.authed = false
             Session.skipSetup = false
             Session.showGuide = false
@@ -84,9 +83,9 @@ class MagenUiTest {
     private fun str(@StringRes id: Int, vararg args: Any) = compose.activity.getString(id, *args)
 
     private fun launch() {
-        // Use the real MainActivity as the Compose host; an EmptyActivity obscures it.
+        // createAndroidComposeRule has already launched MainActivity. Recreating here would
+        // invoke AndroidX's EmptyActivity trampoline and obscure the screen under test.
         scenario = compose.activityRule.scenario
-        scenario!!.recreate()
     }
 
     /** Waits until some node shows [text] (no fixed sleeps), then returns it. */
@@ -144,13 +143,21 @@ class MagenUiTest {
         compose.await(str(R.string.nav_home)).assertIsDisplayed()
     }
 
-    private companion object { const val NOTIFICATIONS_NAV = -100 }
+    private companion object {
+        const val NOTIFICATIONS_NAV = -100
+        const val BLOCKINGS_LANDMARK = -101
+        const val TIMES_LANDMARK = -102
+    }
 
     private fun navLabel(@StringRes id: Int) =
         if (id == NOTIFICATIONS_NAV) "התראות" else str(if (id == R.string.nav_more) R.string.nav_settings else id)
 
-    private fun screenLandmark(@StringRes id: Int) =
-        if (id == NOTIFICATIONS_NAV) "התראות" else str(id)
+    private fun screenLandmark(@StringRes id: Int) = when (id) {
+        NOTIFICATIONS_NAV -> "התראות"
+        BLOCKINGS_LANDMARK -> "חסימות"
+        TIMES_LANDMARK -> "זמנים"
+        else -> str(id)
+    }
 
     private fun goToTab(@StringRes target: Int) {
         compose.onAllNodes(hasClickAction() and hasText(navLabel(target)))[0].performClick()
@@ -159,8 +166,8 @@ class MagenUiTest {
     /** All six first-class navigation destinations. */
     private val areas: List<Pair<Int, Int>> = listOf(
         R.string.nav_home to R.string.app_name,
-        R.string.nav_blockings to R.string.nav_blockings,
-        R.string.nav_times to R.string.nav_times,
+        R.string.nav_blockings to BLOCKINGS_LANDMARK,
+        R.string.nav_times to TIMES_LANDMARK,
         R.string.nav_protection to R.string.protection_title,
         NOTIFICATIONS_NAV to NOTIFICATIONS_NAV,
         R.string.nav_more to R.string.nav_settings,
@@ -345,7 +352,7 @@ class MagenUiTest {
         compose.onNodeWithTag("blocking_tab_1").performClick()
         compose.await("חסימת חלקי הגדרות").assertIsDisplayed()
         compose.await("איך למצוא חלק מסוים בהגדרות?").assertIsDisplayed()
-        compose.onNodeWithText("רשת ואינטרנט").performClick()
+        compose.onNodeWithText(str(R.string.cat_network)).performClick()
         compose.await("חסימת רשת ואינטרנט").assertIsDisplayed()
         compose.await("VPN").assertIsDisplayed()
         compose.onNodeWithText("סיום").performClick()
