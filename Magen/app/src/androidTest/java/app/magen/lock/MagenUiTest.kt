@@ -148,11 +148,9 @@ class MagenUiTest {
     private fun openMainScreenDirectly() {
         setCodeAndSkipSetup()
         launch()
-        compose.await(str(R.string.enter_code)).assertIsDisplayed()
-        enterPin("2468")
-        compose.waitUntil(15_000) {
-            compose.onAllNodesWithTag("magen_launch_overlay").fetchSemanticsNodes().isEmpty()
-        }
+        // PIN-gate behavior has dedicated tests above. Navigation and feature tests start
+        // from an authenticated session so they exercise their target screen, not the keypad.
+        instrumentation.runOnMainSync { Session.authed = true }
         compose.await(str(R.string.nav_home)).assertIsDisplayed()
     }
 
