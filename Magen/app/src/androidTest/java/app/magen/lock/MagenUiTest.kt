@@ -24,6 +24,9 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import java.io.FileOutputStream
+import app.magen.lock.EventLog
+import app.magen.lock.EventSeverity
+import app.magen.lock.EventState
 import app.magen.lock.ui.Session
 import app.magen.lock.ui.SpecUiPreferences
 import org.junit.Assert.assertEquals
@@ -59,6 +62,7 @@ class MagenUiTest {
         // A clean install: no code, no saved settings, no leftover session state from a previous test.
         ctx.getSharedPreferences("magen", Context.MODE_PRIVATE).edit().clear().commit()
         ctx.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).edit().clear().commit()
+        ctx.getSharedPreferences("magen_events", Context.MODE_PRIVATE).edit().clear().commit()
         instrumentation.runOnMainSync {
             Store.init(ctx)
             app.magen.lock.ui.SpecUiPreferences.load(ctx)
@@ -292,6 +296,40 @@ class MagenUiTest {
         compose.onAllNodes(hasClickAction() and hasText("בהיר"))[0].performClick()
         assertEquals(0, SpecUiPreferences.themeMode)
         assertEquals(0, ctx.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).getInt("themeMode", -1))
+    }
+
+    @Test
+    fun eventLogPersistsGroupsRepeatsAndSupportsReadActions() {
+        openMainScreenDirectly()
+        EventLog.record(
+            type = "test.repeat",
+            title = "בדיקת אירוע חוזר",
+            message = "אירוע בדיקה מקומי.",
+            technical = "test_event",
+            severity = EventSeverity.HIGH,
+            state = EventState.UNRESOLVED,
+        )
+        EventLog.record(
+            type = "test.repeat",
+            title = "בדיקת אירוע חוזר",
+            message = "אירוע בדיקה מקומי.",
+            technical = "test_event",
+            severity = EventSeverity.MEDIUM,
+            state = EventState.UNRESOLVED,
+        )
+        assertEquals(1, EventLog.events.count { it.type == "test.repeat" })
+        val event = EventLog.events.first { it.type == "test.repeat" }
+        assertEquals(2, event.occurrences)
+        assertEquals(EventSeverity.HIGH, event.severity)
+
+        EventLog.markRead(event.id)
+        EventLog.init(ctx)
+        assertTrue(EventLog.find(event.id)?.read == true)
+
+        goToTab(NOTIFICATIONS_NAV)
+        compose.await("בדיקת אירוע חוזר").assertIsDisplayed()
+        compose.await("סמן הכול כלא נקרא").performClick()
+        assertFalse(EventLog.find(event.id)?.read ?: true)
     }
 
     @Test
