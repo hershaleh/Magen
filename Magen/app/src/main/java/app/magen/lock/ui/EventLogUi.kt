@@ -159,7 +159,7 @@ fun EventLogPanel(title: String, subtitle: String, showProtectionStatus: Boolean
         }
     }
 
-    val selected = selectedId?.let(EventLog::find)
+    val selected = selectedId?.let { EventLog.find(it) }
     if (selected != null) {
         AlertDialog(
             onDismissRequest = { selectedId = null },
