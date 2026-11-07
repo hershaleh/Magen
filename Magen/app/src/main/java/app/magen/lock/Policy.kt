@@ -209,8 +209,17 @@ object Policy {
                 applyAndVerify(key, Store.blockingEnabled && cats.any { it.id in Store.blockedSettings })
             }
             lastApplyError = null
+            EventLog.resolve("policy.apply.failure", "policy_apply", "Android אישר מחדש את המדיניות והאימות הצליח.")
         } catch (e: Throwable) {
             lastApplyError = e.javaClass.simpleName + ": " + (e.message ?: "Android rejected a policy change")
+            EventLog.record(
+                type = "policy.apply.failure",
+                title = "כשל באכיפת מדיניות Android",
+                message = "Android לא אישר את ההגבלות הצפויות. מצב האכיפה אינו מוצג כהצלחה.",
+                technical = "policy_apply",
+                severity = EventSeverity.HIGH,
+                state = EventState.UNRESOLVED,
+            )
         }
     }
     /**
