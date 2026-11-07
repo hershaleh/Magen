@@ -308,11 +308,11 @@ class MagenUiTest {
         repeat(2) {
             for ((label, landmark) in areas) {
                 goToTab(label)
-                compose.await(landmark(landmark))
+                compose.await(screenLandmark(landmark))
             }
             for ((label, landmark) in areas.reversed()) {
                 goToTab(label)
-                compose.await(str(landmark))
+                compose.await(screenLandmark(landmark))
             }
         }
         // Still alive: the activity has not been destroyed by a crash.
