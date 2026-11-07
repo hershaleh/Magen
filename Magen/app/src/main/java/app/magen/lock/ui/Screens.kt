@@ -8,6 +8,7 @@ import androidx.activity.compose.BackHandler
 import android.app.admin.DevicePolicyManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.net.Uri
 import android.provider.Settings
 import androidx.annotation.StringRes
