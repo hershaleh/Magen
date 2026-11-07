@@ -90,9 +90,12 @@ class MagenUiTest {
     private fun str(@StringRes id: Int, vararg args: Any) = compose.activity.getString(id, *args)
 
     private fun launch() {
-        // createAndroidComposeRule has already launched MainActivity. Keep that activity in
-        // the foreground and wait for its short opening overlay to finish.
+        // The Compose rule creates MainActivity before @Before runs. resetApp() then clears
+        // SharedPreferences and reinitializes Store, so the first composition would otherwise
+        // still reflect the pre-reset state. Recreate after the reset to make every test start
+        // from the exact persisted state prepared by that test.
         scenario = compose.activityRule.scenario
+        scenario!!.recreate()
         compose.waitUntil(15_000) {
             compose.onAllNodesWithTag("magen_launch_overlay").fetchSemanticsNodes().isEmpty()
         }
