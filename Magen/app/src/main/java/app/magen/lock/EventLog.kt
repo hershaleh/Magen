@@ -107,6 +107,25 @@ object EventLog {
         }
     }
 
+    fun resolve(type: String, technical: String, note: String) {
+        synchronized(lock) {
+            val now = System.currentTimeMillis()
+            var changed = false
+            events = events.map { event ->
+                if (event.type == type && event.technical == technical && event.state != EventState.RESOLVED) {
+                    changed = true
+                    event.copy(
+                        state = EventState.RESOLVED,
+                        updatedAt = now,
+                        read = false,
+                        history = (event.history + "${formatTime(now)} · $note").takeLast(50),
+                    )
+                } else event
+            }.sortedByDescending { it.updatedAt }
+            if (changed) persist()
+        }
+    }
+
     fun markRead(id: String, read: Boolean = true) {
         synchronized(lock) {
             events = events.map { if (it.id == id) it.copy(read = read) else it }
