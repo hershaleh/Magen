@@ -135,8 +135,9 @@ class MagenUiTest {
 
     private fun openMainScreenDirectly() {
         setCodeAndSkipSetup()
-        instrumentation.runOnMainSync { Session.authed = true }
         launch()
+        compose.await(str(R.string.enter_code)).assertIsDisplayed()
+        enterPin("2468")
         compose.waitUntil(15_000) {
             compose.onAllNodesWithTag("magen_launch_overlay").fetchSemanticsNodes().isEmpty()
         }
