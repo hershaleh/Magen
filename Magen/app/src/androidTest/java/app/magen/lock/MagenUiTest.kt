@@ -147,6 +147,7 @@ class MagenUiTest {
         const val NOTIFICATIONS_NAV = -100
         const val BLOCKINGS_LANDMARK = -101
         const val TIMES_LANDMARK = -102
+        const val SETTINGS_LANDMARK = -103
     }
 
     private fun navLabel(@StringRes id: Int) =
@@ -156,6 +157,7 @@ class MagenUiTest {
         NOTIFICATIONS_NAV -> "התראות"
         BLOCKINGS_LANDMARK -> "חסימות"
         TIMES_LANDMARK -> "זמנים"
+        SETTINGS_LANDMARK -> "הגדרות"
         else -> str(id)
     }
 
@@ -170,7 +172,7 @@ class MagenUiTest {
         R.string.nav_times to TIMES_LANDMARK,
         R.string.nav_protection to R.string.protection_title,
         NOTIFICATIONS_NAV to NOTIFICATIONS_NAV,
-        R.string.nav_more to R.string.nav_settings,
+        R.string.nav_more to SETTINGS_LANDMARK,
     )
 
     // ---- installation and launch ---------------------------------------------------------------
@@ -353,7 +355,7 @@ class MagenUiTest {
         compose.await("חסימת חלקי הגדרות").assertIsDisplayed()
         compose.await("איך למצוא חלק מסוים בהגדרות?").assertIsDisplayed()
         compose.onNodeWithText(str(R.string.cat_network)).performClick()
-        compose.await("חסימת רשת ואינטרנט").assertIsDisplayed()
+        compose.await("חסימת ${str(R.string.cat_network)}").assertIsDisplayed()
         compose.await("VPN").assertIsDisplayed()
         compose.onNodeWithText("סיום").performClick()
         compose.onNodeWithTag("blocking_back").performClick()
