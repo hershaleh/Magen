@@ -264,12 +264,12 @@ private fun NotificationsSettings() {
 @Composable
 private fun AppearanceSettings() {
     val context = LocalContext.current
-    var theme by rememberSaveable { mutableIntStateOf(2) }
+    val theme = SpecUiPreferences.themeMode
     SettingsGroup("ערכת נושא") {
-        listOf("בהיר", "כהה", "לפי הגדרות המכשיר").forEachIndexed { i, s ->
-            Row(Modifier.fillMaxWidth().clickable { theme = i }.padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
-                RadioButton(selected = theme == i, onClick = { theme = i })
-                Text(s, style = MaterialTheme.typography.bodyMedium)
+        listOf("בהיר", "כהה", "לפי הגדרות המכשיר").forEachIndexed { i, label ->
+            Row(Modifier.fillMaxWidth().clickable { SpecUiPreferences.setThemeMode(context, i) }.padding(vertical = 7.dp), verticalAlignment = Alignment.CenterVertically) {
+                RadioButton(selected = theme == i, onClick = { SpecUiPreferences.setThemeMode(context, i) })
+                Text(label, style = MaterialTheme.typography.bodyMedium)
             }
         }
     }
