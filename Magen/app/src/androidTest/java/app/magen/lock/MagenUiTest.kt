@@ -83,9 +83,12 @@ class MagenUiTest {
     private fun str(@StringRes id: Int, vararg args: Any) = compose.activity.getString(id, *args)
 
     private fun launch() {
-        // createAndroidComposeRule has already launched MainActivity. Recreating here would
-        // invoke AndroidX's EmptyActivity trampoline and obscure the screen under test.
+        // createAndroidComposeRule has already launched MainActivity. Keep that activity in
+        // the foreground and wait for its short opening overlay to finish.
         scenario = compose.activityRule.scenario
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("magen_launch_overlay").fetchSemanticsNodes().isEmpty()
+        }
     }
 
     /** Waits until some node shows [text] (no fixed sleeps), then returns it. */
@@ -337,6 +340,9 @@ class MagenUiTest {
         goToTab(R.string.nav_times)
         compose.await(str(R.string.nav_times))
         scenario!!.recreate()
+        compose.waitUntil(15_000) {
+            compose.onAllNodesWithTag("magen_launch_overlay").fetchSemanticsNodes().isEmpty()
+        }
         compose.await(str(R.string.nav_times)).assertIsDisplayed()
     }
 
