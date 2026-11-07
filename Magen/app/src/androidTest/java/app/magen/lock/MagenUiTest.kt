@@ -383,7 +383,7 @@ class MagenUiTest {
         openMainScreenDirectly()
         for ((label, landmark) in areas) {
             goToTab(label)
-            compose.await(str(landmark)).assertIsDisplayed()
+            compose.await(screenLandmark(landmark)).assertIsDisplayed()
             instrumentation.waitForIdleSync()
             val fileName = navLabel(label).replace(Regex("[^A-Za-z0-9_-]"), "_")
             captureWalkthroughScreen(fileName)
