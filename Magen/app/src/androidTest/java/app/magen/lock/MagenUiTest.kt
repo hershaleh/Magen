@@ -366,7 +366,7 @@ class MagenUiTest {
         compose.await("איך למצוא חלק מסוים בהגדרות?").assertIsDisplayed()
         compose.onNodeWithText(str(R.string.cat_network)).performClick()
         compose.await("חסימת ${str(R.string.cat_network)}").assertIsDisplayed()
-        compose.onNodeWithText("VPN").performScrollTo().assertIsDisplayed()
+        compose.onAllNodesWithText("VPN")[1].performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("סיום").performClick()
         compose.onNodeWithTag("blocking_back").performClick()
         compose.onNodeWithTag("blocking_tab_2").performClick()
