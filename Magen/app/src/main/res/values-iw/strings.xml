@@ -275,6 +275,7 @@
     <string name="stale_block_title">חסימת הסרה שנשארה</string>
     <string name="stale_block_body">אנדרואיד עדיין חוסמת את הסרת מגן, אף שמגן כבר אינו בעל המכשיר. זו שארית ממצב חזק ישן, ורק בעל המכשיר יכול לנקות אותה. תיקון חד-פעמי: הריצו ממחשב את הפקודה שלמטה (ייתכן שצריך קודם להסיר חשבונות). מגן ינקה את החסימה בעצמו תוך שניות. אחר כך אפשר להסיר שוב את בעלות המכשיר אם צריך, ולהסיר את האפליקציה. מגן לא עורך קובצי מערכת בשביל זה.</string>
     <string name="nav_times">זמנים</string>
+    <string name="nav_notifications">התראות</string>
     <string name="nav_protection">הגנה</string>
     <string name="times_title">זמנים</string>
     <string name="protection_title">הגנה</string>
