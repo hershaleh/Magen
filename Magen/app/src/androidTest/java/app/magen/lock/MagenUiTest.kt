@@ -148,7 +148,7 @@ class MagenUiTest {
     private fun navLabel(@StringRes id: Int) =
         if (id == NOTIFICATIONS_NAV) "התראות" else str(if (id == R.string.nav_more) R.string.nav_settings else id)
 
-    private fun landmark(@StringRes id: Int) =
+    private fun screenLandmark(@StringRes id: Int) =
         if (id == NOTIFICATIONS_NAV) "התראות" else str(id)
 
     private fun goToTab(@StringRes target: Int) {
@@ -288,8 +288,8 @@ class MagenUiTest {
         openMainScreenDirectly()
         for ((label, landmark) in areas) {
             goToTab(label)
-            val tabName = str(label)
-            val expectedHeading = landmark(landmark)
+            val tabName = navLabel(label)
+            val expectedHeading = screenLandmark(landmark)
             try {
                 compose.await(expectedHeading).assertIsDisplayed()
             } catch (error: AssertionError) {
