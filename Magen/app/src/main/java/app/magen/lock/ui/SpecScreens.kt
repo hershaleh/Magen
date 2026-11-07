@@ -652,7 +652,13 @@ private fun AppSettingsScreen() {
                     FilterChip(selected = theme == i, onClick = { SpecUiPreferences.setThemeMode(context, i) }, label = { Text(label) })
                 }
             }
-            SpecToggle("כיבוי אנימציות")
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                Text("הפעלת אנימציות", Modifier.weight(1f))
+                Switch(
+                    checked = SpecUiPreferences.animationsEnabled,
+                    onCheckedChange = { SpecUiPreferences.setAnimationsEnabled(context, it) },
+                )
+            }
             Text("בחירת ערכת הנושא מוחלת מיד ונשמרת גם לאחר הפעלה מחדש.")
         }
         SpecCard("ניווט") {
