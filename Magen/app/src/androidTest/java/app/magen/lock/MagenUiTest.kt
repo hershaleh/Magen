@@ -64,6 +64,9 @@ class MagenUiTest {
         ctx.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).edit().clear().commit()
         ctx.getSharedPreferences("magen_events", Context.MODE_PRIVATE).edit().clear().commit()
         instrumentation.runOnMainSync {
+            // Tests assert Hebrew UI labels; the emulator's system locale is English.
+            // Reset AppCompat's per-app locale for every test to avoid order-dependent failures.
+            app.magen.lock.ui.Lang.set("he")
             Store.init(ctx)
             app.magen.lock.ui.SpecUiPreferences.load(ctx)
             Session.authed = false
