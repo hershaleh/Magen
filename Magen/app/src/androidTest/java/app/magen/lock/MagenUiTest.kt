@@ -17,6 +17,7 @@ import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.lifecycle.Lifecycle
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -365,7 +366,7 @@ class MagenUiTest {
         compose.await("איך למצוא חלק מסוים בהגדרות?").assertIsDisplayed()
         compose.onNodeWithText(str(R.string.cat_network)).performClick()
         compose.await("חסימת ${str(R.string.cat_network)}").assertIsDisplayed()
-        compose.await("VPN").assertIsDisplayed()
+        compose.onNodeWithText("VPN").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("סיום").performClick()
         compose.onNodeWithTag("blocking_back").performClick()
         compose.onNodeWithTag("blocking_tab_2").performClick()
