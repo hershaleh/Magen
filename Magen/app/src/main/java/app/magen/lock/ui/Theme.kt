@@ -65,8 +65,13 @@ val HeroBrush = Brush.linearGradient(listOf(Color(0xFF4F46E5), Color(0xFF7C3AED)
 
 @Composable
 fun MagenTheme(content: @Composable () -> Unit) {
+    val darkTheme = when (SpecUiPreferences.themeMode) {
+        0 -> false
+        1 -> true
+        else -> isSystemInDarkTheme()
+    }
     MaterialTheme(
-        colorScheme = if (isSystemInDarkTheme()) Dark else Light,
+        colorScheme = if (darkTheme) Dark else Light,
         typography = MagenTypography,
         shapes = Shapes(
             small = RoundedCornerShape(12.dp),

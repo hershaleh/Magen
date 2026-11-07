@@ -2,6 +2,8 @@ package app.magen.lock.ui
 
 import androidx.compose.material.icons.filled.HelpOutline
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.runtime.saveable.rememberSaveable
 import android.content.Context
@@ -26,7 +28,10 @@ import androidx.compose.material.icons.filled.Error
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.filled.FactCheck
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.Button
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -45,6 +50,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.core.app.NotificationManagerCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
@@ -280,129 +287,81 @@ internal fun openFix(ctx: Context, fix: Fix, onNavigate: (Int) -> Unit) {
 fun HomeTab(onNavigate: (Int) -> Unit) {
     val ctx = LocalContext.current
     val p = rememberPerms()
-    // Re-read when the person comes back from Android settings, and again on every press of the check button.
     var tick by remember { mutableIntStateOf(0) }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { tick++ }
-    var checkedAt by remember { mutableStateOf<Long?>(null) }
-    var detailsOpen by rememberSaveable { mutableStateOf(false) }
     val locked = Store.locked
-    val level = Store.level
-    val health = remember(tick, p, locked, level) { computeHealth(ctx) }
-    val policyError = Policy.lastApplyError
-
-    // "Ready, no rules" is shown instead of "active" while nothing is selected to enforce.
-    val idle = health.overall == Sev.OK && !hasAnyRule()
-    val bannerSev = if (idle) Sev.INFO else health.overall
-    val problems = health.checks.filter { it.sev == Sev.WARN || it.sev == Sev.BAD }
-    val fix: (Fix) -> Unit = { openFix(ctx, it, onNavigate) }
+    val health = remember(
+        tick, p, locked, Store.blockPlay, Store.blockApk, Store.blockedSettings,
+        Store.customKeywords, Store.protect, Store.blockingEnabled, Store.level,
+    ) { computeHealth(ctx) }
+    val problems = health.checks.filter { (it.sev == Sev.WARN || it.sev == Sev.BAD) && it.fix != null }
+    val ruleCount = (if (Store.blockPlay) 1 else 0) +
+        (if (Store.blockApk) 1 else 0) + Store.customKeywords.size
 
     MagenScreen {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
-            ShieldBadge(36.dp)
-            Text(stringResource(R.string.app_name), style = MaterialTheme.typography.titleLarge)
+        // This switch controls user-configured blocking rules. Magen's self-protection remains independent.
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Surface(
+                onClick = { Store.updateBlockingEnabled(!Store.blockingEnabled) },
+                modifier = Modifier.size(184.dp),
+                shape = CircleShape,
+                color = if (Store.blockingEnabled) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant,
+                border = androidx.compose.foundation.BorderStroke(
+                    2.dp,
+                    if (Store.blockingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                ),
+            ) {
+                Column(
+                    Modifier.fillMaxSize().padding(18.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        Icons.Filled.Shield,
+                        contentDescription = null,
+                        modifier = Modifier.size(52.dp),
+                        tint = if (Store.blockingEnabled) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(10.dp))
+                    Text(
+                        if (Store.blockingEnabled) "החסימות מופעלות" else "החסימות כבויות",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                    )
+                }
+            }
         }
 
-        StatusBanner(
-            sev = bannerSev,
-            title = stringResource(
-                when {
-                    idle -> R.string.status_idle
-                    health.overall == Sev.OK -> R.string.status_full
-                    health.overall == Sev.WARN -> R.string.status_partial
-                    else -> R.string.status_none
-                },
-            ),
-            subtitle = when {
-                health.issues > 0 -> stringResource(R.string.status_sub_issues, health.issues)
-                idle -> stringResource(if (Store.protect) R.string.status_sub_idle else R.string.status_sub_idle_off)
-                else -> stringResource(R.string.status_sub_ok)
-            },
+        if (problems.isNotEmpty() && hasAnyRule() && Store.blockingEnabled) {
+            Surface(
+                onClick = { onNavigate(Tabs.PROTECTION) },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(14.dp),
+                color = MaterialTheme.colorScheme.errorContainer,
+            ) {
+                Row(
+                    Modifier.fillMaxWidth().padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Icon(Icons.Filled.Warning, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+                    Text(
+                        "${problems.size} פריטים דורשים טיפול — לפתיחת הפרטים",
+                        modifier = Modifier.weight(1f),
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
+
+        Column(
+            Modifier.fillMaxWidth().padding(horizontal = 4.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            TonalButton(
-                stringResource(R.string.check_button),
-                onClick = {
-                    tick++
-                    checkedAt = System.currentTimeMillis()
-                    detailsOpen = true
-                },
-                icon = Icons.Filled.FactCheck,
-            )
-        }
-
-        if (policyError != null && Policy.isOwner(ctx)) {
-            Text(
-                "תקלה בהחלת הגנת המערכת: " + policyError,
-                color = MaterialTheme.colorScheme.error,
-                style = MaterialTheme.typography.bodyMedium,
-            )
-        }
-
-        if (problems.isNotEmpty()) {
-            SectionHeader(stringResource(R.string.home_attention))
-            GroupCard {
-                problems.forEachIndexed { i, c ->
-                    if (i > 0) RowDivider()
-                    CheckRow(c, fix)
-                }
-            }
-        }
-
-        // Counts show what is selected (saved settings), not what is proven to work; the status above does that.
-        SectionHeader(stringResource(R.string.home_summary))
-        val installBlocks = (if (Store.blockPlay) 1 else 0) + (if (Store.blockApk) 1 else 0)
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
-            SummaryTile(
-                "${Store.locked.size}",
-                stringResource(R.string.tile_apps),
-                { onNavigate(Tabs.APPS) },
-                Modifier.weight(1f).fillMaxHeight(),
-            )
-            SummaryTile(
-                "$installBlocks/2",
-                stringResource(R.string.tile_installs),
-                { onNavigate(Tabs.PROTECTION) },
-                Modifier.weight(1f).fillMaxHeight(),
-            )
-        }
-        Row(Modifier.fillMaxWidth().height(IntrinsicSize.Max), horizontalArrangement = Arrangement.spacedBy(Sp.m)) {
-            SummaryTile(
-                "${Store.blockedSettings.size + Store.customKeywords.size}",
-                stringResource(R.string.tile_settings),
-                { onNavigate(Tabs.PROTECTION) },
-                Modifier.weight(1f).fillMaxHeight(),
-            )
-            SummaryTile(
-                stringResource(if (level == "strong") R.string.level_strong else R.string.level_regular),
-                stringResource(R.string.tile_level),
-                { onNavigate(Tabs.PROTECTION) },
-                Modifier.weight(1f).fillMaxHeight(),
-                caption = if (level == "strong") {
-                    stringResource(if (p.owner) R.string.tile_owner_on else R.string.tile_owner_off)
-                } else {
-                    stringResource(if (p.admin) R.string.tile_admin_on else R.string.tile_admin_off)
-                },
-            )
-        }
-
-        GroupCard {
-            ExpandRow(
-                title = stringResource(R.string.home_details),
-                supporting = checkedAt?.let {
-                    stringResource(R.string.check_time, java.text.DateFormat.getTimeInstance(java.text.DateFormat.MEDIUM).format(java.util.Date(it)))
-                } ?: stringResource(R.string.home_details_sub),
-                expanded = detailsOpen,
-                onToggle = { detailsOpen = !detailsOpen },
-            )
-            if (detailsOpen) {
-                health.checks.forEach { c ->
-                    RowDivider()
-                    CheckRow(c, fix)
-                }
-            }
-        }
-        if (detailsOpen) {
-            SectionHeader(stringResource(R.string.home_permissions))
-            PermissionCards(p, showOwner = true)
+            Text("אפליקציות חסומות: ${Store.locked.size}", style = MaterialTheme.typography.bodyLarge)
+            Text("כללי חסימה: $ruleCount", style = MaterialTheme.typography.bodyLarge)
+            Text("חלקים חסומים בהגדרות: ${Store.blockedSettings.size}", style = MaterialTheme.typography.bodyLarge)
         }
     }
 }

@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import app.magen.lock.ui.LockContent
 import app.magen.lock.ui.MagenTheme
+import app.magen.lock.ui.SpecUiPreferences
 
 /** Full-screen lock shown by [GuardService] on top of a locked app. */
 class LockActivity : AppCompatActivity() {
@@ -23,8 +24,9 @@ class LockActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        SpecUiPreferences.load(this)
         pkg = intent.getStringExtra(EXTRA_PKG).orEmpty()
-        onBackPressedDispatcher.addCallback(this) { goHome() }
+        onBackPressedDispatcher.addCallback(this) { /* Back cannot dismiss a blocking screen. */ }
         setContent {
             MagenTheme {
                 LockContent(

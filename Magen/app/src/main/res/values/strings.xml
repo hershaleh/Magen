@@ -275,6 +275,7 @@
     <string name="stale_block_title">Leftover uninstall block</string>
     <string name="stale_block_body">Android still blocks uninstalling Magen, although Magen is no longer the Device Owner. It is a leftover from an older Strong mode, and only a Device Owner can clear it. One-time fix: run the command below from a computer (it may require removing accounts first). Magen then clears the block by itself within seconds. After that, remove Device Owner again if needed and uninstall. Magen does not edit system files for this.</string>
     <string name="nav_times">Times</string>
+    <string name="nav_notifications">Notifications</string>
     <string name="nav_protection">Protection</string>
     <string name="times_title">Times</string>
     <string name="protection_title">Protection</string>
@@ -379,7 +380,7 @@
     <string name="help_intro">Help by topic. The step-by-step setup for strong mode is at the end.</string>
     <string name="guide_steps_title">Set up strong mode, step by step</string>
     <string name="help_map_title">Where things are</string>
-    <string name="help_map_body">Home: protection status, what needs attention, and a summary.\nApps: choose which apps are locked.\nProtection: Play, APK and Settings blocks, self-protection and advanced protection.\nTimes: when apps lock again, the uninstall approval window and the wrong-code pause.\nSettings: code and recovery, permission shortcuts, release and recovery, language.</string>
+    <string name="help_map_body">Home: protection status, what needs attention, and a summary.\nBlocking: app selection, Android Settings components, and custom rules.\nTimes: personal and group quotas, schedules, Shabbat and holidays, and relocking.\nProtection: self-protection, installation blocks, regular and strong modes.\nMore: code and recovery, permissions, security log, backup, settings, release and recovery.</string>
     <string name="help_regular_title">Regular protection: what is needed</string>
     <string name="help_regular_body">Regular protection needs no computer. It relies on permissions you switch on yourself:\n• Accessibility service: lets Magen see which app or Settings page is open, so it can show the lock and close blocked pages. Without it, app locks and blocks do not work.\n• Device admin: uninstalling Magen then needs approval inside Magen.\nRecommended: allow Magen to run in the background (battery settings) and keep notifications on, so Magen can warn you if protection stops.\nTo check: open the Home tab and press “Protection check”. Every item is shown as working, needing attention, or not verifiable.</string>
     <string name="help_status_title">On, running, or verified?</string>
@@ -450,5 +451,9 @@
     <string name="times_wrong_title">After wrong codes</string>
     <string name="times_wrong_body">After 5 wrong codes the keypad pauses for 30 seconds. Each further wrong code doubles the pause, up to 15 minutes.</string>
     <string name="times_wrong_now">Paused: %1$d s</string>
+    <string name="nav_blockings">Blocking</string>
+    <string name="nav_more">More</string>
+    <string name="filter_system">System apps</string>
+    <string name="filter_user">User apps</string>
 </resources>
 

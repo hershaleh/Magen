@@ -1,4 +1,9 @@
 name: Build APK
+
+concurrency:
+  group: magen-${{ github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
   workflow_dispatch:
@@ -41,6 +46,23 @@ jobs:
         run: |
           set -o pipefail
           gradle :app:lintDebug :keeper:lintDebug :app:testDebugUnitTest :app:assembleDebug :app:assembleDebugAndroidTest :keeper:assembleDebug --no-daemon --console=plain 2>&1 | tee "$GITHUB_WORKSPACE/validation.log"
+
+      # Build the app APK independently so UI previews remain available even if JVM tests fail.
+      - name: Build UI preview APK
+        id: preview
+        if: always() && steps.loc.outcome == 'success'
+        working-directory: ${{ steps.loc.outputs.dir }}
+        run: |
+          set -o pipefail
+          gradle :app:assembleDebug --no-daemon --console=plain 2>&1 | tee "$GITHUB_WORKSPACE/preview-build.log"
+
+      - name: Upload UI preview APK
+        if: always() && steps.preview.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: magen-ui-preview-apk
+          path: ${{ steps.loc.outputs.dir }}/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
 
       - name: Summarize validation failures
         if: failure() && steps.validation.outcome == 'failure'
