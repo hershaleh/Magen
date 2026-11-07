@@ -559,19 +559,11 @@ private fun CustomRulesScreen() {
 }
 @Composable
 fun NotificationsCenterScreen() {
-    SpecPage("התראות", "מרכז ההתראות והאירועים של מגן.") {
-        SpecCard("מצב הגנה") {
-            val running = app.magen.lock.GuardService.instance != null
-            Text(if (running) "שירות הנגישות של מגן פועל" else "שירות הנגישות של מגן אינו פועל")
-            Text("מצב השירות מוצג בנפרד מההרשאות ומהגדרות החסימה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        SpecCard("אירועים הדורשים טיפול") {
-            Text("יומן אירועים מתמשך עדיין אינו מחובר. כרגע מוצגים רק מצבי הגנה שניתן לבדוק בזמן אמת.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        SpecCard("הגדרות התראות") {
-            Text("העדפות סוגי ההתראות, חומרה, צליל והתנהגות קריאה יופיעו בהגדרות > התראות.")
-        }
-    }
+    EventLogPanel(
+        title = "התראות",
+        subtitle = "מרכז ההתראות והאירועים של מגן. מצב השירות מוצג בנפרד מהעדפות החסימה.",
+        showProtectionStatus = true,
+    )
 }
 
 @Composable
@@ -586,33 +578,11 @@ fun SpecRouteScreen(route: String, onBack: () -> Unit) {
 }
 @Composable
 private fun SecurityLogScreen() {
-    SpecPage("יומן אבטחה", "תיעוד אירועי הגנה, שינויים, כשלים וניסיונות עקיפה.") {
-        SpecCard("סינון וחיפוש") {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf("הכול", "קריטי", "אזהרה", "מידע").forEach { label -> FilterChip(selected = label == "הכול", onClick = {}, label = { Text(label) }) }
-            }
-            SpecField("חיפוש ביומן")
-            SpecToggle("הצגת אירועים שלא נקראו בלבד")
-        }
-        SpecCard("מצבי טיפול") {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf("פעיל", "בטיפול", "נפתר", "לא נפתר").forEach { label ->
-                    FilterChip(selected = false, onClick = {}, label = { Text(label) })
-                }
-            }
-        }
-        SpecCard("אירועים") {
-            Text("אין עדיין אירועים שמורים בממשק החדש.", color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("אירוע יכלול חומרה, זמן, מקור, מצב טיפול ופרטי אימות. אירועים חוזרים יאוחדו; פתרון יסומן רק לאחר אימות.")
-            Text("ברירת המחדל היא שימור ללא הגבלת זמן, עם אפשרות להגדיר תקופת שמירה.")
-        }
-        SpecCard("פעולות") {
-            Button(onClick = {}) { Text("תצוגה מקדימה וייצוא דוח (טרם חובר)") }
-            Button(onClick = {}) { Text("סמן הכול כנקרא (טרם חובר)") }
-            Button(onClick = {}) { Text("בדיקת הגנה ותיקון בטוח (טרם חובר)") }
-            Button(onClick = {}) { Text("מחיקת היומן (טרם חובר)") }
-        }
-    }
+    EventLogPanel(
+        title = "יומן אבטחה",
+        subtitle = "תיעוד אירועי הגנה, שינויים, כשלים וניסיונות עקיפה.",
+        showProtectionStatus = false,
+    )
 }
 @Composable
 private fun BackupScreen() {
