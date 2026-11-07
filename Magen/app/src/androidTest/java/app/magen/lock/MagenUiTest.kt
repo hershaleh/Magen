@@ -59,6 +59,7 @@ class MagenUiTest {
         instrumentation.runOnMainSync {
             Store.init(ctx)
             app.magen.lock.ui.SpecUiPreferences.load(ctx)
+            app.magen.lock.ui.Lang.set("he")
             Session.authed = false
             Session.skipSetup = false
             Session.showGuide = false
