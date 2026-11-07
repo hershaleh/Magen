@@ -174,6 +174,20 @@ object Session {
 }
 
 object Lang {
+    /** Explicit app locale when selected; otherwise read the effective system locale. */
+    fun isEnglish(context: Context): Boolean {
+        val explicit = AppCompatDelegate.getApplicationLocales().toLanguageTags()
+        val locale = if (explicit.isNotBlank()) {
+            java.util.Locale.forLanguageTag(explicit.substringBefore(','))
+        } else if (Build.VERSION.SDK_INT >= 24) {
+            context.resources.configuration.locales[0]
+        } else {
+            @Suppress("DEPRECATION")
+            context.resources.configuration.locale
+        }
+        return locale?.language?.equals("en", ignoreCase = true) == true
+    }
+
     fun current(): String = AppCompatDelegate.getApplicationLocales().toLanguageTags()
 
     fun set(tag: String) {
@@ -425,7 +439,7 @@ fun MainScaffold() {
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
-                                if (Lang.current().startsWith("en")) {
+                                if (Lang.isEnglish(context)) {
                                     IconButton(onClick = openDrawer) {
                                         Icon(Icons.Filled.Menu, contentDescription = "Open menu")
                                     }
