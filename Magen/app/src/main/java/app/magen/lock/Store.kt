@@ -85,25 +85,32 @@ object Store {
         customKeywords = sp.getStringSet("customKeywords", emptySet()) ?: emptySet()
         biometric = sp.getBoolean("bio", false)
         hasRecovery = sp.contains("rhash")
+        EventLog.init(app)
         Policy.apply()
     }
 
     @JvmName("applyLevel")
     fun setLevel(l: String) {
+        if (level == l) return
         level = l
         sp.edit().putString("level", l).apply()
+        EventLog.record("protection.level", "רמת ההגנה שנבחרה עודכנה", "נבחר מצב: $l. מצב האכיפה בפועל נבדק בנפרד.", "protection_level", EventSeverity.LOW)
     }
 
     fun addKeyword(raw: String) {
         // Accepts a path such as "Network & internet > Internet" and keeps the last part, the page itself.
         val k = CustomKeyword.parse(raw) ?: return
+        if (k in customKeywords) return
         customKeywords = customKeywords + k
         sp.edit().putStringSet("customKeywords", customKeywords).apply()
+        EventLog.record("custom_rule.add", "נוסף כלל מותאם", "נוסף כלל מותאם אישית.", "custom_rule_add", EventSeverity.LOW)
     }
 
     fun removeKeyword(k: String) {
+        if (k !in customKeywords) return
         customKeywords = customKeywords - k
         sp.edit().putStringSet("customKeywords", customKeywords).apply()
+        EventLog.record("custom_rule.remove", "הוסר כלל מותאם", "הוסר כלל מותאם אישית.", "custom_rule_remove", EventSeverity.LOW)
     }
 
     // ---- master code -------------------------------------------------------------------------
@@ -196,16 +203,20 @@ object Store {
 
     @JvmName("applyBiometric")
     fun setBiometric(on: Boolean) {
+        if (biometric == on) return
         biometric = on
         sp.edit().putBoolean("bio", on).apply()
+        EventLog.record("security.biometric", "העדפת זיהוי ביומטרי עודכנה", if (on) "העדפת זיהוי ביומטרי הופעלה." else "העדפת זיהוי ביומטרי כובתה.", "biometric_preference", EventSeverity.LOW)
     }
 
     // ---- app locking -------------------------------------------------------------------------
 
     fun setMode(pkg: String, mode: LockMode?) {
+        if (locked[pkg] == mode) return
         locked = if (mode == null) locked - pkg else locked + (pkg to mode)
         if (mode != LockMode.MAIN) mainUnlocked = mainUnlocked - pkg
         sp.edit().putStringSet("locked", locked.map { "${it.key}:${it.value.name}" }.toSet()).apply()
+        EventLog.record("app.lock", "הגדרת חסימת אפליקציה עודכנה", if (mode == null) "הוסרה הגדרת חסימה מחבילת $pkg." else "עודכנה הגדרת חסימה לחבילת $pkg: $mode.", "app_lock:$pkg", EventSeverity.LOW)
     }
 
     fun toggleMainUnlocked(pkg: String) {
@@ -228,40 +239,52 @@ object Store {
 
     @JvmName("applyBlockPlay")
     fun setBlockPlay(on: Boolean) {
+        if (blockPlay == on) return
         blockPlay = on
         sp.edit().putBoolean("blockPlay", on).apply()
+        EventLog.record("rule.play", "הגדרת חסימת Play עודכנה", if (on) "הופעלה העדפת חסימת Play." else "כובתה העדפת חסימת Play.", "block_play", EventSeverity.LOW)
     }
 
     @JvmName("applyBlockApk")
     fun setBlockApk(on: Boolean) {
+        if (blockApk == on) return
         blockApk = on
         sp.edit().putBoolean("blockApk", on).apply()
         Policy.apply()
+        EventLog.record("rule.apk", "הגדרת חסימת APK עודכנה", if (on) "הופעלה העדפת חסימת התקנת APK." else "כובתה העדפת חסימת התקנת APK.", "block_apk", EventSeverity.LOW)
     }
 
     fun setBlockedSetting(id: String, on: Boolean) {
+        if ((id in blockedSettings) == on) return
         blockedSettings = if (on) blockedSettings + id else blockedSettings - id
         sp.edit().putStringSet("blockedSettings", blockedSettings).apply()
         Policy.apply()
+        EventLog.record("setting.block.$id", "הגדרת חסימת מערכת עודכנה", if (on) "נשמרה העדפת חסימה עבור $id." else "הוסרה העדפת חסימה עבור $id.", "blocked_setting:$id", EventSeverity.LOW)
     }
 
     fun updateBlockingEnabled(on: Boolean) {
+        if (blockingEnabled == on) return
         blockingEnabled = on
         sp.edit().putBoolean("blockingEnabled", on).apply()
         // Strong-mode restrictions are updated and verified by the existing policy layer.
         Policy.apply()
+        EventLog.record("blocking.master", "מתג החסימות עודכן", if (on) "הופעלה העדפת החסימות שהוגדרו." else "כובתה העדפת החסימות שהוגדרו.", "blocking_master", EventSeverity.LOW)
     }
 
     @JvmName("applyProtect")
     fun setProtect(on: Boolean) {
+        if (protect == on) return
         protect = on
         sp.edit().putBoolean("protect", on).apply()
         Policy.apply()
+        EventLog.record("protection.self", "העדפת ההגנה העצמית עודכנה", if (on) "הופעלה העדפת ההגנה העצמית." else "כובתה העדפת ההגנה העצמית.", "self_protection_preference", EventSeverity.MEDIUM)
     }
 
     fun setRelock(on: Boolean) {
+        if (relockOnScreenOff == on) return
         relockOnScreenOff = on
         sp.edit().putBoolean("relock", on).apply()
+        EventLog.record("security.relock", "העדפת נעילה מחדש עודכנה", if (on) "הופעלה נעילה מחדש בעת כיבוי המסך." else "כובתה נעילה מחדש בעת כיבוי המסך.", "relock_preference", EventSeverity.LOW)
     }
 
     // ---- uninstall approval ------------------------------------------------------------------
