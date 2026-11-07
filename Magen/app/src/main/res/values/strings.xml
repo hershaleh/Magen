@@ -275,6 +275,7 @@
     <string name="stale_block_title">Leftover uninstall block</string>
     <string name="stale_block_body">Android still blocks uninstalling Magen, although Magen is no longer the Device Owner. It is a leftover from an older Strong mode, and only a Device Owner can clear it. One-time fix: run the command below from a computer (it may require removing accounts first). Magen then clears the block by itself within seconds. After that, remove Device Owner again if needed and uninstall. Magen does not edit system files for this.</string>
     <string name="nav_times">Times</string>
+    <string name="nav_notifications">Notifications</string>
     <string name="nav_protection">Protection</string>
     <string name="times_title">Times</string>
     <string name="protection_title">Protection</string>
