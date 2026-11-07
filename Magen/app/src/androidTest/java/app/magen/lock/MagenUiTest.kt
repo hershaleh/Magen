@@ -338,12 +338,12 @@ class MagenUiTest {
     fun selectedAreaSurvivesRecreationOfTheActivity() {
         openMainScreenDirectly()
         goToTab(R.string.nav_times)
-        compose.await(str(R.string.nav_times))
+        compose.await("זמנים").assertIsDisplayed()
         scenario!!.recreate()
         compose.waitUntil(15_000) {
             compose.onAllNodesWithTag("magen_launch_overlay").fetchSemanticsNodes().isEmpty()
         }
-        compose.await(str(R.string.nav_times)).assertIsDisplayed()
+        compose.await("זמנים").assertIsDisplayed()
     }
 
     @Test
