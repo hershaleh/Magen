@@ -81,7 +81,7 @@ class MagenUiTest {
 
     // ---- helpers -------------------------------------------------------------------------------
 
-    private fun str(@StringRes id: Int, vararg args: Any) = ctx.getString(id, *args)
+    private fun str(@StringRes id: Int, vararg args: Any) = compose.activity.getString(id, *args)
 
     private fun launch() {
         // Use the real MainActivity as the Compose host; an EmptyActivity obscures it.
