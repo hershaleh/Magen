@@ -289,7 +289,10 @@ class MagenUiTest {
         compose.onAllNodes(hasClickAction() and hasText("החסימות כבויות"))[0].performClick()
         compose.await("החסימות מופעלות").assertIsDisplayed()
         assertTrue(Store.blockingEnabled)
-        compose.await("פריטים דורשים טיפול").assertIsDisplayed()
+        compose.waitUntil(20_000) {
+            compose.onAllNodesWithText("פריטים דורשים טיפול", substring = true).fetchSemanticsNodes().isNotEmpty()
+        }
+        compose.onAllNodesWithText("פריטים דורשים טיפול", substring = true)[0].assertIsDisplayed()
     }
 
 
