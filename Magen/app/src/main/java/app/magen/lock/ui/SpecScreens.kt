@@ -55,11 +55,13 @@ private val gap = 12.dp
 object SpecUiPreferences {
     var navigationMode by mutableIntStateOf(1) // 0 = overlay drawer, 1 = bottom, 2 = top
     var animationsEnabled by mutableStateOf(true)
+    var themeMode by mutableIntStateOf(2) // 0 = light, 1 = dark, 2 = follow system
 
     fun load(context: Context) {
         val prefs = context.getSharedPreferences("magen_ui", Context.MODE_PRIVATE)
         navigationMode = prefs.getInt("navigationMode", 1).coerceIn(0, 2)
         animationsEnabled = prefs.getBoolean("animationsEnabled", true)
+        themeMode = prefs.getInt("themeMode", 2).coerceIn(0, 2)
     }
 
     fun setNavigationMode(context: Context, mode: Int) {
@@ -70,6 +72,11 @@ object SpecUiPreferences {
     fun setAnimationsEnabled(context: Context, enabled: Boolean) {
         animationsEnabled = enabled
         context.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).edit().putBoolean("animationsEnabled", enabled).apply()
+    }
+
+    fun setThemeMode(context: Context, mode: Int) {
+        themeMode = mode.coerceIn(0, 2)
+        context.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).edit().putInt("themeMode", themeMode).apply()
     }
 
     fun shouldAnimate(context: Context): Boolean {
@@ -639,10 +646,10 @@ private fun AppSettingsScreen() {
             Text("החלפת השפה משנה את שפת הממשק ואת כיוון הכתיבה.")
         }
         SpecCard("מראה") {
-            var theme by rememberSaveable { mutableIntStateOf(2) }
+            val theme = SpecUiPreferences.themeMode
             Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf("בהיר", "כהה", "לפי המכשיר").forEachIndexed { i, label ->
-                    FilterChip(selected = theme == i, onClick = { theme = i }, label = { Text(label) })
+                    FilterChip(selected = theme == i, onClick = { SpecUiPreferences.setThemeMode(context, i) }, label = { Text(label) })
                 }
             }
             SpecToggle("כיבוי אנימציות")
