@@ -11,7 +11,7 @@ import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.ComposeTestRule
-import androidx.compose.ui.test.junit4.createEmptyComposeRule
+import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -41,7 +41,7 @@ import org.junit.runner.RunWith
  */
 @RunWith(AndroidJUnit4::class)
 class MagenUiTest {
-    private val compose = createEmptyComposeRule()
+    private val compose = createAndroidComposeRule<MainActivity>()
 
     // The screenshot rule must wrap the compose rule so it sees a failure from either.
     @get:Rule
@@ -59,6 +59,7 @@ class MagenUiTest {
         ctx.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).edit().clear().commit()
         instrumentation.runOnMainSync {
             Store.init(ctx)
+            app.magen.lock.ui.SpecUiPreferences.load(ctx)
             Session.authed = false
             Session.skipSetup = false
             Session.showGuide = false
@@ -78,17 +79,14 @@ class MagenUiTest {
         }
     }
 
-    @After
-    fun closeApp() {
-        scenario?.close()
-    }
-
     // ---- helpers -------------------------------------------------------------------------------
 
     private fun str(@StringRes id: Int, vararg args: Any) = ctx.getString(id, *args)
 
     private fun launch() {
-        scenario = ActivityScenario.launch(MainActivity::class.java)
+        // Use the real MainActivity as the Compose host; an EmptyActivity obscures it.
+        scenario = compose.activityRule.scenario
+        scenario!!.recreate()
     }
 
     /** Waits until some node shows [text] (no fixed sleeps), then returns it. */
@@ -145,19 +143,25 @@ class MagenUiTest {
         compose.await(str(R.string.nav_home)).assertIsDisplayed()
     }
 
-    private fun navLabel(@StringRes id: Int) = str(id)
+    private companion object { const val NOTIFICATIONS_NAV = -100 }
 
-    private fun goToTab(@StringRes navLabel: Int) {
-        val label = if (navLabel == R.string.nav_more) navLabel(R.string.nav_settings) else navLabel(navLabel)
-        compose.onAllNodes(hasClickAction() and hasText(label))[0].performClick()
+    private fun navLabel(@StringRes id: Int) =
+        if (id == NOTIFICATIONS_NAV) "התראות" else str(if (id == R.string.nav_more) R.string.nav_settings else id)
+
+    private fun landmark(@StringRes id: Int) =
+        if (id == NOTIFICATIONS_NAV) "התראות" else str(id)
+
+    private fun goToTab(@StringRes target: Int) {
+        compose.onAllNodes(hasClickAction() and hasText(navLabel(target)))[0].performClick()
     }
 
-    /** The five areas of the bottom navigation, each with a string that only that screen shows. */
+    /** All six first-class navigation destinations. */
     private val areas: List<Pair<Int, Int>> = listOf(
         R.string.nav_home to R.string.app_name,
-        R.string.nav_blockings to R.string.apps_title,
+        R.string.nav_blockings to R.string.nav_blockings,
         R.string.nav_times to R.string.nav_times,
         R.string.nav_protection to R.string.protection_title,
+        NOTIFICATIONS_NAV to NOTIFICATIONS_NAV,
         R.string.nav_more to R.string.nav_settings,
     )
 
@@ -251,7 +255,7 @@ class MagenUiTest {
     // ---- navigation ----------------------------------------------------------------------------
 
     @Test
-    fun homeScreenLoadsWithAllFiveNavigationAreas() {
+    fun homeScreenLoadsWithAllSixNavigationAreas() {
         openMainScreenDirectly()
         compose.await(str(R.string.app_name)).assertIsDisplayed()
         for ((label, _) in areas) {
@@ -285,7 +289,7 @@ class MagenUiTest {
         for ((label, landmark) in areas) {
             goToTab(label)
             val tabName = str(label)
-            val expectedHeading = str(landmark)
+            val expectedHeading = landmark(landmark)
             try {
                 compose.await(expectedHeading).assertIsDisplayed()
             } catch (error: AssertionError) {
@@ -303,7 +307,7 @@ class MagenUiTest {
         repeat(2) {
             for ((label, landmark) in areas) {
                 goToTab(label)
-                compose.await(str(landmark))
+                compose.await(landmark(landmark))
             }
             for ((label, landmark) in areas.reversed()) {
                 goToTab(label)
