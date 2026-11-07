@@ -25,6 +25,8 @@ import androidx.test.platform.app.InstrumentationRegistry
 import java.io.File
 import java.io.FileOutputStream
 import app.magen.lock.ui.Session
+import app.magen.lock.ui.SpecUiPreferences
+import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -276,6 +278,22 @@ class MagenUiTest {
             compose.onAllNodes(hasClickAction() and hasText(navLabel(label)))[0].assertIsDisplayed()
         }
     }
+    @Test
+    fun themeSelectionIsAppliedImmediatelyAndSaved() {
+        openMainScreenDirectly()
+        goToTab(R.string.nav_more)
+        compose.await("מראה ושפה").performClick()
+        compose.await("ערכת נושא").assertIsDisplayed()
+
+        compose.onAllNodes(hasClickAction() and hasText("כהה"))[0].performClick()
+        assertEquals(1, SpecUiPreferences.themeMode)
+        assertEquals(1, ctx.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).getInt("themeMode", -1))
+
+        compose.onAllNodes(hasClickAction() and hasText("בהיר"))[0].performClick()
+        assertEquals(0, SpecUiPreferences.themeMode)
+        assertEquals(0, ctx.getSharedPreferences("magen_ui", Context.MODE_PRIVATE).getInt("themeMode", -1))
+    }
+
     @Test
     fun homeMasterSwitchTogglesBlockingAndNoEmptyAttentionNoticeIsShown() {
         openMainScreenDirectly()
