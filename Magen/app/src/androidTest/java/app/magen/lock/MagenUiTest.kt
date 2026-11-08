@@ -110,6 +110,18 @@ class MagenUiTest {
         return onAllNodesWithText(text)[0]
     }
 
+    /** Wait for Compose transitions/layout to finish, not merely for a node to enter the semantics tree. */
+    private fun ComposeTestRule.awaitDisplayed(text: String, timeoutMs: Long = 20_000): SemanticsNodeInteraction {
+        lateinit var match: SemanticsNodeInteraction
+        waitUntil(timeoutMs) {
+            val nodes = onAllNodesWithText(text).fetchSemanticsNodes()
+            if (nodes.isEmpty()) return@waitUntil false
+            match = onAllNodesWithText(text)[0]
+            runCatching { match.isDisplayed() }.getOrDefault(false)
+        }
+        return match
+    }
+
     private fun awaitGone(text: String, timeoutMs: Long = 20_000) {
         compose.waitUntil(timeoutMs) { compose.onAllNodesWithText(text).fetchSemanticsNodes().isEmpty() }
     }
@@ -331,7 +343,7 @@ class MagenUiTest {
         assertTrue(EventLog.find(event.id)?.read == true)
 
         goToTab(NOTIFICATIONS_NAV)
-        compose.await("בדיקת אירוע חוזר").assertIsDisplayed()
+        compose.awaitDisplayed("בדיקת אירוע חוזר").assertIsDisplayed()
         compose.await("סמן הכול כלא נקרא").performClick()
         assertFalse(EventLog.find(event.id)?.read ?: true)
     }
