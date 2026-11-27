@@ -117,7 +117,7 @@ class MagenUiTest {
             val nodes = onAllNodesWithText(text).fetchSemanticsNodes()
             if (nodes.isEmpty()) return@waitUntil false
             match = onAllNodesWithText(text)[0]
-            runCatching { match.isDisplayed() }.getOrDefault(false)
+            runCatching { match.assertIsDisplayed(); true }.getOrDefault(false)
         }
         return match
     }
