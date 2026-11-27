@@ -139,7 +139,11 @@ object RuleRuntime {
                     .setContentText(text)
                     .setAutoCancel(true)
                     .build()
-                NotificationManagerCompat.from(ctx).notify(w.key.hashCode(), n)
+                try {
+                    NotificationManagerCompat.from(ctx).notify(w.key.hashCode(), n)
+                } catch (_: SecurityException) {
+                    // Notification permission was revoked after the check above; the warning is simply not shown.
+                }
             }
         }
     }
