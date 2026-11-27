@@ -1,6 +1,9 @@
 package app.magen.lock.ui
 
 import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -161,6 +164,8 @@ fun EventLogPanel(title: String, subtitle: String, showProtectionStatus: Boolean
 
     val selected = selectedId?.let { EventLog.find(it) }
     if (selected != null) {
+        val ctx = LocalContext.current
+        val repair = if (selected.state != EventState.RESOLVED) repairIntent(ctx.packageName, selected.type) else null
         AlertDialog(
             onDismissRequest = { selectedId = null },
             title = { Text(selected.title) },
@@ -178,6 +183,10 @@ fun EventLogPanel(title: String, subtitle: String, showProtectionStatus: Boolean
                     if (selected.technical.isNotBlank()) Text("פרטים טכניים: ${selected.technical}")
                     Text("היסטוריה", style = MaterialTheme.typography.titleSmall)
                     selected.history.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall) }
+                    if (repair != null) {
+                        Text("הפתיחה מובילה למסך ההגדרות הרלוונטי. האירוע ייסגר רק אחרי שמגן יאמת שהתקלה נפתרה.", style = MaterialTheme.typography.bodySmall)
+                        Button(onClick = { runCatching { ctx.startActivity(repair.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) } }) { Text("פתח את ההגדרה לתיקון") }
+                    }
                 }
             },
             confirmButton = {
@@ -222,4 +231,12 @@ private fun EventRow(event: MagenEvent, onClick: () -> Unit) {
             )
         }
     }
+}
+
+/** The settings screen that fixes an open event of [type], or null when there is nothing to open. */
+private fun repairIntent(pkg: String, type: String): Intent? = when {
+    type.contains("accessibility") -> Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
+    type.contains("notification") -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg"))
+    type.contains("location") -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg"))
+    else -> null
 }
