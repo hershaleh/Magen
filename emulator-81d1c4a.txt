@@ -1,0 +1,50 @@
+branch=feature/spec-merged sha=81d1c4a8e400f2e3742321520dc5c6033cc58daf
+app.magen.lock.MagenUiTest:...s_glBindAttribLocation: bind attrib 0 name position
+s_glBindAttribLocation: bind attrib 1 name color
+s_glBindAttribLocation: bind attrib 2 name localCoord
+Error in newSpecificationSectionsAreReachable(app.magen.lock.MagenUiTest):
+androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 20000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:441)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:306)
+	at app.magen.lock.MagenUiTest.await(MagenUiTest.kt:109)
+	at app.magen.lock.MagenUiTest.await$default(MagenUiTest.kt:108)
+	at app.magen.lock.MagenUiTest.newSpecificationSectionsAreReachable(MagenUiTest.kt:453)
+..........
+Error in eventLogPersistsGroupsRepeatsAndSupportsReadActions(app.magen.lock.MagenUiTest):
+androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 20000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:441)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:306)
+	at app.magen.lock.MagenUiTest.awaitDisplayed(MagenUiTest.kt:116)
+	at app.magen.lock.MagenUiTest.awaitDisplayed$default(MagenUiTest.kt:114)
+	at app.magen.lock.MagenUiTest.eventLogPersistsGroupsRepeatsAndSupportsReadActions(MagenUiTest.kt:346)
+.
+Time: 98.881
+There were 2 failures:
+1) newSpecificationSectionsAreReachable(app.magen.lock.MagenUiTest)
+androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 20000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:441)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:306)
+	at app.magen.lock.MagenUiTest.await(MagenUiTest.kt:109)
+	at app.magen.lock.MagenUiTest.await$default(MagenUiTest.kt:108)
+	at app.magen.lock.MagenUiTest.newSpecificationSectionsAreReachable(MagenUiTest.kt:453)
+2) eventLogPersistsGroupsRepeatsAndSupportsReadActions(app.magen.lock.MagenUiTest)
+androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 20000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:441)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:306)
+	at app.magen.lock.MagenUiTest.awaitDisplayed(MagenUiTest.kt:116)
+	at app.magen.lock.MagenUiTest.awaitDisplayed$default(MagenUiTest.kt:114)
+	at app.magen.lock.MagenUiTest.eventLogPersistsGroupsRepeatsAndSupportsReadActions(MagenUiTest.kt:346)
+FAILURES!!!
+Tests run: 16,  Failures: 2
+total 3628
+drwxr-xr-x 4 runner runner    4096 Nov 27 03:34 .
+drwxr-xr-x 8 runner runner    4096 Nov 27 03:32 ..
+drwxr-xr-x 2 runner runner    4096 Nov 27 03:34 failure-screenshots
+-rw-r--r-- 1 runner runner 1328986 Nov 27 03:34 final-screen.png
+-rw-r--r-- 1 runner runner    2818 Nov 27 03:33 instrumentation.txt
+-rw-r--r-- 1 runner runner       0 Nov 27 03:34 logcat-crash.txt
+-rw-r--r-- 1 runner runner 1233139 Nov 27 03:34 logcat-full.txt
+-rw-r--r-- 1 runner runner       0 Nov 27 03:34 screenrecord.log
+-rw-r--r-- 1 runner runner 1119369 Nov 27 03:34 ui-test-video.mp4
+-rw-r--r-- 1 runner runner     214 Nov 27 03:34 walkthrough-instrumentation.txt
+drwxr-xr-x 2 runner runner    4096 Nov 27 03:34 walkthrough-screenshots
