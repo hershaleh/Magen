@@ -334,12 +334,17 @@ private fun CustomRulesScreen() {
     }
 }
 @Composable
-fun NotificationsCenterScreen() {
-    EventLogPanel(
+fun NotificationsCenterScreen(onOpenSettings: () -> Unit = {}) {
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), horizontalArrangement = Arrangement.End) {
+            TextButton(onClick = onOpenSettings) { Text("הגדרות התראות") }
+        }
+        EventLogPanel(
         title = "התראות",
         subtitle = "מרכז ההתראות והאירועים של מגן. מצב השירות מוצג בנפרד מהעדפות החסימה.",
         showProtectionStatus = true,
-    )
+        )
+    }
 }
 
 @Composable
@@ -399,17 +404,34 @@ private fun AppSettingsScreen() {
             }
             Text("בחירת מיקום הניווט משנה מיד את מבנה הניווט.")
         }
-        SpecCard("אבחון משאבים") {
+        SpecCard("אבחון") {
             val runtime = Runtime.getRuntime()
             val usedMb = (runtime.totalMemory() - runtime.freeMemory()) / (1024 * 1024)
             val totalMb = runtime.totalMemory() / (1024 * 1024)
+            val pm = context.getSystemService(android.content.Context.POWER_SERVICE) as android.os.PowerManager
+            fun yn(b: Boolean) = if (b) "כן" else "לא"
+            Text("שירות הנגישות פעיל: ${yn(Policy.accessibilityOn(context))}")
+            Text("מנהל מכשיר: ${yn(Policy.isAdmin(context))} · Device Owner: ${yn(Policy.isOwner(context))}")
+            Text("מוחרג מחיסכון בסוללה: ${yn(pm.isIgnoringBatteryOptimizations(context.packageName))}")
             Text("זיכרון JVM בשימוש: $usedMb MB מתוך $totalMb MB")
-            Text("Android ${android.os.Build.VERSION.RELEASE} · API ${android.os.Build.VERSION.SDK_INT}")
-            Text("אלה מדדי תהליך בסיסיים בלבד; ניטור CPU, סוללה ושירותים יתחבר בהמשך.")
+            Text("Android ${android.os.Build.VERSION.RELEASE} · API ${android.os.Build.VERSION.SDK_INT} · ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
+            Text("הערכים נקראים ישירות מהמערכת ברגע פתיחת המסך.", style = MaterialTheme.typography.bodySmall)
+        }
+        SpecCard("התראות", "סימון אירועים כנקראו בעת פתיחת מסך היומן, לכל רמת חומרה.") {
+            listOf(
+                app.magen.lock.EventSeverity.CRITICAL to "קריטית",
+                app.magen.lock.EventSeverity.HIGH to "גבוהה",
+                app.magen.lock.EventSeverity.MEDIUM to "בינונית",
+                app.magen.lock.EventSeverity.LOW to "נמוכה",
+            ).forEach { (sev, label) ->
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Text("סמן כנקרא בפתיחה: $label", Modifier.weight(1f))
+                    Switch(checked = sev in app.magen.lock.EventLog.markReadOnOpen, onCheckedChange = { app.magen.lock.EventLog.setMarkReadOnOpen(sev, it) })
+                }
+            }
         }
         SpecCard("פרטיות") {
-            SpecToggle("בקשת אישור לפני שיתוף דוח אבחון")
-            Text("מגן פועלת מקומית. לא נדרש חשבון ענן או שירות בתשלום.")
+            Text("לפני שיתוף דוח אירועים מוצג תוכן הדוח המלא ורק אחרי אישורך הוא נשלח. מגן פועלת מקומית ולא נדרש חשבון ענן או שירות בתשלום.")
         }
     }
 }

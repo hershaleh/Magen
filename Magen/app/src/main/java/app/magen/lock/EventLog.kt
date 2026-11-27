@@ -47,7 +47,31 @@ object EventLog {
         synchronized(lock) {
             app = context.applicationContext
             retentionDays = app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)?.getInt("retentionDays", -1)?.takeIf { it > 0 }
+            app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)?.getStringSet("markReadOnOpen", null)?.let { saved ->
+                markReadOnOpen = saved.mapNotNull { n -> EventSeverity.values().firstOrNull { it.name == n } }.toSet()
+            }
             events = trim(load())
+        }
+    }
+
+    /** Severities whose events are marked as read when the log screen is opened. Critical ones stay prominent by default. */
+    var markReadOnOpen by mutableStateOf(setOf(EventSeverity.LOW, EventSeverity.MEDIUM, EventSeverity.HIGH))
+        private set
+
+    fun setMarkReadOnOpen(severity: EventSeverity, on: Boolean) {
+        synchronized(lock) {
+            markReadOnOpen = if (on) markReadOnOpen + severity else markReadOnOpen - severity
+            app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)?.edit()
+                ?.putStringSet("markReadOnOpen", markReadOnOpen.map { it.name }.toSet())?.apply()
+        }
+    }
+
+    /** Called when the log screen opens: marks as read the events of the severities chosen in the settings. */
+    fun onScreenOpened() {
+        synchronized(lock) {
+            if (events.none { !it.read && it.severity in markReadOnOpen }) return
+            events = events.map { if (!it.read && it.severity in markReadOnOpen) it.copy(read = true) else it }
+            persist()
         }
     }
 

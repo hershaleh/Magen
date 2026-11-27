@@ -512,7 +512,7 @@ fun MainScaffold() {
                             Tabs.BLOCKINGS -> BlockingsHub()
                             Tabs.TIMES -> TimesHub()
                             Tabs.PROTECTION -> ProtectionTab(onOpenHome = { tab = Tabs.HOME })
-                            notificationsTab -> NotificationsCenterScreen()
+                            notificationsTab -> NotificationsCenterScreen(onOpenSettings = { specRoute = "settings" })
                             else -> SettingsHub(
                                 onChangePin = { changingPin = true },
                                 onRecovery = { recoveryMode = true },

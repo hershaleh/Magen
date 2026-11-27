@@ -57,6 +57,7 @@ fun EventLogPanel(title: String, subtitle: String, showProtectionStatus: Boolean
     var previewExport by rememberSaveable { mutableStateOf(false) }
     var retentionText by rememberSaveable { mutableStateOf(EventLog.retentionDays?.toString() ?: "") }
     val context = LocalContext.current
+    androidx.compose.runtime.LaunchedEffect(Unit) { EventLog.onScreenOpened() }
     val selectedSeverity = when (severity) {
         "קריטי" -> EventSeverity.CRITICAL
         "גבוה" -> EventSeverity.HIGH
