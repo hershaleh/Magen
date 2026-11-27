@@ -37,6 +37,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import app.magen.lock.AppsChanged
 import app.magen.lock.Backups
 import app.magen.lock.R
 import app.magen.lock.RuleRuntime
@@ -98,7 +99,7 @@ private fun HubRow(text: String, onClick: () -> Unit) {
 @Composable
 internal fun AppsRules() {
     val ctx = LocalContext.current
-    val apps = remember { launchableApps(ctx) }
+    val apps = remember(AppsChanged.version) { launchableApps(ctx) }
     var editing by remember { mutableStateOf<PickApp?>(null) }
     val e = editing
     if (e != null) {
@@ -142,7 +143,7 @@ private fun AppRuleEditor(app: PickApp, onDone: () -> Unit) {
 @Composable
 internal fun GroupsRules() {
     val ctx = LocalContext.current
-    val apps = remember { launchableApps(ctx) }
+    val apps = remember(AppsChanged.version) { launchableApps(ctx) }
     var editId by remember { mutableStateOf<String?>(null) }
     var creating by remember { mutableStateOf(false) }
     val id = editId
@@ -429,7 +430,7 @@ internal fun DeviceScheduleEditor() {
 @Composable
 internal fun VideoStopEditor() {
     val ctx = LocalContext.current
-    val apps = remember { launchableApps(ctx) }
+    val apps = remember(AppsChanged.version) { launchableApps(ctx) }
     val rule = RuleStore.config.video
     var refused by remember { mutableStateOf(false) }
     fun save(v: VideoRule) { refused = !RuleStore.updateConfig { it.withVideo(v) } }

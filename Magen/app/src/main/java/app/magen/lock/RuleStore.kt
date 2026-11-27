@@ -3,6 +3,7 @@ package app.magen.lock
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import app.magen.lock.core.RuleCodec
@@ -117,4 +118,9 @@ object RuleStore {
             .putLong("shabbatLatch", latch)
             .apply()
     }
+}
+
+/** Bumped when an app is installed or removed, so lists of apps on screen reload themselves. */
+object AppsChanged {
+    var version by mutableIntStateOf(0)
 }

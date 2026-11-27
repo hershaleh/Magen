@@ -33,6 +33,7 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import app.magen.lock.core.AppRule
 import app.magen.lock.core.BlockSource
 import app.magen.lock.core.Decision
 import app.magen.lock.core.VideoDetector
@@ -103,9 +104,34 @@ class GuardService : AccessibilityService() {
         }
     }
 
+    /** Keeps the app lists and the rules in step with installs and removals (spec section 3.1). */
+    private val packageChanges = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val pkg = intent.data?.schemeSpecificPart ?: return
+            val removed = intent.action == Intent.ACTION_PACKAGE_REMOVED
+            if (removed && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+            if (removed && RuleStore.config.apps.containsKey(pkg)) {
+                // A removed app keeps no rule behind; the change is skipped (and retried on the next removal) while settings are locked.
+                if (RuleStore.updateConfig { it.withApp(pkg, AppRule()) }) {
+                    RuleStore.record("app_removed", pkg, System.currentTimeMillis(), "An app with rules was uninstalled and its rules were removed.", "package=$pkg")
+                }
+            }
+            AppsChanged.version++
+        }
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
+        ContextCompat.registerReceiver(
+            this, packageChanges,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_ADDED)
+                addAction(Intent.ACTION_PACKAGE_REMOVED)
+                addDataScheme("package")
+            },
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         runCatching { NotificationManagerCompat.from(this).cancel(NOTIF_OFF) }
         ContextCompat.registerReceiver(
             this, screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF), ContextCompat.RECEIVER_NOT_EXPORTED,
@@ -123,6 +149,7 @@ class GuardService : AccessibilityService() {
         // Warn when protection is switched off (by hand, by the system or by a crash of the service).
         if (Store.hasPin && Store.protect && !Store.uninstallAllowed()) notifyServiceOff()
         runCatching { unregisterReceiver(screenOff) }
+        runCatching { unregisterReceiver(packageChanges) }
         super.onDestroy()
     }
 

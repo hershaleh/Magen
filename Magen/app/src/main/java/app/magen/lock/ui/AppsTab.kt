@@ -116,7 +116,7 @@ fun AppsTab() {
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { refreshKey++ }
     // null while the list is still loading, so "no apps" is not shown by mistake.
     val loaded = remember { mutableStateOf<List<AppItem>?>(null) }
-    LaunchedEffect(refreshKey) {
+    LaunchedEffect(refreshKey, app.magen.lock.AppsChanged.version) {
         loaded.value = null
         loaded.value = withContext(Dispatchers.Default) { loadApps(ctx) }
     }
