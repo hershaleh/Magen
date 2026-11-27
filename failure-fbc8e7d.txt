@@ -1,0 +1,214 @@
+branch=feature/spec-next sha=fbc8e7d9e0f95c9e11c5d8a4e384820eb2a5fb3a
+w: file:///home/runner/work/Magen/Magen/Magen/app/src/main/java/app/magen/lock/Catalog.kt:224:53 'val Icons.Filled.VolumeUp: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.VolumeUp.
+w: file:///home/runner/work/Magen/Magen/Magen/app/src/main/java/app/magen/lock/ui/Status.kt:214:33 'val Icons.Filled.HelpOutline: ImageVector' is deprecated. Use the AutoMirrored version at Icons.AutoMirrored.Filled.HelpOutline.
+
+> Task :app:compileDebugJavaWithJavac NO-SOURCE
+> Task :app:bundleDebugClassesToCompileJar
+> Task :app:mergeExtDexDebug
+--
+RuleStoreTest > changesAreRefusedWhileReadOnlyAndNothingIsWritten FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+RuleStoreTest > aSavedRuleIsStillThereAfterTheStoreIsInitialisedAgain FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+RuleStoreTest > theStoredTextIsWhatTheCodecWrites FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+RuleStoreTest > theSecurityLogIsSavedAndMergesRepeats FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+RuleStoreTest > groupsAndMembershipSurviveAReload FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+RuleStoreTest > missingOrBrokenRuntimeStateStartsFresh FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+RuleStoreTest > countersClockAndNoticesAreSavedAndRestored FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+RuleStoreTest > unreadableStoredRulesAreKeptForDiagnosisResetAndLogged FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+RuleStoreTest > theRuntimeStepOnAFreshInstallBlocksNothingAndSavesItsState FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > unusableCustomKeywordIsIgnored FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > missingSaltFailsInsteadOfCrashing FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > lockoutFromAnOlderVersionThatAlreadyEndedIsNotActive FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > noConfiguredRulesMeansThereIsNothingToEnforce FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > recoveryWithoutACodeFailsWithoutCounting FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > damagedDataThatCountsAsFailuresEventuallyLocksTheKeypad FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > correctPinSucceedsAndResetsTheFailureCount FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > emptySaltFailsInsteadOfCrashing FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > masterBlockingSwitchDoesNotChangeMagenSelfProtectionPreference FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > lockoutFromAnOlderVersionIsReadAndCapped FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > fiveWrongPinsLockTheKeypadAndEvenTheRightPinIsRefusedWhileLocked FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > lockoutKeepsTheOldWallClockKeyForOlderVersions FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > uninstallApprovalIsNotActiveAfterExplicitClosure FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > missingHashFailsInsteadOfCrashing FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > wrongPinIsCounted FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > eachConfiguredRuleMakesProtectionNonEmpty FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > invalidBase64SaltFailsInsteadOfCrashing FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > customKeywordKeepsTheLastPartOfAPathAndIsPersisted FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > recoveryWithMissingOrDamagedDataFailsAndIsCounted FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > checkPinWithNoStoredPinFailsSafelyAndCountsAsAWrongAttempt FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > masterBlockingSwitchDefaultsOnAndPersistsItsState FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > approvalWindowFromAnOlderVersionThatEndedIsClosedForGood FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > approvalWindowSurvivesReloadWithinTheSameBoot FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > garbageHashFailsInsteadOfCrashing FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > approvalWindowOpensAndClosesAndKeepsTheOldWallClockKey FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > settingANewPinClearsTheLockout FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > recoveryCodeWorksInAnyCaseAndWithoutDashes FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > approvalWindowFromAnOlderVersionStillOpenIsReadAsOpen FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+StoreTest > emptyPinNeverSucceeds FAILED
+    java.lang.AssertionError at MavenArtifactFetcher.java:129
+        Caused by: java.util.concurrent.ExecutionException at AbstractFuture.java:596
+            Caused by: java.io.IOException at HttpURLConnection.java:2059
+
+--
+> Task :app:testDebugUnitTest FAILED
+> Task :app:lintAnalyzeDebug
+gradle/actions: Writing build results to /home/runner/work/_temp/.gradle-actions/build-results/validation-1795770543897.json
+
+FAILURE: Build failed with an exception.
+--
+* What went wrong:
+Execution failed for task ':app:testDebugUnitTest'.
+> There were failing tests. See the report at: file:///home/runner/work/Magen/Magen/Magen/app/build/reports/tests/testDebugUnitTest/index.html
+
+* Try:
+> Run with --scan to get full insights.
+--
+BUILD FAILED in 1m 38s
+64 actionable tasks: 64 executed
