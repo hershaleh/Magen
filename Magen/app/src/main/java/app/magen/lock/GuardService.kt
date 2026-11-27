@@ -33,6 +33,11 @@ import android.view.accessibility.AccessibilityNodeInfo
 import android.view.inputmethod.InputMethodManager
 import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
+import app.magen.lock.core.AppRule
+import app.magen.lock.core.BlockSource
+import app.magen.lock.core.Decision
+import app.magen.lock.core.VideoDetector
+import app.magen.lock.core.VideoSignals
 import app.magen.lock.core.InstallerScreen
 
 /**
@@ -49,6 +54,9 @@ class GuardService : AccessibilityService() {
         var instance: GuardService? = null
         private const val CHANNEL = "magen_guard"
         private const val NOTIF_OFF = 41
+        private const val RULE_TICK_MS = 5_000L
+        const val VIDEO_SCAN_MS = 600L
+        const val VIDEO_HOLD_MS = 4_000L
         private const val CAPTURE_WINDOW_MS = 10 * 60_000L
         private val GENERIC_TITLES = setOf(
             "settings", "search settings", "navigate up", "back", "more options", "search",
@@ -78,6 +86,14 @@ class GuardService : AccessibilityService() {
     private var imePkgs: Set<String> = emptySet()
     private var imeAt = 0L
 
+    /** Counts foreground time and applies quotas, schedules and Shabbat blocking (see [RuleRuntime]). */
+    private val ruleTick = object : Runnable {
+        override fun run() {
+            tickRules()
+            handler.postDelayed(this, RULE_TICK_MS)
+        }
+    }
+
     private val screenOff = object : BroadcastReceiver() {
         override fun onReceive(c: Context?, i: Intent?) {
             currentApp = ""
@@ -88,22 +104,52 @@ class GuardService : AccessibilityService() {
         }
     }
 
+    /** Keeps the app lists and the rules in step with installs and removals (spec section 3.1). */
+    private val packageChanges = object : BroadcastReceiver() {
+        override fun onReceive(context: Context, intent: Intent) {
+            val pkg = intent.data?.schemeSpecificPart ?: return
+            val removed = intent.action == Intent.ACTION_PACKAGE_REMOVED
+            if (removed && intent.getBooleanExtra(Intent.EXTRA_REPLACING, false)) return
+            if (removed && RuleStore.config.apps.containsKey(pkg)) {
+                // A removed app keeps no rule behind; the change is skipped (and retried on the next removal) while settings are locked.
+                if (RuleStore.updateConfig { it.withApp(pkg, AppRule()) }) {
+                    RuleStore.record("app_removed", pkg, System.currentTimeMillis(), "An app with rules was uninstalled and its rules were removed.", "package=$pkg")
+                }
+            }
+            AppsChanged.version++
+        }
+    }
+
     override fun onServiceConnected() {
         super.onServiceConnected()
         instance = this
+        ContextCompat.registerReceiver(
+            this, packageChanges,
+            IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_ADDED)
+                addAction(Intent.ACTION_PACKAGE_REMOVED)
+                addDataScheme("package")
+            },
+            ContextCompat.RECEIVER_NOT_EXPORTED,
+        )
         runCatching { NotificationManagerCompat.from(this).cancel(NOTIF_OFF) }
         ContextCompat.registerReceiver(
             this, screenOff, IntentFilter(Intent.ACTION_SCREEN_OFF), ContextCompat.RECEIVER_NOT_EXPORTED,
         )
+        handler.removeCallbacks(ruleTick)
+        handler.post(ruleTick)
     }
 
     override fun onDestroy() {
         instance = null
+        handler.removeCallbacks(ruleTick)
+        RuleRuntime.flush()
         removeCover()
         removeCapture()
         // Warn when protection is switched off (by hand, by the system or by a crash of the service).
         if (Store.hasPin && Store.protect && !Store.uninstallAllowed()) notifyServiceOff()
         runCatching { unregisterReceiver(screenOff) }
+        runCatching { unregisterReceiver(packageChanges) }
         super.onDestroy()
     }
 
@@ -335,10 +381,13 @@ class GuardService : AccessibilityService() {
         val pkg = e.packageName?.toString() ?: return
         val state = e.eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED
         if (state) onForeground(pkg, e.className?.toString())
+        if (state) tickRules()
         maintain()
 
         if (Store.blockingEnabled && Store.hasPin && Store.locked.containsKey(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
         updateCapture(pkg, state)
+
+        scanVideo(pkg)
 
         val now = SystemClock.uptimeMillis()
         if (!state && now - lastScan < 250) return
@@ -356,6 +405,88 @@ class GuardService : AccessibilityService() {
                 scanInstaller()
             }
         }
+    }
+
+    /** Apps that are never blocked by quotas, schedules or Shabbat: Magen, the launcher, calls, the system and the installer. */
+    private fun isEssential(pkg: String): Boolean {
+        if (pkg == packageName || pkg in Catalog.SETTINGS || pkg in Catalog.INSTALLERS || isTransient(pkg)) return true
+        if (pkg == "com.android.systemui" || pkg == "com.android.emergency" || pkg == launcherPackage() || pkg == dialerPackage()) return true
+        return false
+    }
+
+    private var launcherPkg: String? = null
+    private fun launcherPackage(): String? {
+        if (launcherPkg == null) {
+            launcherPkg = runCatching {
+                packageManager.resolveActivity(Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME), android.content.pm.PackageManager.MATCH_DEFAULT_ONLY)
+                    ?.activityInfo?.packageName
+            }.getOrNull()
+        }
+        return launcherPkg
+    }
+
+    private fun dialerPackage(): String? =
+        runCatching { getSystemService(android.telecom.TelecomManager::class.java)?.defaultDialerPackage }.getOrNull()
+
+    // ---- VideoStop -----------------------------------------------------------------------------
+
+    private var videoPkg: String? = null
+    private var videoSeenAt = 0L
+    private var lastVideoScan = 0L
+
+    /** Looks for a video player in the front app when VideoStop applies to it, and lets the central engine block it. */
+    private fun scanVideo(pkg: String) {
+        if (!RuleStore.config.video.applies(pkg) || isEssential(pkg)) {
+            if (videoPkg == pkg) videoPkg = null
+            return
+        }
+        val now = SystemClock.uptimeMillis()
+        if (now - lastVideoScan < VIDEO_SCAN_MS) return
+        lastVideoScan = now
+        val root = rootInActiveWindow ?: return
+        if (root.packageName?.toString() != pkg) return
+        val ids = ArrayList<String>()
+        val classes = ArrayList<String>()
+        val labels = ArrayList<String>()
+        var count = 0
+
+        fun walk(n: AccessibilityNodeInfo, depth: Int) {
+            if (count++ > 700 || depth > 25) return
+            n.viewIdResourceName?.let { ids.add(it) }
+            n.className?.toString()?.let { classes.add(it) }
+            n.contentDescription?.toString()?.takeIf { it.isNotBlank() }?.let { labels.add(it) }
+            for (i in 0 until n.childCount) n.getChild(i)?.let { walk(it, depth + 1) }
+        }
+        walk(root, 0)
+        if (VideoDetector.detect(VideoSignals(ids, classes, labels))) {
+            videoPkg = pkg
+            videoSeenAt = now
+            tickRules()
+        }
+    }
+
+    private fun tickRules() {
+        runCatching {
+            val pkg = currentApp.takeIf { it.isNotEmpty() }
+            val essential = pkg == null || isEssential(pkg)
+            val video = pkg != null && videoPkg == pkg && SystemClock.uptimeMillis() - videoSeenAt < VIDEO_HOLD_MS
+            val step = RuleRuntime.step(this, pkg, essential, video)
+            RuleRuntime.notify(this, step.warnings)
+            if (pkg != null && !essential && step.decision.blocked) enforceBlock(step.decision, pkg)
+        }
+    }
+
+    private fun enforceBlock(d: Decision, pkg: String) {
+        val reason = when (d.primary) {
+            BlockSource.SHABBAT -> R.string.blocked_shabbat
+            BlockSource.SCHEDULE -> R.string.blocked_schedule
+            BlockSource.PERSONAL_QUOTA -> R.string.blocked_quota
+            BlockSource.GROUP_QUOTA -> R.string.blocked_group_quota
+            BlockSource.CUSTOM_RULE -> R.string.blocked_video
+            else -> R.string.blocked_rule
+        }
+        performGlobalAction(GLOBAL_ACTION_HOME)
+        block(reason, pkg)
     }
 
     private fun maintain() {
@@ -504,14 +635,15 @@ class GuardService : AccessibilityService() {
 
     // ---- helpers -----------------------------------------------------------------------------
 
-    private fun block(@StringRes reason: Int) {
+    private fun block(@StringRes reason: Int, blockedPackage: String? = null) {
         val n = SystemClock.uptimeMillis()
         if (n - lastBlock < 1500) return
         lastBlock = n
         startActivity(
             Intent(this, BlockActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                .putExtra(BlockActivity.EXTRA_REASON, reason),
+                .putExtra(BlockActivity.EXTRA_REASON, reason)
+                .putExtra(BlockActivity.EXTRA_PACKAGE, blockedPackage),
         )
     }
 

@@ -1,5 +1,8 @@
 name: Build APK
 
+permissions:
+  contents: write
+
 concurrency:
   group: magen-v3-${{ github.ref }}
   cancel-in-progress: true
@@ -66,6 +69,21 @@ jobs:
             grep -E 'FAILED|error:|^e: |What went wrong|Execution failed|Could not|Lint found' -A3 validation.log | head -120 || true
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      # Publishes the failure excerpt to the ci-feedback branch so it can be read without opening the run page.
+      - name: Publish failure excerpt
+        if: failure() && steps.validation.outcome == 'failure'
+        shell: bash {0}
+        run: |
+          mkdir -p "$RUNNER_TEMP/fb" && cd "$RUNNER_TEMP/fb"
+          {
+            echo "branch=${GITHUB_REF_NAME} sha=${GITHUB_SHA}"
+            grep -E 'FAILED|error:|^e: |^w: .*(Deprecat)?|What went wrong|Execution failed|Could not|Lint found|Error:' -A4 "$GITHUB_WORKSPACE/validation.log" | head -300
+          } > "failure-${GITHUB_SHA::7}.txt"
+          git init -q && git checkout -q -b ci-feedback
+          git config user.name "ci" && git config user.email "ci@users.noreply.github.com"
+          git add . && git commit -q -m "CI failure excerpt ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-feedback || true
 
       - uses: actions/upload-artifact@v4
         if: failure() && steps.validation.outcome == 'failure'
@@ -143,6 +161,23 @@ jobs:
             grep -E '^(OK|FAILURES|Tests run)|INSTRUMENTATION_(CODE|FAILED)|test=' emulator-output/instrumentation.txt 2>/dev/null | tail -40 || echo 'no instrumentation output'
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish emulator excerpt
+        if: failure()
+        shell: bash {0}
+        run: |
+          mkdir -p "$RUNNER_TEMP/fb" && cd "$RUNNER_TEMP/fb"
+          {
+            echo "branch=${GITHUB_REF_NAME} sha=${GITHUB_SHA}"
+            for f in "$GITHUB_WORKSPACE"/emulator-output/instrumentation.txt; do
+              [ -f "$f" ] && grep -vE '^\s*$' "$f" | tail -150
+            done
+            ls -la "$GITHUB_WORKSPACE/emulator-output" 2>&1 | head -30
+          } > "emulator-${GITHUB_SHA::7}.txt"
+          git init -q && git checkout -q -b ci-feedback-emulator
+          git config user.name "ci" && git config user.email "ci@users.noreply.github.com"
+          git add . && git commit -q -m "Emulator excerpt ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-feedback-emulator || true
 
       - uses: actions/upload-artifact@v4
         if: always()

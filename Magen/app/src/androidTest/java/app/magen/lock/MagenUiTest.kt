@@ -117,7 +117,7 @@ class MagenUiTest {
             val nodes = onAllNodesWithText(text).fetchSemanticsNodes()
             if (nodes.isEmpty()) return@waitUntil false
             match = onAllNodesWithText(text)[0]
-            runCatching { match.isDisplayed() }.getOrDefault(false)
+            runCatching { match.assertIsDisplayed(); true }.getOrDefault(false)
         }
         return match
     }
@@ -343,7 +343,7 @@ class MagenUiTest {
         assertTrue(EventLog.find(event.id)?.read == true)
 
         goToTab(NOTIFICATIONS_NAV)
-        compose.awaitDisplayed("בדיקת אירוע חוזר").assertIsDisplayed()
+        compose.await("בדיקת אירוע חוזר").performScrollTo().assertIsDisplayed()
         compose.await("סמן הכול כלא נקרא").performClick()
         assertFalse(EventLog.find(event.id)?.read ?: true)
     }
@@ -448,11 +448,11 @@ class MagenUiTest {
         compose.await("זמנים").assertIsDisplayed()
         compose.onNodeWithTag("times_tab_0").performClick()
         compose.await("לוח זמנים לכל המכשיר").assertIsDisplayed()
-        compose.await("החלון חוצה חצות").assertIsDisplayed()
+        compose.await("הוסף זמן").assertIsDisplayed()
         compose.onNodeWithTag("times_tab_1").performClick()
-        compose.await("הקבוצות שלי").assertIsDisplayed()
+        compose.await("מכסה משותפת חדשה").assertIsDisplayed()
         compose.onNodeWithTag("times_tab_2").performClick()
-        compose.await("יום טוב שני: פעיל").assertIsDisplayed()
+        compose.await("חסימה בשבתות ובחגים יהודיים").assertIsDisplayed()
 
         goToTab(R.string.nav_more)
         compose.await("אבחון ויומן אירועים").performClick()
@@ -463,7 +463,7 @@ class MagenUiTest {
         compose.onAllNodes(hasClickAction() and hasText("הגדרות", substring = true))[0].performClick()
         compose.await("גיבוי ושחזור").performClick()
         compose.await("פתיחת גיבוי ושחזור").performClick()
-        compose.await("בחירת קובץ לשחזור (טרם חובר)").assertIsDisplayed()
+        compose.await("צור גיבוי עכשיו").assertIsDisplayed()
     }
 
     /**

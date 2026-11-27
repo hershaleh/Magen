@@ -37,11 +37,62 @@ object EventLog {
     var events by mutableStateOf<List<MagenEvent>>(emptyList())
         private set
 
+    private const val MAX_EVENTS = 1000
+
+    /** Days to keep events, or null for no time limit (the default). */
+    var retentionDays by mutableStateOf<Int?>(null)
+        private set
+
     fun init(context: Context) {
         synchronized(lock) {
             app = context.applicationContext
-            events = load()
+            retentionDays = app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)?.getInt("retentionDays", -1)?.takeIf { it > 0 }
+            app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)?.getStringSet("markReadOnOpen", null)?.let { saved ->
+                markReadOnOpen = saved.mapNotNull { n -> EventSeverity.values().firstOrNull { it.name == n } }.toSet()
+            }
+            events = trim(load())
         }
+    }
+
+    /** Severities whose events are marked as read when the log screen is opened. Critical ones stay prominent by default. */
+    var markReadOnOpen by mutableStateOf(setOf(EventSeverity.LOW, EventSeverity.MEDIUM, EventSeverity.HIGH))
+        private set
+
+    fun setMarkReadOnOpen(severity: EventSeverity, on: Boolean) {
+        synchronized(lock) {
+            markReadOnOpen = if (on) markReadOnOpen + severity else markReadOnOpen - severity
+            app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)?.edit()
+                ?.putStringSet("markReadOnOpen", markReadOnOpen.map { it.name }.toSet())?.apply()
+        }
+    }
+
+    /** Called when the log screen opens: marks as read the events of the severities chosen in the settings. */
+    fun onScreenOpened() {
+        synchronized(lock) {
+            if (events.none { !it.read && it.severity in markReadOnOpen }) return
+            events = events.map { if (!it.read && it.severity in markReadOnOpen) it.copy(read = true) else it }
+            persist()
+        }
+    }
+
+    /** Changes the retention period; applies to old events at once. Open events are always kept. */
+    fun setRetention(days: Int?) {
+        synchronized(lock) {
+            retentionDays = days?.takeIf { it > 0 }
+            app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)?.edit()?.putInt("retentionDays", retentionDays ?: -1)?.apply()
+            events = trim(events)
+            persist()
+        }
+    }
+
+    /** Drops resolved events older than the retention period and keeps the log under [MAX_EVENTS], newest and open ones first. */
+    private fun trim(list: List<MagenEvent>): List<MagenEvent> {
+        val cutoff = retentionDays?.let { System.currentTimeMillis() - it * 86_400_000L }
+        val kept = list.filter { cutoff == null || it.state != EventState.RESOLVED || it.updatedAt >= cutoff }
+        if (kept.size <= MAX_EVENTS) return kept
+        val open = kept.filter { it.state != EventState.RESOLVED }
+        val room = (MAX_EVENTS - open.size).coerceAtLeast(0)
+        return (open + kept.filter { it.state == EventState.RESOLVED }.sortedByDescending { it.updatedAt }.take(room)).sortedByDescending { it.updatedAt }
     }
 
     fun record(
@@ -87,7 +138,7 @@ object EventLog {
                     history = listOf("${formatTime(now)} · נוצר"),
                 )
             }
-            events = next.sortedByDescending { it.updatedAt }
+            events = trim(next.sortedByDescending { it.updatedAt })
             persist()
         }
     }
@@ -104,6 +155,26 @@ object EventLog {
                 ) else event
             }
             persist()
+        }
+    }
+
+    /** Resolves every open event of [type] after the caller has verified the problem is gone. */
+    fun resolveType(type: String, note: String) {
+        synchronized(lock) {
+            val now = System.currentTimeMillis()
+            var changed = false
+            events = events.map { event ->
+                if (event.type == type && event.state != EventState.RESOLVED) {
+                    changed = true
+                    event.copy(
+                        state = EventState.RESOLVED,
+                        updatedAt = now,
+                        read = false,
+                        history = (event.history + "${formatTime(now)} · $note").takeLast(50),
+                    )
+                } else event
+            }.sortedByDescending { it.updatedAt }
+            if (changed) persist()
         }
     }
 

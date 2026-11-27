@@ -7,6 +7,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import app.magen.lock.ui.BlockContent
 import app.magen.lock.ui.MagenTheme
@@ -16,16 +17,19 @@ import app.magen.lock.ui.SpecUiPreferences
 class BlockActivity : AppCompatActivity() {
     companion object {
         const val EXTRA_REASON = "reason"
+        const val EXTRA_PACKAGE = "package"
     }
 
     private var reason by mutableIntStateOf(R.string.blocked_settings)
+    private var blockedPackage by mutableStateOf<String?>(null)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         SpecUiPreferences.load(this)
         reason = intent.getIntExtra(EXTRA_REASON, R.string.blocked_settings)
-        setContent { MagenTheme { BlockContent(reason) { goHome() } } }
+        blockedPackage = intent.getStringExtra(EXTRA_PACKAGE)
+        setContent { MagenTheme { BlockContent(reason, blockedPackage) { goHome() } } }
     }
 
     private fun goHome() {
@@ -41,6 +45,7 @@ class BlockActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         reason = intent.getIntExtra(EXTRA_REASON, R.string.blocked_settings)
+        blockedPackage = intent.getStringExtra(EXTRA_PACKAGE)
     }
 
 }
