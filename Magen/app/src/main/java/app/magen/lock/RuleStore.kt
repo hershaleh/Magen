@@ -9,6 +9,7 @@ import app.magen.lock.core.RuleCodec
 import app.magen.lock.core.RuleConfig
 import app.magen.lock.core.SecurityEvent
 import app.magen.lock.core.SecurityLog
+import app.magen.lock.core.Severity
 import app.magen.lock.core.StateCodec
 import app.magen.lock.core.TrustedClock
 import app.magen.lock.core.UsageLedger
@@ -66,6 +67,15 @@ object RuleStore {
     fun record(type: String, key: String, nowMs: Long, message: String = "", technical: String = "") {
         val next = SecurityLog.record(events, type, key, nowMs, message, technical)
         save(next)
+        // The screens show app.magen.lock.EventLog, so the rule events are mirrored there too.
+        val sev = when (SecurityLog.severityFor(type)) {
+            Severity.CRITICAL -> EventSeverity.CRITICAL
+            Severity.HIGH -> EventSeverity.HIGH
+            Severity.MEDIUM -> EventSeverity.MEDIUM
+            Severity.LOW -> EventSeverity.LOW
+        }
+        val open = sev == EventSeverity.CRITICAL || sev == EventSeverity.HIGH
+        runCatching { EventLog.record(type, message.ifBlank { type }, message, technical, sev, if (open) EventState.ACTIVE else EventState.RESOLVED) }
     }
 
     @Synchronized

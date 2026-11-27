@@ -56,6 +56,11 @@ object RuleRuntime {
         val s = r.step(wall, elapsed, bootCount(ctx), TimeZone.getDefault().getOffset(wall).toLong(), pkg, essential)
 
         runCatching { Backups.autoIfDue(ctx, Math.floorDiv(s.trustedMs + TimeZone.getDefault().getOffset(wall), 86_400_000L)) }
+        if (!bootVerified) {
+            // This tick runs inside the accessibility service, which proves it is running after a restart.
+            bootVerified = true
+            resolveOpen("accessibility_disabled", wall, "The accessibility service is running again.")
+        }
         shabbatActive = s.shabbat.active
         shabbatUnverified = r.config.shabbat.enabled && !s.shabbat.verified
         if (RuleStore.readOnly != s.shabbat.active) RuleStore.readOnly = s.shabbat.active
@@ -87,7 +92,10 @@ object RuleRuntime {
         return s
     }
 
+    private var bootVerified = false
+
     private fun resolveOpen(type: String, now: Long, note: String) {
+        runCatching { EventLog.resolveType(type, note) }
         val open = RuleStore.events.filter { it.type == type && it.isOpen }
         if (open.isEmpty()) return
         RuleStore.mutateEvents { list -> open.fold(list) { acc, e -> SecurityLog.resolve(acc, e.id, now, verifiedGone = true, note = note) } }

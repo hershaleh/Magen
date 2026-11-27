@@ -107,6 +107,26 @@ object EventLog {
         }
     }
 
+    /** Resolves every open event of [type] after the caller has verified the problem is gone. */
+    fun resolveType(type: String, note: String) {
+        synchronized(lock) {
+            val now = System.currentTimeMillis()
+            var changed = false
+            events = events.map { event ->
+                if (event.type == type && event.state != EventState.RESOLVED) {
+                    changed = true
+                    event.copy(
+                        state = EventState.RESOLVED,
+                        updatedAt = now,
+                        read = false,
+                        history = (event.history + "${formatTime(now)} · $note").takeLast(50),
+                    )
+                } else event
+            }.sortedByDescending { it.updatedAt }
+            if (changed) persist()
+        }
+    }
+
     fun resolve(type: String, technical: String, note: String) {
         synchronized(lock) {
             val now = System.currentTimeMillis()
