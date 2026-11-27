@@ -552,5 +552,8 @@
     <string name="backup_paste">הדבק טקסט גיבוי</string>
     <string name="backup_export">ייצוא כטקסט</string>
     <string name="backup_from_text">שחזור מטקסט</string>
+    <string name="shabbat_use_gps">השתמש במיקום המכשיר</string>
+    <string name="shabbat_gps_failed">לא ניתן לקבל מיקום. אשר הרשאה או הזן ידנית.</string>
+    <string name="shabbat_gps_ok">המיקום מולא. לחץ על שמור.</string>
 </resources>
 

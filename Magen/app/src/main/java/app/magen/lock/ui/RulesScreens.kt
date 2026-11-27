@@ -1,6 +1,13 @@
 package app.magen.lock.ui
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.location.LocationManager
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -230,6 +237,20 @@ internal fun ShabbatRules() {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         for (city in CITIES) FilterChip(selected = false, onClick = { lat = city.lat.toString(); lon = city.lon.toString() }, label = { Text(city.name) })
     }
+    val gpsCtx = LocalContext.current
+    var gpsMsg by remember { mutableStateOf<String?>(null) }
+    val gpsFailed = stringResource(R.string.shabbat_gps_failed)
+    val gpsOk = stringResource(R.string.shabbat_gps_ok)
+    val askLocation = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        val fix = if (granted) lastKnownLocation(gpsCtx) else null
+        if (fix != null) { lat = fix.first.toString(); lon = fix.second.toString(); gpsMsg = gpsOk } else gpsMsg = gpsFailed
+    }
+    OutlinedButton(modifier = Modifier.fillMaxWidth(), onClick = {
+        val fix = lastKnownLocation(gpsCtx)
+        if (fix != null) { lat = fix.first.toString(); lon = fix.second.toString(); gpsMsg = gpsOk }
+        else askLocation.launch(Manifest.permission.ACCESS_COARSE_LOCATION)
+    }) { Text(stringResource(R.string.shabbat_use_gps)) }
+    gpsMsg?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
     TextBox(stringResource(R.string.shabbat_lat), lat, { lat = it.filter { ch -> ch.isDigit() || ch == '.' || ch == '-' }.take(10) }, Modifier.fillMaxWidth())
     TextBox(stringResource(R.string.shabbat_lon), lon, { lon = it.filter { ch -> ch.isDigit() || ch == '.' || ch == '-' }.take(10) }, Modifier.fillMaxWidth())
     val latV = lat.toDoubleOrNull()?.takeIf { it in -66.0..66.0 }
@@ -372,5 +393,16 @@ internal fun BackupPage() {
             },
             dismissButton = { TextButton(onClick = { plan = null }) { Text(stringResource(R.string.rules_cancel)) } },
         )
+    }
+}
+
+/** The last location the device knows (coarse is enough for sunset times), or null when none or no permission. */
+private fun lastKnownLocation(ctx: Context): Pair<Double, Double>? {
+    if (ContextCompat.checkSelfPermission(ctx, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) return null
+    return try {
+        val lm = ctx.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        lm.getProviders(true).mapNotNull { lm.getLastKnownLocation(it) }.maxByOrNull { it.time }?.let { it.latitude to it.longitude }
+    } catch (_: SecurityException) {
+        null
     }
 }

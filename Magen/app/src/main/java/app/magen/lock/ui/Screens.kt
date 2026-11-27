@@ -1252,7 +1252,7 @@ fun LockContent(pkg: String, onUnlocked: () -> Unit, onOpenMain: () -> Unit, onB
 }
 
 @Composable
-fun BlockContent(@StringRes reason: Int, onClose: () -> Unit) {
+fun BlockContent(@StringRes reason: Int, packageName: String? = null, onClose: () -> Unit) {
     val ctx = LocalContext.current
     val animate = SpecUiPreferences.shouldAnimate(ctx)
     val reasonText = remember(reason) { runCatching { ctx.getString(reason) }.getOrNull() }
@@ -1293,6 +1293,19 @@ fun BlockContent(@StringRes reason: Int, onClose: () -> Unit) {
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                     )
+                    if (packageName != null) {
+                        // The app's own icon and name as the device shows them; the technical name is the fallback.
+                        val appIcon = remember(packageName) {
+                            runCatching { ctx.packageManager.getApplicationIcon(packageName).toBitmap(160, 160).asImageBitmap() }.getOrNull()
+                        }
+                        val appName = remember(packageName) {
+                            runCatching { ctx.packageManager.getApplicationLabel(ctx.packageManager.getApplicationInfo(packageName, 0)).toString() }.getOrNull() ?: packageName
+                        }
+                        Spacer(Modifier.height(18.dp))
+                        if (appIcon != null) Image(appIcon, contentDescription = null, modifier = Modifier.size(64.dp))
+                        Spacer(Modifier.height(8.dp))
+                        Text(appName, style = MaterialTheme.typography.titleMedium, textAlign = TextAlign.Center)
+                    }
                     if (reasonText != null) {
                         Spacer(Modifier.height(10.dp))
                         Text(reasonText, color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = TextAlign.Center)

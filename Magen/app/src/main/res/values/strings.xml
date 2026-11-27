@@ -552,5 +552,8 @@
     <string name="backup_paste">Paste backup text</string>
     <string name="backup_export">Export text</string>
     <string name="backup_from_text">Restore from text</string>
+    <string name="shabbat_use_gps">Use device location</string>
+    <string name="shabbat_gps_failed">Could not get the location. Allow it or enter it by hand.</string>
+    <string name="shabbat_gps_ok">Location filled in. Press Save.</string>
 </resources>
 

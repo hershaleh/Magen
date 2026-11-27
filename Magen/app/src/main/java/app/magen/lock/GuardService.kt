@@ -401,11 +401,11 @@ class GuardService : AccessibilityService() {
             val essential = pkg == null || isEssential(pkg)
             val step = RuleRuntime.step(this, pkg, essential)
             RuleRuntime.notify(this, step.warnings)
-            if (pkg != null && !essential && step.decision.blocked) enforceBlock(step.decision)
+            if (pkg != null && !essential && step.decision.blocked) enforceBlock(step.decision, pkg)
         }
     }
 
-    private fun enforceBlock(d: Decision) {
+    private fun enforceBlock(d: Decision, pkg: String) {
         val reason = when (d.primary) {
             BlockSource.SHABBAT -> R.string.blocked_shabbat
             BlockSource.SCHEDULE -> R.string.blocked_schedule
@@ -414,7 +414,7 @@ class GuardService : AccessibilityService() {
             else -> R.string.blocked_rule
         }
         performGlobalAction(GLOBAL_ACTION_HOME)
-        block(reason)
+        block(reason, pkg)
     }
 
     private fun maintain() {
@@ -563,14 +563,15 @@ class GuardService : AccessibilityService() {
 
     // ---- helpers -----------------------------------------------------------------------------
 
-    private fun block(@StringRes reason: Int) {
+    private fun block(@StringRes reason: Int, blockedPackage: String? = null) {
         val n = SystemClock.uptimeMillis()
         if (n - lastBlock < 1500) return
         lastBlock = n
         startActivity(
             Intent(this, BlockActivity::class.java)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_NO_ANIMATION)
-                .putExtra(BlockActivity.EXTRA_REASON, reason),
+                .putExtra(BlockActivity.EXTRA_REASON, reason)
+                .putExtra(BlockActivity.EXTRA_PACKAGE, blockedPackage),
         )
     }
 
