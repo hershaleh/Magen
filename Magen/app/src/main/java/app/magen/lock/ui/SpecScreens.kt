@@ -42,6 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import app.magen.lock.Catalog
+import app.magen.lock.Policy
+import app.magen.lock.SettingsCat
 import app.magen.lock.Store
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -263,7 +265,7 @@ private fun SystemComponentsScreen() {
                         Icon(cat.icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                         Column(Modifier.weight(1f)) {
                             Text(label, fontWeight = FontWeight.Medium)
-                            Text(if (cat.id == "network") "תתי־הגדרות: VPN, נקודה חמה ועוד" else "פתיחת אפשרויות החסימה",
+                            Text(if (cat.id == "network") "תתי־הגדרות: VPN, נקודה חמה ועוד" else enforcementLevel(cat, Policy.isOwner(LocalContext.current)),
                                 style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         }
                         Text(if (cat.id in Store.blockedSettings) "חסום" else "›",
@@ -289,7 +291,7 @@ private fun SystemComponentsScreen() {
                         title = "חסימת $label",
                         checked = selected.id in Store.blockedSettings,
                         onChange = { Store.setBlockedSetting(selected.id, it) },
-                        supporting = if (selected.restriction != null) "חסימה מרכזית; אינה כוללת תתי־הגדרות" else "חסימת המסך המרכזי בלבד",
+                        supporting = enforcementLevel(selected, Policy.isOwner(LocalContext.current)),
                         icon = selected.icon,
                     )
                     if (nestedIds.isNotEmpty()) {
@@ -410,4 +412,11 @@ private fun AppSettingsScreen() {
             Text("מגן פועלת מקומית. לא נדרש חשבון ענן או שירות בתשלום.")
         }
     }
+}
+
+/** How strongly a settings category is enforced right now: by Android itself (Device Owner) or only by screen blocking. */
+private fun enforcementLevel(cat: SettingsCat, owner: Boolean): String = when {
+    cat.restriction != null && owner -> "נאכף ברמת המערכת (מצב חזק) ובנוסף בחסימת מסך"
+    cat.restriction != null -> "חסימת מסך דרך הנגישות; אכיפת מערכת זמינה רק במצב חזק"
+    else -> "חסימת מסך דרך הנגישות בלבד"
 }
