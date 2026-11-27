@@ -24,6 +24,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.remember
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -53,6 +54,8 @@ fun EventLogPanel(title: String, subtitle: String, showProtectionStatus: Boolean
     var query by rememberSaveable { mutableStateOf("") }
     var selectedId by rememberSaveable { mutableStateOf<String?>(null) }
     var confirmClear by rememberSaveable { mutableStateOf(false) }
+    var previewExport by rememberSaveable { mutableStateOf(false) }
+    var retentionText by rememberSaveable { mutableStateOf(EventLog.retentionDays?.toString() ?: "") }
     val context = LocalContext.current
     val selectedSeverity = when (severity) {
         "קריטי" -> EventSeverity.CRITICAL
@@ -150,16 +153,20 @@ fun EventLogPanel(title: String, subtitle: String, showProtectionStatus: Boolean
         }
 
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = {
-                val send = Intent(Intent.ACTION_SEND).apply {
-                    type = "text/plain"
-                    putExtra(Intent.EXTRA_SUBJECT, "Magen — דוח אירועים")
-                    putExtra(Intent.EXTRA_TEXT, EventLog.exportText())
-                }
-                runCatching { context.startActivity(Intent.createChooser(send, "ייצוא דוח אירועים")) }
-            }) { Text("ייצוא דוח") }
+            Button(onClick = { previewExport = true }) { Text("ייצוא דוח") }
             TextButton(onClick = { confirmClear = true }) { Text("מחיקת כל היומן") }
         }
+        OutlinedTextField(
+            value = retentionText,
+            onValueChange = { v ->
+                retentionText = v.filter { it.isDigit() }.take(4)
+                EventLog.setRetention(retentionText.toIntOrNull())
+            },
+            label = { Text("תקופת שמירה בימים (ריק = ללא הגבלה)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Text("שינוי התקופה חל מיד גם על אירועים ישנים שנפתרו. אירועים פתוחים נשמרים תמיד.", style = MaterialTheme.typography.bodySmall)
     }
 
     val selected = selectedId?.let { EventLog.find(it) }
@@ -193,6 +200,31 @@ fun EventLogPanel(title: String, subtitle: String, showProtectionStatus: Boolean
                 TextButton(onClick = { EventLog.markRead(selected.id, false); selectedId = null }) { Text("סמן כלא נקרא") }
             },
             dismissButton = { TextButton(onClick = { selectedId = null }) { Text("סגירה") } },
+        )
+    }
+    if (previewExport) {
+        val report = remember { EventLog.exportText() }
+        AlertDialog(
+            onDismissRequest = { previewExport = false },
+            title = { Text("תצוגה מקדימה של הדוח") },
+            text = {
+                Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Text("בדוק שאין בדוח מידע אישי שאינך רוצה לחשוף לפני השיתוף.", style = MaterialTheme.typography.bodySmall)
+                    Text(report, style = MaterialTheme.typography.bodySmall)
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    val send = Intent(Intent.ACTION_SEND).apply {
+                        type = "text/plain"
+                        putExtra(Intent.EXTRA_SUBJECT, "Magen — דוח אירועים")
+                        putExtra(Intent.EXTRA_TEXT, report)
+                    }
+                    runCatching { context.startActivity(Intent.createChooser(send, "ייצוא דוח אירועים")) }
+                    previewExport = false
+                }) { Text("שיתוף") }
+            },
+            dismissButton = { TextButton(onClick = { previewExport = false }) { Text("ביטול") } },
         )
     }
     if (confirmClear) {
@@ -237,6 +269,7 @@ private fun EventRow(event: MagenEvent, onClick: () -> Unit) {
 private fun repairIntent(pkg: String, type: String): Intent? = when {
     type.contains("accessibility") -> Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS)
     type.contains("notification") -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg"))
+    type.contains("background") -> Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
     type.contains("location") -> Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$pkg"))
     else -> null
 }

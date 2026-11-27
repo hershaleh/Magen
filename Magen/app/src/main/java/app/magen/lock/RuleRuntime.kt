@@ -59,6 +59,7 @@ object RuleRuntime {
         if (!bootVerified) {
             // This tick runs inside the accessibility service, which proves it is running after a restart.
             bootVerified = true
+            Health.check(ctx, wall)
             resolveOpen("accessibility_disabled", wall, "The accessibility service is running again.")
         }
         shabbatActive = s.shabbat.active

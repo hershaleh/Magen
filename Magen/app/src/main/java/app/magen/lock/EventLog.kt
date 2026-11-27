@@ -37,11 +37,38 @@ object EventLog {
     var events by mutableStateOf<List<MagenEvent>>(emptyList())
         private set
 
+    private const val MAX_EVENTS = 1000
+
+    /** Days to keep events, or null for no time limit (the default). */
+    var retentionDays by mutableStateOf<Int?>(null)
+        private set
+
     fun init(context: Context) {
         synchronized(lock) {
             app = context.applicationContext
-            events = load()
+            retentionDays = app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)?.getInt("retentionDays", -1)?.takeIf { it > 0 }
+            events = trim(load())
         }
+    }
+
+    /** Changes the retention period; applies to old events at once. Open events are always kept. */
+    fun setRetention(days: Int?) {
+        synchronized(lock) {
+            retentionDays = days?.takeIf { it > 0 }
+            app?.getSharedPreferences("magen_events", Context.MODE_PRIVATE)?.edit()?.putInt("retentionDays", retentionDays ?: -1)?.apply()
+            events = trim(events)
+            persist()
+        }
+    }
+
+    /** Drops resolved events older than the retention period and keeps the log under [MAX_EVENTS], newest and open ones first. */
+    private fun trim(list: List<MagenEvent>): List<MagenEvent> {
+        val cutoff = retentionDays?.let { System.currentTimeMillis() - it * 86_400_000L }
+        val kept = list.filter { cutoff == null || it.state != EventState.RESOLVED || it.updatedAt >= cutoff }
+        if (kept.size <= MAX_EVENTS) return kept
+        val open = kept.filter { it.state != EventState.RESOLVED }
+        val room = (MAX_EVENTS - open.size).coerceAtLeast(0)
+        return (open + kept.filter { it.state == EventState.RESOLVED }.sortedByDescending { it.updatedAt }.take(room)).sortedByDescending { it.updatedAt }
     }
 
     fun record(
@@ -87,7 +114,7 @@ object EventLog {
                     history = listOf("${formatTime(now)} · נוצר"),
                 )
             }
-            events = next.sortedByDescending { it.updatedAt }
+            events = trim(next.sortedByDescending { it.updatedAt })
             persist()
         }
     }
