@@ -162,6 +162,23 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Publish emulator excerpt
+        if: failure()
+        shell: bash {0}
+        run: |
+          mkdir -p "$RUNNER_TEMP/fb" && cd "$RUNNER_TEMP/fb"
+          {
+            echo "branch=${GITHUB_REF_NAME} sha=${GITHUB_SHA}"
+            for f in "$GITHUB_WORKSPACE"/emulator-output/instrumentation.txt; do
+              [ -f "$f" ] && grep -vE '^\s*$' "$f" | tail -150
+            done
+            ls -la "$GITHUB_WORKSPACE/emulator-output" 2>&1 | head -30
+          } > "emulator-${GITHUB_SHA::7}.txt"
+          git init -q && git checkout -q -b ci-feedback-emulator
+          git config user.name "ci" && git config user.email "ci@users.noreply.github.com"
+          git add . && git commit -q -m "Emulator excerpt ${GITHUB_SHA::7}"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" ci-feedback-emulator || true
+
       - uses: actions/upload-artifact@v4
         if: always()
         with:
