@@ -8,6 +8,7 @@ import android.provider.Settings
 import android.util.Base64
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import app.magen.lock.core.Credential
@@ -27,6 +28,9 @@ object Store {
 
     var hasPin by mutableStateOf(false)
         private set
+    /** Length is stored so the keypad can submit as soon as a complete PIN has been entered. */
+    var pinLength by mutableIntStateOf(0)
+        private set
     var locked by mutableStateOf<Map<String, LockMode>>(emptyMap())
         private set
     var mainUnlocked by mutableStateOf<Set<String>>(emptySet())
@@ -38,6 +42,9 @@ object Store {
     var blockedSettings by mutableStateOf<Set<String>>(emptySet())
         private set
     var protect by mutableStateOf(true)
+        private set
+    /** Master switch for user-configured blocking rules; self-protection and uninstall safety remain separate. */
+    var blockingEnabled by mutableStateOf(true)
         private set
     var relockOnScreenOff by mutableStateOf(true)
         private set
@@ -61,6 +68,7 @@ object Store {
         app = ctx.applicationContext
         sp = app.getSharedPreferences("magen", Context.MODE_PRIVATE)
         hasPin = sp.contains("hash")
+        pinLength = sp.getInt("pinLength", 0).coerceIn(0, 8)
         locked = (sp.getStringSet("locked", emptySet()) ?: emptySet()).mapNotNull { s ->
             val i = s.lastIndexOf(':')
             if (i < 0) null else runCatching { s.substring(0, i) to LockMode.valueOf(s.substring(i + 1)) }.getOrNull()
@@ -69,6 +77,7 @@ object Store {
         blockApk = sp.getBoolean("blockApk", false)
         blockedSettings = sp.getStringSet("blockedSettings", emptySet()) ?: emptySet()
         protect = sp.getBoolean("protect", true)
+        blockingEnabled = sp.getBoolean("blockingEnabled", true)
         relockOnScreenOff = sp.getBoolean("relock", true)
         allowedUntil = sp.getLong("allowedUntil", 0L)
         uninstallDeadline = loadDeadline("allowedUntil", "allowed", UNINSTALL_LEGACY_CAP_MS)
@@ -76,25 +85,32 @@ object Store {
         customKeywords = sp.getStringSet("customKeywords", emptySet()) ?: emptySet()
         biometric = sp.getBoolean("bio", false)
         hasRecovery = sp.contains("rhash")
+        EventLog.init(app)
         Policy.apply()
     }
 
     @JvmName("applyLevel")
     fun setLevel(l: String) {
+        val changed = level != l
         level = l
         sp.edit().putString("level", l).apply()
+        if (changed) EventLog.record("protection.level", "רמת ההגנה שנבחרה עודכנה", "נבחר מצב: $l. מצב האכיפה בפועל נבדק בנפרד.", "protection_level", EventSeverity.LOW)
     }
 
     fun addKeyword(raw: String) {
         // Accepts a path such as "Network & internet > Internet" and keeps the last part, the page itself.
         val k = CustomKeyword.parse(raw) ?: return
+        if (k in customKeywords) return
         customKeywords = customKeywords + k
         sp.edit().putStringSet("customKeywords", customKeywords).apply()
+        EventLog.record("custom_rule.add", "נוסף כלל מותאם", "נוסף כלל מותאם אישית.", "custom_rule_add", EventSeverity.LOW)
     }
 
     fun removeKeyword(k: String) {
+        if (k !in customKeywords) return
         customKeywords = customKeywords - k
         sp.edit().putStringSet("customKeywords", customKeywords).apply()
+        EventLog.record("custom_rule.remove", "הוסר כלל מותאם", "הוסר כלל מותאם אישית.", "custom_rule_remove", EventSeverity.LOW)
     }
 
     // ---- master code -------------------------------------------------------------------------
@@ -110,10 +126,12 @@ object Store {
         sp.edit()
             .putString("salt", Base64.encodeToString(salt, Base64.NO_WRAP))
             .putString("hash", hash(pin, salt))
+            .putInt("pinLength", pin.length)
             .putInt("fails", 0)
             .apply()
         saveDeadline("lockUntil", "lock", Deadline.NONE)
         hasPin = true
+        pinLength = pin.length
     }
 
     /** Seconds the keypad stays disabled after too many wrong attempts. */
@@ -133,6 +151,11 @@ object Store {
         if (lockRemaining() > 0) return false
         // Missing or damaged stored data is a failed attempt, never a crash and never a success.
         val ok = Credential.matches(pin, decode("salt"), sp.getString("hash", null)) { p, s -> hash(p, s) }
+        if (ok && pinLength == 0) {
+            // One-time migration for installations created before PIN length was persisted.
+            pinLength = pin.length
+            sp.edit().putInt("pinLength", pin.length).apply()
+        }
         return registerAttempt(ok)
     }
 
@@ -180,16 +203,20 @@ object Store {
 
     @JvmName("applyBiometric")
     fun setBiometric(on: Boolean) {
+        val changed = biometric != on
         biometric = on
         sp.edit().putBoolean("bio", on).apply()
+        if (changed) EventLog.record("security.biometric", "העדפת זיהוי ביומטרי עודכנה", if (on) "העדפת זיהוי ביומטרי הופעלה." else "העדפת זיהוי ביומטרי כובתה.", "biometric_preference", EventSeverity.LOW)
     }
 
     // ---- app locking -------------------------------------------------------------------------
 
     fun setMode(pkg: String, mode: LockMode?) {
+        val changed = locked[pkg] != mode
         locked = if (mode == null) locked - pkg else locked + (pkg to mode)
         if (mode != LockMode.MAIN) mainUnlocked = mainUnlocked - pkg
         sp.edit().putStringSet("locked", locked.map { "${it.key}:${it.value.name}" }.toSet()).apply()
+        if (changed) EventLog.record("app.lock", "הגדרת חסימת אפליקציה עודכנה", if (mode == null) "הוסרה הגדרת חסימה מחבילת $pkg." else "עודכנה הגדרת חסימה לחבילת $pkg: $mode.", "app_lock:$pkg", EventSeverity.LOW)
     }
 
     fun toggleMainUnlocked(pkg: String) {
@@ -212,33 +239,52 @@ object Store {
 
     @JvmName("applyBlockPlay")
     fun setBlockPlay(on: Boolean) {
+        val changed = blockPlay != on
         blockPlay = on
         sp.edit().putBoolean("blockPlay", on).apply()
+        if (changed) EventLog.record("rule.play", "הגדרת חסימת Play עודכנה", if (on) "הופעלה העדפת חסימת Play." else "כובתה העדפת חסימת Play.", "block_play", EventSeverity.LOW)
     }
 
     @JvmName("applyBlockApk")
     fun setBlockApk(on: Boolean) {
+        val changed = blockApk != on
         blockApk = on
         sp.edit().putBoolean("blockApk", on).apply()
         Policy.apply()
+        if (changed) EventLog.record("rule.apk", "הגדרת חסימת APK עודכנה", if (on) "הופעלה העדפת חסימת התקנת APK." else "כובתה העדפת חסימת התקנת APK.", "block_apk", EventSeverity.LOW)
     }
 
     fun setBlockedSetting(id: String, on: Boolean) {
+        val changed = (id in blockedSettings) != on
         blockedSettings = if (on) blockedSettings + id else blockedSettings - id
         sp.edit().putStringSet("blockedSettings", blockedSettings).apply()
         Policy.apply()
+        if (changed) EventLog.record("setting.block.$id", "הגדרת חסימת מערכת עודכנה", if (on) "נשמרה העדפת חסימה עבור $id." else "הוסרה העדפת חסימה עבור $id.", "blocked_setting:$id", EventSeverity.LOW)
+    }
+
+    fun updateBlockingEnabled(on: Boolean) {
+        val changed = blockingEnabled != on
+        blockingEnabled = on
+        sp.edit().putBoolean("blockingEnabled", on).apply()
+        // Strong-mode restrictions are updated and verified by the existing policy layer.
+        Policy.apply()
+        if (changed) EventLog.record("blocking.master", "מתג החסימות עודכן", if (on) "הופעלה העדפת החסימות שהוגדרו." else "כובתה העדפת החסימות שהוגדרו.", "blocking_master", EventSeverity.LOW)
     }
 
     @JvmName("applyProtect")
     fun setProtect(on: Boolean) {
+        val changed = protect != on
         protect = on
         sp.edit().putBoolean("protect", on).apply()
         Policy.apply()
+        if (changed) EventLog.record("protection.self", "העדפת ההגנה העצמית עודכנה", if (on) "הופעלה העדפת ההגנה העצמית." else "כובתה העדפת ההגנה העצמית.", "self_protection_preference", EventSeverity.MEDIUM)
     }
 
     fun setRelock(on: Boolean) {
+        val changed = relockOnScreenOff != on
         relockOnScreenOff = on
         sp.edit().putBoolean("relock", on).apply()
+        if (changed) EventLog.record("security.relock", "העדפת נעילה מחדש עודכנה", if (on) "הופעלה נעילה מחדש בעת כיבוי המסך." else "כובתה נעילה מחדש בעת כיבוי המסך.", "relock_preference", EventSeverity.LOW)
     }
 
     // ---- uninstall approval ------------------------------------------------------------------

@@ -66,7 +66,7 @@ class GuardService : AccessibilityService() {
     private val recheck = Runnable {
         val p = recheckPkg ?: return@Runnable
         recheckPkg = null
-        if (Store.hasPin && Store.locked.containsKey(p) && activeIs(p)) enforceLock(p)
+        if (Store.blockingEnabled && Store.hasPin && Store.locked.containsKey(p) && activeIs(p)) enforceLock(p)
     }
 
     private var currentApp = ""
@@ -337,13 +337,13 @@ class GuardService : AccessibilityService() {
         if (state) onForeground(pkg, e.className?.toString())
         maintain()
 
-        if (Store.hasPin && Store.locked.containsKey(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
+        if (Store.blockingEnabled && Store.hasPin && Store.locked.containsKey(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
         updateCapture(pkg, state)
 
         val now = SystemClock.uptimeMillis()
         if (!state && now - lastScan < 250) return
         when {
-            pkg == Catalog.PLAY -> if (Store.blockPlay) {
+            pkg == Catalog.PLAY -> if (Store.blockingEnabled && Store.blockPlay) {
                 lastScan = now
                 scanPlay()
             }
@@ -473,13 +473,13 @@ class GuardService : AccessibilityService() {
             block(R.string.blocked_self)
             return
         }
-        if (Store.blockApk && top.any { it in Catalog.unknownSources }) {
+        if (Store.blockingEnabled && Store.blockApk && top.any { it in Catalog.unknownSources }) {
             block(R.string.blocked_apk)
             return
         }
-        val hit = Store.blockedSettings.mapNotNull { Catalog.byId[it] }
+        val hit = Store.blockingEnabled && Store.blockedSettings.mapNotNull { Catalog.byId[it] }
             .any { c -> c.keywords.any { Catalog.norm(it) in top } }
-        val custom = Store.customKeywords.any { Catalog.norm(it) in top }
+        val custom = Store.blockingEnabled && Store.customKeywords.any { Catalog.norm(it) in top }
         if (hit || custom) block(R.string.blocked_settings)
     }
 
@@ -499,7 +499,7 @@ class GuardService : AccessibilityService() {
         val isUninstall = InstallerScreen.isUninstall(nodes)
         // Magen's own uninstall, confirmed with the code, must not be blocked by an unfamiliar dialog wording.
         val ownApprovedUninstall = InstallerScreen.isApprovedMagenUninstall(nodes, mentionsUs, approval)
-        if (Store.blockApk && !isUninstall && !ownApprovedUninstall) block(R.string.blocked_apk)
+        if (Store.blockingEnabled && Store.blockApk && !isUninstall && !ownApprovedUninstall) block(R.string.blocked_apk)
     }
 
     // ---- helpers -----------------------------------------------------------------------------

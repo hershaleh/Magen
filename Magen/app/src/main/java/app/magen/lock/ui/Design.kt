@@ -59,10 +59,12 @@ import app.magen.lock.R
 
 object Tabs {
     const val HOME = 0
-    const val APPS = 1
-    const val PROTECTION = 2
-    const val TIMES = 3
-    const val SETTINGS = 4
+    const val BLOCKINGS = 1
+    const val APPS = BLOCKINGS // Compatibility for existing Home shortcuts.
+    const val TIMES = 2
+    const val PROTECTION = 3
+    const val MORE = 4
+    const val SETTINGS = MORE
 }
 
 object Sp {

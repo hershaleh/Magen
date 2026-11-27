@@ -69,6 +69,8 @@ dependencies {
     implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.6")
+    // Compose UI test APIs reference forceEnableAppTracing(); keep app/test variants consistent.
+    implementation("androidx.tracing:tracing:1.2.0")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("org.robolectric:robolectric:4.14.1")
@@ -78,4 +80,6 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
     androidTestImplementation("androidx.test.ext:junit:1.2.1")
     androidTestImplementation("androidx.test:runner:1.6.2")
+    // Compose UI testing calls forceEnableAppTracing(), added in this tracing release.
+    androidTestImplementation("androidx.tracing:tracing:1.2.0")
 }

@@ -1,6 +1,7 @@
 package app.magen.lock
 
 import android.content.Context
+import app.magen.lock.ui.hasAnyRule
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
@@ -221,6 +222,28 @@ class StoreTest {
 
 
     // ---- active-rule status and app-initiated trips ---------------------------------------------
+
+    @Test
+    fun masterBlockingSwitchDefaultsOnAndPersistsItsState() {
+        assertTrue(Store.blockingEnabled)
+        Store.updateBlockingEnabled(false)
+        assertFalse(Store.blockingEnabled)
+        assertFalse(prefs().getBoolean("blockingEnabled", true))
+        Store.init(ctx)
+        assertFalse(Store.blockingEnabled)
+        Store.updateBlockingEnabled(true)
+        assertTrue(prefs().getBoolean("blockingEnabled", false))
+        assertTrue(Store.blockingEnabled)
+    }
+
+    @Test
+    fun masterBlockingSwitchDoesNotChangeMagenSelfProtectionPreference() {
+        Store.setProtect(true)
+        assertTrue(Store.protect)
+        Store.updateBlockingEnabled(false)
+        assertTrue(Store.protect)
+        assertTrue(prefs().getBoolean("protect", false))
+    }
 
     @Test
     fun noConfiguredRulesMeansThereIsNothingToEnforce() {

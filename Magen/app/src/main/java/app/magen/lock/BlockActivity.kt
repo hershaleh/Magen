@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import app.magen.lock.ui.BlockContent
 import app.magen.lock.ui.MagenTheme
+import app.magen.lock.ui.SpecUiPreferences
 
 /** Small "Blocked by Magen" notice shown after [GuardService] closes a forbidden screen. */
 class BlockActivity : AppCompatActivity() {
@@ -22,6 +23,7 @@ class BlockActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        SpecUiPreferences.load(this)
         reason = intent.getIntExtra(EXTRA_REASON, R.string.blocked_settings)
         setContent { MagenTheme { BlockContent(reason) { goHome() } } }
     }
