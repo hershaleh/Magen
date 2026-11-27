@@ -90,12 +90,12 @@ object SpecUiPreferences {
 }
 
 @Composable
-private fun SpecPage(title: String, subtitle: String? = null, content: @Composable () -> Unit) {
+private fun SpecPage(title: String, subtitle: String? = null, preview: Boolean = true, content: @Composable () -> Unit) {
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(gap)) {
         Text(title, style = MaterialTheme.typography.headlineSmall)
         if (subtitle != null) Text(subtitle, color = MaterialTheme.colorScheme.onSurfaceVariant)
         content()
-        Text("תצוגה מקדימה: חלק מהאפשרויות עדיין אינן מחוברות למנגנון האכיפה.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
+        if (preview) Text("תצוגה מקדימה: חלק מהאפשרויות עדיין אינן מחוברות למנגנון האכיפה.", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
     }
 }
 @Composable
@@ -247,210 +247,21 @@ private fun WholeDeviceScheduleScreen() {
 
 @Composable
 private fun GroupsManagementScreen() {
-    var groups by rememberSaveable { mutableStateOf(listOf("קבוצה חדשה")) }
-    var selected by rememberSaveable { mutableIntStateOf(0) }
-    var newName by rememberSaveable { mutableStateOf("") }
-    SpecPage("קבוצות", "קבוצות מאפשרות להגדיר לוח זמנים משותף לאפליקציות המשויכות אליהן. מכסות אישיות וקבוצתיות מוגדרות בתוך הגדרות האפליקציות.") {
-        SpecCard("הקבוצות שלי") {
-            groups.forEachIndexed { index, name ->
-                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    androidx.compose.material3.RadioButton(selected = selected == index, onClick = { selected = index })
-                    Text(name, Modifier.weight(1f))
-                    TextButton(onClick = {
-                        if (groups.size > 1) {
-                            groups = groups.filterIndexed { i, _ -> i != index }
-                            selected = 0
-                        }
-                    }, enabled = groups.size > 1) { Text("הסרה") }
-                }
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                OutlinedTextField(
-                    value = newName,
-                    onValueChange = { newName = it },
-                    label = { Text("שם קבוצה חדשה") },
-                    singleLine = true,
-                    modifier = Modifier.weight(1f),
-                )
-                TextButton(
-                    onClick = {
-                        groups = groups + newName.trim()
-                        selected = groups.lastIndex
-                        newName = ""
-                    },
-                    enabled = newName.isNotBlank(),
-                ) { Text("הוספה") }
-            }
-        }
-        SpecCard("לוח הזמנים של ${groups.getOrElse(selected) { "הקבוצה" }}") {
-            SpecToggle("הפעלת לוח זמנים לקבוצה")
-            Text("בחירת ימים וחלונות זמן תוגדר כאן. אפליקציה יכולה להשתייך לקבוצה אחת בלבד; מעבר קבוצה אינו מוחק שימוש קודם.")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Column(Modifier.weight(1f)) { SpecField("משעה", "16:00") }
-                Column(Modifier.weight(1f)) { SpecField("עד שעה", "20:00") }
-            }
-            SpecToggle("החלון חוצה חצות")
-        }
-    }
+    SpecPage("מכסות משותפות", "קבוצת אפליקציות שחולקת מכסה יומית אחת.", preview = false) { GroupsRules() }
 }
 
 @Composable
 private fun QuotasScreen() {
-    var selectedApp by rememberSaveable { mutableIntStateOf(0) }
-    var minutes by rememberSaveable { mutableIntStateOf(60) }
-    var groupMinutes by rememberSaveable { mutableIntStateOf(120) }
-    var warningMinutes by rememberSaveable { mutableIntStateOf(5) }
-    var groupSelected by rememberSaveable { mutableIntStateOf(0) }
-    val apps = listOf("דפדפן", "YouTube", "Telegram", "משחקים")
-    val groups = listOf("רשתות חברתיות", "וידאו", "משחקים")
-    SpecPage("מכסות שימוש", "מכסה אישית לכל אפליקציה ומכסה משותפת לקבוצה. השימוש נספר רק כשהאפליקציה בחזית ומתאפס בחצות המקומית.") {
-        SpecCard("בחירת אפליקציה") {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                apps.forEachIndexed { i, app -> FilterChip(selected = selectedApp == i, onClick = { selectedApp = i }, label = { Text(app) }) }
-            }
-            Text("שימוש היום: 42 דקות מתוך $minutes דקות", style = MaterialTheme.typography.bodyMedium)
-            Text("נותרו: ${(minutes - 42).coerceAtLeast(0)} דקות", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        SpecCard("מכסה אישית — ${apps[selectedApp]}", "0 דקות פירושן חסימה לכל היום. שינוי מכסה אינו מאפס שימוש שכבר נצבר.") {
-            Text(if (minutes == 0) "חסימה מלאה למשך היום" else "מכסה יומית: $minutes דקות")
-            Slider(value = minutes.toFloat(), onValueChange = { minutes = it.toInt() }, valueRange = 0f..360f, steps = 35)
-            SpecToggle("הפעלת מכסה אישית", initial = true)
-            SpecToggle("השהיית המכסה האישית")
-        }
-        SpecCard("התראה לפני סיום") {
-            Text("התראה $warningMinutes דקות לפני סיום המכסה")
-            Slider(value = warningMinutes.toFloat(), onValueChange = { warningMinutes = it.toInt() }, valueRange = 1f..30f, steps = 28)
-            Text("ברירת המחדל היא 5 דקות. כשהמכסה מסתיימת, החסימה אמורה להיכנס לתוקף מיד גם אם האפליקציה פתוחה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        SpecCard("קבוצות מכסה") {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                groups.forEachIndexed { i, group -> FilterChip(selected = groupSelected == i, onClick = { groupSelected = i }, label = { Text(group) }) }
-            }
-            SpecField("שם הקבוצה", groups[groupSelected])
-            Text("מכסה משותפת: $groupMinutes דקות")
-            Slider(value = groupMinutes.toFloat(), onValueChange = { groupMinutes = it.toInt() }, valueRange = 0f..360f, steps = 35)
-            Text("שימוש קבוצתי היום: 86 דקות מתוך $groupMinutes", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Text("כל אפליקציה יכולה להשתייך לקבוצה אחת לכל היותר. אפשר להפעיל גם מכסה אישית וגם קבוצתית; אם אחת מהן מסתיימת — האפליקציה נחסמת.", style = MaterialTheme.typography.bodySmall)
-        }
-        SpecCard("שיוך אפליקציות לקבוצה") {
-            apps.forEach { app -> SpecToggle(app, "שיוך לקבוצה הנבחרת") }
-            Text("מעבר קבוצה חל מיד: שימוש קודם נשאר בקבוצה הקודמת, ושימוש חדש נספר בקבוצה החדשה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        SpecCard("השהיות והפסקות") {
-            SpecToggle("השהיית המכסה הקבוצתית")
-            SpecToggle("הוספת הפסקה מתוזמנת")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Column(Modifier.weight(1f)) { SpecField("התחלה", "13:00") }
-                Column(Modifier.weight(1f)) { SpecField("סיום", "14:00") }
-            }
-            Text("השהיה של מכסה אישית אינה משהה מכסה קבוצתית, ולהפך. הפסקה אינה מבטלת חסימות אחרות.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
+    SpecPage("מכסות שימוש", "בחר אפליקציה כדי להגדיר מכסה יומית. השימוש נספר רק כשהאפליקציה בחזית ומתאפס בחצות המקומית.", preview = false) { AppsRules() }
 }
 @Composable
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 private fun SchedulesScreen() {
-    var selectedApp by rememberSaveable { mutableIntStateOf(0) }
-    var selectedDays by rememberSaveable { mutableStateOf(setOf("ראשון", "שני", "שלישי", "רביעי", "חמישי")) }
-    var windowCount by rememberSaveable { mutableIntStateOf(1) }
-    var exceptionMode by rememberSaveable { mutableIntStateOf(0) }
-    val apps = listOf("דפדפן", "YouTube", "Telegram", "משחקים")
-    val days = listOf("ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת")
-    SpecPage("לוחות זמנים", "הגדר חלונות שבהם אפליקציה מותרת או חסומה. ניתן ליצור כמה חלונות ביום, כולל חלונות שחוצים חצות.") {
-        SpecCard("בחירת אפליקציה") {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                apps.forEachIndexed { i, app -> FilterChip(selected = selectedApp == i, onClick = { selectedApp = i }, label = { Text(app) }) }
-            }
-        }
-        SpecCard("ימים פעילים") {
-            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                days.forEach { day ->
-                    FilterChip(selected = day in selectedDays, onClick = {
-                        selectedDays = if (day in selectedDays) selectedDays - day else selectedDays + day
-                    }, label = { Text(day) })
-                }
-            }
-        }
-        repeat(windowCount) { index ->
-            SpecCard("חלון זמן ${index + 1}") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Column(Modifier.weight(1f)) { SpecField("משעה", if (index == 0) "08:00" else "16:00") }
-                    Column(Modifier.weight(1f)) { SpecField("עד שעה", if (index == 0) "13:00" else "20:00") }
-                }
-                SpecToggle("חלון זה חוצה חצות", initial = false)
-                SpecToggle("חסימה בכל היום", initial = false)
-            }
-        }
-        SpecCard("ניהול חלונות") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { windowCount = (windowCount + 1).coerceAtMost(5) }, enabled = windowCount < 5) { Text("הוספת חלון") }
-                TextButton(onClick = { windowCount = (windowCount - 1).coerceAtLeast(1) }, enabled = windowCount > 1) { Text("הסרת חלון") }
-            }
-            Text("אפשר להגדיר חלונות נפרדים לאותו יום. חלונות חופפים אינם יוצרים היתר נוסף.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        SpecCard("הפסקות וחריגים לתאריכים") {
-            SpecToggle("הוספת הפסקה קבועה")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Column(Modifier.weight(1f)) { SpecField("תחילת הפסקה", "13:00") }
-                Column(Modifier.weight(1f)) { SpecField("סיום הפסקה", "14:00") }
-            }
-            SpecField("תאריך חריג", "DD/MM/YYYY")
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                listOf("ללא חריג", "לחסום", "לאפשר").forEachIndexed { i, label ->
-                    FilterChip(selected = exceptionMode == i, onClick = { exceptionMode = i }, label = { Text(label) })
-                }
-            }
-            Text("כאשר לוחות זמנים, חריגים או מכסות מתנגשים — החסימה גוברת. שבת וחגים מנוהלים בנפרד.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
+    SpecPage("לוחות זמנים", "בחר אפליקציה כדי להגדיר זמני חסימה שבועיים, מעבר חצות וחריגים לפי תאריך.", preview = false) { AppsRules() }
 }
 @Composable
 private fun ShabbatScreen() {
-    var enabled by rememberSaveable { mutableStateOf(true) }
-    var candles by rememberSaveable { mutableIntStateOf(18) }
-    var exitOffset by rememberSaveable { mutableIntStateOf(0) }
-    var locationMode by rememberSaveable { mutableIntStateOf(0) }
-    var secondDay by rememberSaveable { mutableIntStateOf(0) }
-    SpecPage("חסימה בשבתות ובחגים יהודיים", "חסימה נפרדת של האפליקציות המנוהלות בשבת ובימים טובים שבהם אסורה מלאכה. חול המועד אינו נחסם.") {
-        SpecCard("הפעלת החסימה") {
-            SpecToggle("חסימה בשבתות ובחגים יהודיים", initial = enabled)
-            Text("החסימה גוברת על מכסות, השהיות ולוחות זמנים רגילים. מגן נשארת זמינה במצב קריאה בלבד, ללא שינוי הגדרות.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        SpecCard("מיקום ומנהג") {
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(selected = locationMode == 0, onClick = { locationMode = 0 }, label = { Text("מיקום המכשיר") })
-                FilterChip(selected = locationMode == 1, onClick = { locationMode = 1 }, label = { Text("בחירה ידנית") })
-            }
-            SpecField("מדינה", "ישראל")
-            SpecField("עיר", "בחירת עיר או מיקום")
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                FilterChip(selected = secondDay == 0, onClick = { secondDay = 0 }, label = { Text("יום טוב שני: כבוי") })
-                FilterChip(selected = secondDay == 1, onClick = { secondDay = 1 }, label = { Text("יום טוב שני: פעיל") })
-            }
-            Text("לוח עברי לפי מנהג ישראל. חול המועד אינו נכלל בחסימה.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        SpecCard("כניסת שבת וחג") {
-            Text("הקדמת תחילת החסימה: $candles דקות לפני השקיעה")
-            Slider(value = candles.toFloat(), onValueChange = { candles = it.toInt() }, valueRange = 0f..60f, steps = 59)
-            SpecToggle("התראה 30 דקות לפני תחילת החסימה", initial = true)
-            SpecField("תוספת ידנית לכניסה (דקות)", "0")
-        }
-        SpecCard("יציאת שבת וחג") {
-            Text("תוספת ידנית ליציאה: $exitOffset דקות")
-            Slider(value = exitOffset.toFloat(), onValueChange = { exitOffset = it.toInt() }, valueRange = -30f..90f, steps = 119)
-            SpecToggle("חישוב יציאה לפי צאת הכוכבים", initial = true)
-            SpecField("שיטת חישוב / זווית", "בחירת שיטה")
-        }
-        SpecCard("לוח שנה מקומי ועבודה ללא אינטרנט") {
-            SpecToggle("שמירת לוח עברי מחושב מראש במכשיר", initial = true)
-            Text("הלוח המקומי מאפשר אכיפה גם ללא חיבור לאינטרנט. יש להתריע מראש לפני שתוקף הכיסוי המקומי מסתיים.", style = MaterialTheme.typography.bodySmall)
-            Text("כיסוי לוח שנה לדוגמה: עד סוף 2028", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-        SpecCard("במהלך שבת וחג") {
-            SpecToggle("מגן במצב קריאה בלבד", initial = true)
-            Text("אתחול במהלך החסימה אמור להחיל אותה מחדש. שינוי מיקום אינו מבטל חסימה שכבר החלה. אם לא ניתן להפעיל חסימה, יש לזהות, לנסות שוב, להתריע ולתעד — ולא להציג מצב פעיל כוזב.", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        }
-    }
+    SpecPage("חסימה בשבתות ובחגים יהודיים", "חסימת האפליקציות המנוהלות בשבת ובימים טובים. חול המועד אינו נחסם.", preview = false) { ShabbatRules() }
 }
 @Composable
 private fun SystemComponentsScreen() {
@@ -572,7 +383,7 @@ fun SpecRouteScreen(route: String, onBack: () -> Unit) {
     Column(Modifier.fillMaxSize()) {
         TextButton(onClick = onBack, modifier = Modifier.padding(start = 8.dp, top = 4.dp)) { Text("חזרה") }
         Box(Modifier.weight(1f)) {
-            when (route) { "log" -> SecurityLogScreen(); "backup" -> BackupScreen(); else -> AppSettingsScreen() }
+            when (route) { "log" -> SecurityLogScreen(); "backup" -> BackupScreen(); "rules" -> RulesScreen(onClose = onBack); else -> AppSettingsScreen() }
         }
     }
 }
@@ -586,21 +397,7 @@ private fun SecurityLogScreen() {
 }
 @Composable
 private fun BackupScreen() {
-    SpecPage("גיבוי ושחזור", "גיבוי מקומי של הגדרות מגן, ללא קודי סוד, מונים או חלונות זמן פעילים.") {
-        SpecCard("גיבוי אוטומטי") {
-            SpecToggle("יצירת גיבוי לפני עדכון או שינוי משמעותי")
-            SpecToggle("שמירת כמה גרסאות גיבוי")
-            Text("מיקום הגיבוי: אחסון מקומי במכשיר.")
-        }
-        SpecCard("גיבוי ידני") {
-            Button(onClick = {}) { Text("יצירת גיבוי עכשיו (טרם חובר)") }
-            Button(onClick = {}) { Text("ייצוא קובץ גיבוי (טרם חובר)") }
-        }
-        SpecCard("שחזור") {
-            Button(onClick = {}) { Text("בחירת קובץ לשחזור (טרם חובר)") }
-            Text("שחזור הגדרות לא יאפס את יומן האבטחה או את נתוני השימוש. תופיע אזהרה אם השחזור עלול להחליש את ההגנה.")
-        }
-    }
+    SpecPage("גיבוי ושחזור", "גיבוי מקומי של הגדרות מגן, ללא קודי סוד, מונים או חלונות זמן פעילים.", preview = false) { BackupPage() }
 }
 @Composable
 private fun AppSettingsScreen() {
