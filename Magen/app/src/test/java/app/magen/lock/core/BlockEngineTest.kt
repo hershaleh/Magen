@@ -121,4 +121,15 @@ class BlockEngineTest {
         assertTrue(BlockEngine.decide(app, ctx(minute = day * 1440 + 3 * 60)).blocked)
         assertFalse(BlockEngine.decide(app, ctx(minute = day * 1440 + 7 * 60)).blocked)
     }
+
+    @Test
+    fun deviceScheduleBlocksEveryAppButNeverEssentialOnes() {
+        val night = BlockSchedule(listOf(BlockSchedule.Window(dow, 22 * 60, 6 * 60)))
+        val cfg = RuleConfig().withDeviceSchedule(night)
+        val at = day * 1440 + 23 * 60
+        val d = BlockEngine.decide(cfg.policyFor("any.app", false, false, false), ctx(minute = at))
+        assertEquals(BlockSource.SCHEDULE, d.primary)
+        assertFalse(BlockEngine.decide(cfg.policyFor("any.app", true, false, false), ctx(minute = at)).blocked)
+        assertFalse(BlockEngine.decide(cfg.policyFor("any.app", false, false, false), ctx(minute = noon)).blocked)
+    }
 }

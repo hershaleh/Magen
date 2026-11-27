@@ -448,7 +448,7 @@ class MagenUiTest {
         compose.await("זמנים").assertIsDisplayed()
         compose.onNodeWithTag("times_tab_0").performClick()
         compose.await("לוח זמנים לכל המכשיר").assertIsDisplayed()
-        compose.await("החלון חוצה חצות").assertIsDisplayed()
+        compose.await("הוסף זמן").assertIsDisplayed()
         compose.onNodeWithTag("times_tab_1").performClick()
         compose.await("מכסה משותפת חדשה").assertIsDisplayed()
         compose.onNodeWithTag("times_tab_2").performClick()

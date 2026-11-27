@@ -14,6 +14,8 @@ class AppPolicy(
     val groupId: String? = null,
     /** A custom rule (for example video blocking) currently applies to this app. */
     val customRuleActive: Boolean = false,
+    /** Device-wide blocking times; blocks the app the same way its own schedule does. */
+    val deviceSchedule: BlockSchedule? = null,
 )
 
 class EvalContext(
@@ -48,7 +50,7 @@ object BlockEngine {
         val out = ArrayList<BlockSource>(2)
         if (ctx.shabbatActive) out += BlockSource.SHABBAT
         if (app.permanent) out += BlockSource.PERMANENT
-        if (app.schedule?.isBlocked(ctx.localMinute) == true) out += BlockSource.SCHEDULE
+        if (app.schedule?.isBlocked(ctx.localMinute) == true || app.deviceSchedule?.isBlocked(ctx.localMinute) == true) out += BlockSource.SCHEDULE
         val pq = app.personalQuota
         if (pq != null && Quotas.isExhausted(pq, ctx.personalUsedMs, ctx.dayOfWeek, ctx.localMinute)) {
             out += BlockSource.PERSONAL_QUOTA

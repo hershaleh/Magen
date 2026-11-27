@@ -207,42 +207,7 @@ fun TimesHub() {
 @Composable
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 private fun WholeDeviceScheduleScreen() {
-    var enabled by rememberSaveable { mutableStateOf(false) }
-    var windowCount by rememberSaveable { mutableIntStateOf(1) }
-    var days by rememberSaveable { mutableStateOf(setOf("ראשון", "שני", "שלישי", "רביעי", "חמישי")) }
-    val allDays = listOf("ראשון", "שני", "שלישי", "רביעי", "חמישי", "שישי", "שבת")
-    SpecPage("לוח זמנים לכל המכשיר", "כאן מוגדרים חלונות החסימה הכלליים בלבד. לוחות זמנים לאפליקציה או לכלל מסוים נמצאים בתוך הגדרות החסימה המתאימות.") {
-        SpecCard("הפעלת לוח הזמנים") {
-            SpecToggle("הפעלת חסימה לפי לוח זמנים", initial = enabled)
-            androidx.compose.foundation.layout.FlowRow(
-                horizontalArrangement = Arrangement.spacedBy(5.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                allDays.forEach { day ->
-                    FilterChip(
-                        selected = day in days,
-                        onClick = { days = if (day in days) days - day else days + day },
-                        label = { Text(day) },
-                    )
-                }
-            }
-        }
-        repeat(windowCount) { index ->
-            SpecCard("חלון חסימה ${index + 1}") {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Column(Modifier.weight(1f)) { SpecField("משעה", if (index == 0) "22:00" else "08:00") }
-                    Column(Modifier.weight(1f)) { SpecField("עד שעה", if (index == 0) "07:00" else "09:00") }
-                }
-                SpecToggle("החלון חוצה חצות")
-            }
-        }
-        SpecCard("ניהול חלונות") {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { windowCount = (windowCount + 1).coerceAtMost(5) }, enabled = windowCount < 5) { Text("הוספת חלון") }
-                TextButton(onClick = { windowCount = (windowCount - 1).coerceAtLeast(1) }, enabled = windowCount > 1) { Text("הסרת חלון") }
-            }
-        }
-    }
+    SpecPage("לוח זמנים לכל המכשיר", "זמני חסימה שחלים על כל האפליקציות המנוהלות, בנוסף ללוח הזמנים של כל אפליקציה. אפליקציות חיוניות לא נחסמות.", preview = false) { DeviceScheduleEditor() }
 }
 
 @Composable

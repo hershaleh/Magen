@@ -127,4 +127,13 @@ class RuleCodecTest {
         val none = c.policyFor("unknown", false, false, false)
         assertNull(none.schedule); assertNull(none.personalQuota); assertNull(none.groupId)
     }
+
+    @Test
+    fun deviceScheduleSurvivesTheRoundTripAndEmptyOnesAreDropped() {
+        val c = RuleConfig(deviceSchedule = sched)
+        val back = RuleCodec.decode(RuleCodec.encode(c))!!
+        assertSameSchedule(sched, back.deviceSchedule)
+        assertNull(RuleCodec.decode(RuleCodec.encode(RuleConfig().withDeviceSchedule(BlockSchedule())))!!.deviceSchedule)
+        assertNull(RuleCodec.decode("v=1\ndevice=1")) // a device line without its schedule is damaged
+    }
 }

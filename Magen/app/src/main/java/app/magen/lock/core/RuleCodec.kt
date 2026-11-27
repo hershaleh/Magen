@@ -121,6 +121,7 @@ object RuleCodec {
             }
         }
         for ((id, g) in c.groups.toSortedMap()) lines += "group=${esc(id)};n=${esc(g.name)};q=${esc(encodeQuota(g.quota))}"
+        c.deviceSchedule?.takeIf { !it.isEmpty }?.let { lines += "device=1;s=${esc(encodeSchedule(it))}" }
         val s = c.shabbat
         lines += buildString {
             append("shabbat=").append(if (s.enabled) 1 else 0)
@@ -155,6 +156,7 @@ object RuleCodec {
         val apps = LinkedHashMap<String, AppRule>()
         val groups = LinkedHashMap<String, GroupRule>()
         var shabbat = ShabbatConfig()
+        var device: BlockSchedule? = null
         try {
             for (line in lines.drop(1)) {
                 val f = fields(line) ?: return null
@@ -173,6 +175,10 @@ object RuleCodec {
                         val quota = decodeQuota(unesc(f["q"] ?: return null) ?: return null) ?: return null
                         if (id in groups) return null
                         groups[id] = GroupRule(name, quota)
+                    }
+                    "device" in f -> {
+                        if (device != null) return null
+                        device = decodeSchedule(unesc(f["s"] ?: return null) ?: return null) ?: return null
                     }
                     "shabbat" in f -> {
                         fun flag(k: String): Boolean = when (f[k]) {
@@ -200,6 +206,6 @@ object RuleCodec {
         }
         // Membership must point at an existing group, and no app may be in two (it cannot be by construction).
         if (apps.values.any { it.groupId != null && it.groupId !in groups }) return null
-        return RuleConfig(apps, groups, shabbat)
+        return RuleConfig(apps, groups, shabbat, device)
     }
 }

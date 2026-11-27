@@ -406,3 +406,18 @@ private fun lastKnownLocation(ctx: Context): Pair<Double, Double>? {
         null
     }
 }
+
+/** Blocking times that apply to every app except the essential ones. */
+@Composable
+internal fun DeviceScheduleEditor() {
+    val form = remember { ScheduleForm(RuleStore.config.deviceSchedule) }
+    var saved by remember { mutableStateOf(false) }
+    var refused by remember { mutableStateOf(false) }
+    SectionCard(stringResource(R.string.sched_windows)) { form.Content() }
+    if (refused) Text(stringResource(R.string.rules_refused), color = MaterialTheme.colorScheme.error)
+    if (saved) Text(stringResource(R.string.rules_saved))
+    Button(enabled = !RuleStore.readOnly, onClick = {
+        val ok = RuleStore.updateConfig { it.withDeviceSchedule(form.toSchedule()) }
+        saved = ok; refused = !ok
+    }) { Text(stringResource(R.string.rules_save)) }
+}
