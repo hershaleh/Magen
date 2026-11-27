@@ -52,6 +52,8 @@ import app.magen.lock.core.SecurityEvent
 import app.magen.lock.core.SecurityLog
 import app.magen.lock.core.Severity
 import app.magen.lock.core.ShabbatConfig
+import app.magen.lock.core.VideoRule
+import app.magen.lock.core.VideoScope
 import java.text.DateFormat
 import java.util.Date
 
@@ -420,4 +422,33 @@ internal fun DeviceScheduleEditor() {
         val ok = RuleStore.updateConfig { it.withDeviceSchedule(form.toSchedule()) }
         saved = ok; refused = !ok
     }) { Text(stringResource(R.string.rules_save)) }
+}
+
+/** VideoStop settings: on/off, which apps, and an honest note about what the detection can and cannot do. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+internal fun VideoStopEditor() {
+    val ctx = LocalContext.current
+    val apps = remember { launchableApps(ctx) }
+    val rule = RuleStore.config.video
+    var refused by remember { mutableStateOf(false) }
+    fun save(v: VideoRule) { refused = !RuleStore.updateConfig { it.withVideo(v) } }
+    SwitchRow(stringResource(R.string.video_on), rule.enabled) { save(rule.copy(enabled = it)) }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        FilterChip(selected = rule.scope == VideoScope.ALL, onClick = { save(rule.copy(scope = VideoScope.ALL)) }, label = { Text(stringResource(R.string.video_scope_all)) })
+        FilterChip(selected = rule.scope == VideoScope.ONLY_LISTED, onClick = { save(rule.copy(scope = VideoScope.ONLY_LISTED)) }, label = { Text(stringResource(R.string.video_scope_only)) })
+        FilterChip(selected = rule.scope == VideoScope.ALL_EXCEPT_LISTED, onClick = { save(rule.copy(scope = VideoScope.ALL_EXCEPT_LISTED)) }, label = { Text(stringResource(R.string.video_scope_except)) })
+    }
+    if (rule.scope != VideoScope.ALL) {
+        Text(stringResource(R.string.video_apps), style = MaterialTheme.typography.titleSmall)
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            for (a in apps) FilterChip(
+                selected = a.pkg in rule.packages,
+                onClick = { save(rule.copy(packages = if (a.pkg in rule.packages) rule.packages - a.pkg else rule.packages + a.pkg)) },
+                label = { Text(a.label) },
+            )
+        }
+    }
+    if (refused || RuleStore.readOnly) Text(stringResource(R.string.rules_readonly), color = MaterialTheme.colorScheme.error)
+    Text(stringResource(R.string.video_note), style = MaterialTheme.typography.bodySmall)
 }

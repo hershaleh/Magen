@@ -122,6 +122,7 @@ object RuleCodec {
         }
         for ((id, g) in c.groups.toSortedMap()) lines += "group=${esc(id)};n=${esc(g.name)};q=${esc(encodeQuota(g.quota))}"
         c.deviceSchedule?.takeIf { !it.isEmpty }?.let { lines += "device=1;s=${esc(encodeSchedule(it))}" }
+        if (c.video != VideoRule()) lines += "video=${if (c.video.enabled) 1 else 0};scope=${c.video.scope.ordinal};pk=${c.video.packages.sorted().joinToString(",") { esc(it) }}"
         val s = c.shabbat
         lines += buildString {
             append("shabbat=").append(if (s.enabled) 1 else 0)
@@ -157,6 +158,7 @@ object RuleCodec {
         val groups = LinkedHashMap<String, GroupRule>()
         var shabbat = ShabbatConfig()
         var device: BlockSchedule? = null
+        var video = VideoRule()
         try {
             for (line in lines.drop(1)) {
                 val f = fields(line) ?: return null
@@ -179,6 +181,11 @@ object RuleCodec {
                     "device" in f -> {
                         if (device != null) return null
                         device = decodeSchedule(unesc(f["s"] ?: return null) ?: return null) ?: return null
+                    }
+                    "video" in f -> {
+                        val sc = VideoScope.values().getOrNull(f["scope"]?.toIntOrNull() ?: return null) ?: return null
+                        val pk = (f["pk"] ?: return null).split(",").filter { it.isNotEmpty() }.map { unesc(it) ?: return null }.toSet()
+                        video = VideoRule(when (f["video"]) { "1" -> true; "0" -> false; else -> return null }, sc, pk)
                     }
                     "shabbat" in f -> {
                         fun flag(k: String): Boolean = when (f[k]) {
@@ -206,6 +213,6 @@ object RuleCodec {
         }
         // Membership must point at an existing group, and no app may be in two (it cannot be by construction).
         if (apps.values.any { it.groupId != null && it.groupId !in groups }) return null
-        return RuleConfig(apps, groups, shabbat, device)
+        return RuleConfig(apps, groups, shabbat, device, video)
     }
 }

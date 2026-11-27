@@ -555,5 +555,12 @@
     <string name="shabbat_use_gps">השתמש במיקום המכשיר</string>
     <string name="shabbat_gps_failed">לא ניתן לקבל מיקום. אשר הרשאה או הזן ידנית.</string>
     <string name="shabbat_gps_ok">המיקום מולא. לחץ על שמור.</string>
+    <string name="blocked_video">סרטונים חסומים באפליקציה הזו.</string>
+    <string name="video_on">חסימת נגני וידאו</string>
+    <string name="video_scope_all">כל האפליקציות</string>
+    <string name="video_scope_only">רק האפליקציות שנבחרו</string>
+    <string name="video_scope_except">כל האפליקציות חוץ מהנבחרות</string>
+    <string name="video_apps">אפליקציות נבחרות</string>
+    <string name="video_note">VideoStop מזהה בקרות של נגן וידאו על המסך. הוא עלול לפספס נגן שמסתיר אותן, ולפעמים לזהות בטעות מסך אחר כסרטון. הוא לא קורא כתובות אינטרנט או תוכן עמודים.</string>
 </resources>
 

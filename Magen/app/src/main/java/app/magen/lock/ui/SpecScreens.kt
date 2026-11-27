@@ -327,9 +327,7 @@ private fun CustomRulesScreen() {
             Text("כלל מותאם צריך להיות ממוקד כדי שלא לחסום מסכים שאינם קשורים.")
         }
         SpecCard("VideoStop", "זיהוי מסכי וידאו ונגנים באפליקציות ובדפדפן.") {
-            SpecToggle("הפעלת VideoStop")
-            SpecField("אפליקציות להחרגה")
-            Text("VideoStop עדיין לא מחובר. זיהוי וידאו אינו מוחלט ודורש בדיקות תאימות וביצועים.")
+            VideoStopEditor()
         }
     }
 }

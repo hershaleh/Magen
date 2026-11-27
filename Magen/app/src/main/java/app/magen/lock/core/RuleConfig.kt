@@ -35,22 +35,25 @@ class RuleConfig(
     val shabbat: ShabbatConfig = ShabbatConfig(),
     /** Blocking times that apply to every non-essential app, on top of each app's own schedule. */
     val deviceSchedule: BlockSchedule? = null,
+    val video: VideoRule = VideoRule(),
 ) {
     fun withApp(pkg: String, rule: AppRule): RuleConfig =
-        RuleConfig(if (rule.isEmpty) apps - pkg else apps + (pkg to rule), groups, shabbat, deviceSchedule)
+        RuleConfig(if (rule.isEmpty) apps - pkg else apps + (pkg to rule), groups, shabbat, deviceSchedule, video)
 
-    fun withGroup(id: String, g: GroupRule): RuleConfig = RuleConfig(apps, groups + (id to g), shabbat, deviceSchedule)
+    fun withGroup(id: String, g: GroupRule): RuleConfig = RuleConfig(apps, groups + (id to g), shabbat, deviceSchedule, video)
 
     /** Deleting a group also takes its members out of it (their own quota and schedule stay). */
     fun withoutGroup(id: String): RuleConfig {
         val kept = apps.mapValues { (_, r) -> if (r.groupId == id) AppRule(r.schedule, r.quota, null) else r }
             .filterValues { !it.isEmpty }
-        return RuleConfig(kept, groups - id, shabbat, deviceSchedule)
+        return RuleConfig(kept, groups - id, shabbat, deviceSchedule, video)
     }
 
-    fun withShabbat(s: ShabbatConfig): RuleConfig = RuleConfig(apps, groups, s, deviceSchedule)
+    fun withShabbat(s: ShabbatConfig): RuleConfig = RuleConfig(apps, groups, s, deviceSchedule, video)
 
-    fun withDeviceSchedule(d: BlockSchedule?): RuleConfig = RuleConfig(apps, groups, shabbat, d?.takeIf { !it.isEmpty })
+    fun withDeviceSchedule(d: BlockSchedule?): RuleConfig = RuleConfig(apps, groups, shabbat, d?.takeIf { !it.isEmpty }, video)
+
+    fun withVideo(v: VideoRule): RuleConfig = RuleConfig(apps, groups, shabbat, deviceSchedule, v)
 
     /** Moves [pkg] to [groupId] (or out of every group when null). Earlier usage of the old group is kept by the ledger. */
     fun withGroupMembership(pkg: String, groupId: String?): RuleConfig {

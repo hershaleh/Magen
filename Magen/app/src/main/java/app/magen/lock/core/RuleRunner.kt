@@ -103,7 +103,7 @@ class RuleRunner(
      * @param pkg app in front, or null when none or the screen is off
      * @param essential the app may never be blocked (Magen, launcher, dialer, system UI, installer, Settings)
      */
-    fun step(wallMs: Long, elapsed: Long, boot: Int, offsetMs: Long, pkg: String?, essential: Boolean): Step {
+    fun step(wallMs: Long, elapsed: Long, boot: Int, offsetMs: Long, pkg: String?, essential: Boolean, customActive: Boolean = false): Step {
         val reading = clock.read(wallMs, elapsed, boot)
         val trusted = reading.trustedWall
         val day = CivilDate.localEpochDay(trusted, offsetMs)
@@ -128,7 +128,7 @@ class RuleRunner(
         val decision = if (pkg == null) Decision(emptyList()) else {
             // Shabbat blocks every app that is not essential; the other sources need the app's own rule.
             BlockEngine.decide(
-                config.policyFor(pkg, essential, permanent = false, customRuleActive = false),
+                config.policyFor(pkg, essential, permanent = false, customRuleActive = customActive),
                 EvalContext(minute, dow, personalUsed, groupUsed, config.groupDefs, sh.active),
             )
         }

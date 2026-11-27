@@ -555,5 +555,12 @@
     <string name="shabbat_use_gps">Use device location</string>
     <string name="shabbat_gps_failed">Could not get the location. Allow it or enter it by hand.</string>
     <string name="shabbat_gps_ok">Location filled in. Press Save.</string>
+    <string name="blocked_video">Video is blocked in this app.</string>
+    <string name="video_on">Block video players</string>
+    <string name="video_scope_all">All apps</string>
+    <string name="video_scope_only">Only the chosen apps</string>
+    <string name="video_scope_except">All except the chosen apps</string>
+    <string name="video_apps">Chosen apps</string>
+    <string name="video_note">VideoStop recognises video player controls on screen. It can miss a player that hides them and can mistake other screens for video. It does not read web addresses or page content.</string>
 </resources>
 

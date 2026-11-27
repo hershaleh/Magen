@@ -48,12 +48,12 @@ object RuleRuntime {
 
     /** One tick. [pkg] is the app in front (null when none or the screen is off). */
     @Synchronized
-    fun step(ctx: Context, pkg: String?, essential: Boolean): RuleRunner.Step {
+    fun step(ctx: Context, pkg: String?, essential: Boolean, customActive: Boolean = false): RuleRunner.Step {
         val r = runner()
         r.config = RuleStore.config
         val wall = System.currentTimeMillis()
         val elapsed = SystemClock.elapsedRealtime()
-        val s = r.step(wall, elapsed, bootCount(ctx), TimeZone.getDefault().getOffset(wall).toLong(), pkg, essential)
+        val s = r.step(wall, elapsed, bootCount(ctx), TimeZone.getDefault().getOffset(wall).toLong(), pkg, essential, customActive)
 
         runCatching { Backups.autoIfDue(ctx, Math.floorDiv(s.trustedMs + TimeZone.getDefault().getOffset(wall), 86_400_000L)) }
         if (!bootVerified) {

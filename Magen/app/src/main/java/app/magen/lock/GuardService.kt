@@ -35,6 +35,8 @@ import androidx.annotation.StringRes
 import androidx.core.content.ContextCompat
 import app.magen.lock.core.BlockSource
 import app.magen.lock.core.Decision
+import app.magen.lock.core.VideoDetector
+import app.magen.lock.core.VideoSignals
 import app.magen.lock.core.InstallerScreen
 
 /**
@@ -52,6 +54,8 @@ class GuardService : AccessibilityService() {
         private const val CHANNEL = "magen_guard"
         private const val NOTIF_OFF = 41
         private const val RULE_TICK_MS = 5_000L
+        const val VIDEO_SCAN_MS = 600L
+        const val VIDEO_HOLD_MS = 4_000L
         private const val CAPTURE_WINDOW_MS = 10 * 60_000L
         private val GENERIC_TITLES = setOf(
             "settings", "search settings", "navigate up", "back", "more options", "search",
@@ -356,6 +360,8 @@ class GuardService : AccessibilityService() {
         if (Store.blockingEnabled && Store.hasPin && Store.locked.containsKey(pkg) && (state || activeIs(pkg))) enforceLock(pkg)
         updateCapture(pkg, state)
 
+        scanVideo(pkg)
+
         val now = SystemClock.uptimeMillis()
         if (!state && now - lastScan < 250) return
         when {
@@ -395,11 +401,49 @@ class GuardService : AccessibilityService() {
     private fun dialerPackage(): String? =
         runCatching { getSystemService(android.telecom.TelecomManager::class.java)?.defaultDialerPackage }.getOrNull()
 
+    // ---- VideoStop -----------------------------------------------------------------------------
+
+    private var videoPkg: String? = null
+    private var videoSeenAt = 0L
+    private var lastVideoScan = 0L
+
+    /** Looks for a video player in the front app when VideoStop applies to it, and lets the central engine block it. */
+    private fun scanVideo(pkg: String) {
+        if (!RuleStore.config.video.applies(pkg) || isEssential(pkg)) {
+            if (videoPkg == pkg) videoPkg = null
+            return
+        }
+        val now = SystemClock.uptimeMillis()
+        if (now - lastVideoScan < VIDEO_SCAN_MS) return
+        lastVideoScan = now
+        val root = rootInActiveWindow ?: return
+        if (root.packageName?.toString() != pkg) return
+        val ids = ArrayList<String>()
+        val classes = ArrayList<String>()
+        val labels = ArrayList<String>()
+        var count = 0
+
+        fun walk(n: AccessibilityNodeInfo, depth: Int) {
+            if (count++ > 700 || depth > 25) return
+            n.viewIdResourceName?.let { ids.add(it) }
+            n.className?.toString()?.let { classes.add(it) }
+            n.contentDescription?.toString()?.takeIf { it.isNotBlank() }?.let { labels.add(it) }
+            for (i in 0 until n.childCount) n.getChild(i)?.let { walk(it, depth + 1) }
+        }
+        walk(root, 0)
+        if (VideoDetector.detect(VideoSignals(ids, classes, labels))) {
+            videoPkg = pkg
+            videoSeenAt = now
+            tickRules()
+        }
+    }
+
     private fun tickRules() {
         runCatching {
             val pkg = currentApp.takeIf { it.isNotEmpty() }
             val essential = pkg == null || isEssential(pkg)
-            val step = RuleRuntime.step(this, pkg, essential)
+            val video = pkg != null && videoPkg == pkg && SystemClock.uptimeMillis() - videoSeenAt < VIDEO_HOLD_MS
+            val step = RuleRuntime.step(this, pkg, essential, video)
             RuleRuntime.notify(this, step.warnings)
             if (pkg != null && !essential && step.decision.blocked) enforceBlock(step.decision, pkg)
         }
@@ -411,6 +455,7 @@ class GuardService : AccessibilityService() {
             BlockSource.SCHEDULE -> R.string.blocked_schedule
             BlockSource.PERSONAL_QUOTA -> R.string.blocked_quota
             BlockSource.GROUP_QUOTA -> R.string.blocked_group_quota
+            BlockSource.CUSTOM_RULE -> R.string.blocked_video
             else -> R.string.blocked_rule
         }
         performGlobalAction(GLOBAL_ACTION_HOME)
